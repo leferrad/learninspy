@@ -23,10 +23,10 @@ labels = iris.target
 
 t1 = time.time()
 #redneuronal.persist_layers()
-cost, (n_w, n_b) = redneuronal.cost(features[0], labels[0])
+hits = redneuronal.train(features, labels)
 t1f = time.time() - t1
 
-print 'Tiempo: ', t1f, 'cost: ', cost
+print 'Tiempo: ', t1f, 'Tasa de acierto final: ', hits
 
 
 

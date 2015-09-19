@@ -11,7 +11,8 @@ from neurons import DistributedNeurons, LocalNeurons
 from scipy import sparse
 from pyspark.mllib.regression import LabeledPoint
 from context import sc
-from utils.util import LearninspyLogger
+#from utils.util import LearninspyLogger
+import itertools
 import copy
 import checks
 
@@ -58,6 +59,10 @@ class NeuralLayer(object):
             self.weights_T = LocalNeurons(w.transpose(), self.shape_w[::-1])
             self.bias = LocalNeurons(b, self.shape_b)
 
+    def __div__(self, other):
+        self.weights /= other
+        self.bias /= other
+        return self
 
     def l1(self):
         return self.weights.l1()
@@ -106,7 +111,7 @@ class NeuralLayer(object):
 
     def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos
         self.weights += step_w
-        self.weights_T += step_w.transpose()
+#        self.weights_T += step_w.transpose()
         self.bias += step_b
         return
 
@@ -126,7 +131,7 @@ class OutputLayer(NeuralLayer):
 class DeepLearningParams:
 
     def __init__(self, units_layers, activation='ReLU', loss='MSE', layer_distributed=None, dropout_ratios=None,
-                 mini_batch=100, minimizer='Adadelta', autoencoder=False, rng=None):
+                 mini_batch=50, minimizer='Adadelta', autoencoder=False, rng=None):
         if dropout_ratios is None:
             dropout_ratios = len(units_layers) * [0.3]  # Por defecto, todos los radios son de 0.3
         if layer_distributed is None:
@@ -200,16 +205,12 @@ class NeuralNetwork(object):
 
     # Ante la duda, l2 consigue por lo general mejores resultados que l1 pero se pueden combinar
 
-    def feedforward(self, x, y):
-        num_layers = len(self.list_layers)
-        dropfraction = self.params.dropout_ratios  # Vector con las fracciones de DropOut para cada NeuralLayer
+    def predict(self, x):
+        num_layers = self.num_layers
+        # Tener en cuenta que en la prediccion no se aplica el dropout
         for i in xrange(num_layers):
-            if dropfraction[i] > 0.0:
-                (x, d_x), mask = self.list_layers[i].dropoutput(x, dropfraction[i], grad=True)
-            else:
-                (x, d_x) = self.list_layers[i].output(x, grad=True)
-        error = x.loss(self.loss, y)
-        return error
+            x = self.list_layers[i].output(x, grad=False)
+        return x
 
     def backprop(self, x, y):
         # Ver http://neuralnetworksanddeeplearning.com/chap1.html#implementing_our_network_to_classify_digits
@@ -251,20 +252,57 @@ class NeuralNetwork(object):
         if self.params.strength_l1 > 0.0:
             cost_l1, nabla_w_l1 = self.l1()
             cost += cost_l1
-            nabla_w += nabla_w_l1
+            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l1))
         if self.params.strength_l2 > 0.0:
             cost_l2, nabla_w_l2 = self.l2()
             cost += cost_l2
-            nabla_w += nabla_w_l2
+            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l2))
         return cost, (nabla_w, nabla_b)
 
-    def optimize(self, batch, options=None):
-        model = copy.copy(self)
-        minimizer = self.opt_algo(model, batch, options)
-        for info in minimizer:
-            print info
-        return 0
+    def _optimize(self, batch, options=None):
+        model = copy.deepcopy(self)
+        data = list(batch)
+        minimizer = self.opt_algo(model, data, options)
+        final = None
+        for result in minimizer:
+            final = result
+            if result['hits'] > 0.95:
+                break
+        yield final
 
+    def evaluate(self, data):
+        hits = 0.0
+        for lp in data:  # Por cada LabeledPoint del conj de datos
+            out = self.predict(lp.features).matrix()
+            pred = np.argmax(out)
+            if pred == lp.label:
+                hits += 1.0
+        if type(data) is itertools.chain:
+            data = list(data)
+        size = len(data)
+        hits /= float(size)
+        return hits
+
+    def _mix_models(self, left, right):
+        """
+        Se devuelve el resultado de sumar las NeuralLayers
+        de left y right
+        :param left: list of NeuralLayer
+        :param right: list of NeuralLayer
+        :return: list of NeuralLayer
+        """
+        # Los paso a dict ya q son generators
+        leftdict = dict(left)
+        rightdict = dict(right)
+        # Extraigo lista de capas en cada uno
+        rightlayers = rightdict['model']
+        leftlayers = leftdict['model']
+        for l in xrange(len(leftlayers)):
+            w = rightlayers[l].get_weights()
+            b = rightlayers[l].get_bias()
+            leftlayers[l].update(w, b)  # Update suma el w y el b
+        leftdict['model'] = leftlayers
+        return leftdict
 
 
     def train(self, data, label, options=None):
@@ -272,13 +310,20 @@ class NeuralNetwork(object):
         # TODO: ver improve_patience en deeplearning.net
         assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
         labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
-        mini_batch = self.params.mini_batch
-        labeled_data = sc.parallelize(labeled_data, mini_batch)  # Particiono y distribuyo mini-batches
-        minimizer = self.optimize
-        minimized_partitions = (labeled_data.mapPartitions(lambda batch: minimizer(batch, options))
-                                )
-
-        return minimized_partitions.count()
+        part = len(data) / self.params.mini_batch
+        labeled_data = sc.parallelize(labeled_data, part)  # Particiono y distribuyo mini-batches
+        # Funciones a usar en los RDD
+        minimizer = self._optimize
+        mixer = self._mix_models
+        results = labeled_data.mapPartitions(lambda batch: minimizer(batch, options))
+        mix_model = results.reduce(lambda left, right: mixer(left, right))
+        layers = mix_model['model']
+        final_list_layers = map(lambda layer: layer / part, layers)
+        self.list_layers = final_list_layers
+        #batch = labeled_data.takeSample(False,50)
+        #models = minimizer(batch, options)
+        hits = self.evaluate(labeled_data.collect())
+        return hits
 
     def update(self, stepw, stepb):
         # Cada parametro step es una lista, para actualizar cada capa

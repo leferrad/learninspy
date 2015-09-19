@@ -39,5 +39,6 @@ class LearninspyLogger(object):
 
 def label_to_vector(label, nclasses):
     lab = np.zeros((nclasses, 1), dtype=np.int8)
+    label = int(label)
     lab[label] = 1
     return np.array(lab)

@@ -4,18 +4,20 @@ __author__ = 'leferrad'
 import numpy as np
 import loss
 from neurons import LocalNeurons
+import copy
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', num_epochs=100, mini_batch_size=100, options=None):
+    def __init__(self, algorithm='Adadelta', num_epochs=100, mini_batch_size=100, tolerance=0.99, options=None):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
-                options = {'step-rate': 1, 'decay': 0.9, 'momentum': 0}
+                options = {'step-rate': 1, 'decay': 0.9, 'momentum': 0.3}
             elif algorithm == 'SGD':
-                options = {'step-rate': 1, 'momentum': 0}
+                options = {'step-rate': 1, 'momentum': 0.0}
         self.options = options
         self.algorithm = algorithm
         self.num_epochs = num_epochs
         self.mini_batch_size = mini_batch_size
+        self.tolerance = tolerance
 
 
 
@@ -35,11 +37,33 @@ class Optimizer(object):
         if parameters is None:
             parameters = OptimizerParameters()
         self.parameters = parameters
+        self.cost = 0.0
         self.n_epoch = 0
+        self.hits = 0.0
 
+
+    # def __iter__(self):
+    #     for info in self._iterate():
+    #         yield 'Epoca ' + str(info['n_epoch']) +\
+    #               '. Tasa de aciertos: ' + str(info['hits']) + \
+    #               '. Costo: ' + str(info['cost'])
     def __iter__(self):
         for info in self._iterate():
-            yield 'Epoca ' + str(info['n_epoch']) +'. Costo: ' + str(info['cost'])
+            print 'Epoca ' + str(info['n_epoch']) +\
+                   '. Tasa de aciertos: ' + str(info['hits']) + \
+                   '. Costo: ' + str(info['cost'])
+        yield {
+            'model': self.model.list_layers,
+            'hits': self.hits,
+            'epochs': self.n_epoch,
+            'cost': self.cost
+        }
+
+
+    def check_criterion(self):
+        epochs = self.n_epoch >= self.parameters.num_epochs
+        tolerance = self.hits >= self.parameters.tolerance
+        return epochs or tolerance
 
 
 
@@ -92,11 +116,12 @@ class Adadelta(Optimizer):
 
 
     def _iterate(self):
-        for ep in xrange(self.parameters.num_epochs):
+        while self.check_criterion() is False:
             d = self.parameters.options['decay']
             o = 1e-4  # offset
             m = self.parameters.options['momentum']
             sr = self.parameters.options['step-rate']
+            # --- Entrenamiento ---
             for lp in self.data:  # Por cada LabeledPoint del conj de datos
                 # 1) Computar el gradiente
                 cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
@@ -111,17 +136,21 @@ class Adadelta(Optimizer):
                     step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
                     step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
                     # 4) Acumular actualizaciones
-                    self.step_w[l] = step1w + step2w
-                    self.step_b[l] = step1b + step2b
+                    self.step_w[l] = (step1w + step2w) * -1.0
+                    self.step_b[l] = (step1b + step2b) * -1.0
                     self.sms_w[l] = (self.sms_w[l] * d) + (self.step_w[l] ** 2) * (1 - d)
                     self.sms_b[l] = (self.sms_b[l] * d) + (self.step_b[l] ** 2) * (1 - d)
                 # 5) Aplicar actualizaciones a todas las capas
+                self.cost = cost
                 self._update()
-
+            # --- Error de clasificacion---
+            data = copy.deepcopy(self.data)
+            self.hits = self.model.evaluate(data)
             self.n_epoch += 1
             yield {
                 'n_epoch': self.n_epoch,
-                'cost': cost
+                'hits': self.hits,
+                'cost': self.cost
             }
 
 class SGD:
