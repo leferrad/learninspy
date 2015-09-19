@@ -3,6 +3,7 @@ __author__ = 'leferrad'
 
 import numpy as np
 import loss
+from neurons import LocalNeurons
 
 class OptimizerParameters:
     def __init__(self, algorithm='Adadelta', num_epochs=100, mini_batch_size=100, options=None):
@@ -53,52 +54,75 @@ class Adadelta(Optimizer):
     """
 
     def __init__(self, model, data, parameters=None):
-        """Create an Adadelta object.
+        """
 
+        :param model: NeuralNetwork
+        :param data: list of LabeledPoint
+        :param parameters: OptimizerParameters
+        :return:
         """
         super(Adadelta, self).__init__(model, data, parameters)
+        self._init_acummulators()
 
-        self.gms_w = [.0] * self.num_layers
-        self.gms_b = [.0] * self.num_layers
-        self.sms_w = [.0] * self.num_layers
-        self.sms_b = [.0] * self.num_layers
-        self.step_w = [.0] * self.num_layers
-        self.step_b = [.0] * self.num_layers
 
     def _update(self):
         self.model.update(self.step_w, self.step_b)
 
-    def _iterate(self):
-        d = self.parameters.options['decay']
-        o = 1e-4  # offset
-        m = self.parameters.options['momentum']
-        sr = self.parameters.options['step-rate']
-        for lp in self.data:  # Por cada LabeledPoint del conj de datos
-            # 1) Computar el gradiente
-            cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
-            for l in xrange(self.num_layers):
-                # ADICIONAL: Aplico momentum y step-rate (ANTE LA DUDA, COMENTAR ESTAS LINEAS)
-                step1w = self.step_w[l] * m * sr
-                step1b = self.step_b[l] * m * sr
-                # 2) Acumular el gradiente
-                self.gms_w[l] = (self.gms_w[l] * d) + (nabla_w[l] ** 2) * (1 - d)
-                self.gms_b[l] = (self.gms_b[l] * d) + (nabla_b[l] ** 2) * (1 - d)
-                # 3) Computar actualizaciones
-                step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
-                step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
-                # 4) Acumular actualizaciones
-                self.step_w[l] = step1w + step2w
-                self.step_b[l] = step1b + step2b
-                self.sms_w[l] = (self.sms_w[l] * d) + (self.step_w[l] ** 2) * (1 - d)
-                self.sms_b[l] = (self.sms_b[l] * d) + (self.step_b[l] ** 2) * (1 - d)
-            # 5) Aplicar actualizaciones a todas las capas
-            self._update()
+    def _init_acummulators(self):
+        """
+        Inicializo acumuladores usados para la optimizacion
+        :return:
+        """
+        self.gms_w = []
+        self.gms_b = []
+        self.sms_w = []
+        self.sms_b = []
+        self.step_w = []
+        self.step_b = []
+        for layer in self.model.list_layers:
+            shape_w = layer.get_weights().shape()
+            shape_b = layer.get_bias().shape()
+            self.gms_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
+            self.gms_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
+            self.sms_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
+            self.sms_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
+            self.step_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
+            self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
-        self.n_epoch += 1
-        yield {
-            'n_epoch': self.n_epoch,
-            'cost': cost
-        }
+
+
+    def _iterate(self):
+        for ep in xrange(self.parameters.num_epochs):
+            d = self.parameters.options['decay']
+            o = 1e-4  # offset
+            m = self.parameters.options['momentum']
+            sr = self.parameters.options['step-rate']
+            for lp in self.data:  # Por cada LabeledPoint del conj de datos
+                # 1) Computar el gradiente
+                cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
+                for l in xrange(self.num_layers):
+                    # ADICIONAL: Aplico momentum y step-rate (ANTE LA DUDA, COMENTAR ESTAS LINEAS)
+                    step1w = self.step_w[l] * m * sr
+                    step1b = self.step_b[l] * m * sr
+                    # 2) Acumular el gradiente
+                    self.gms_w[l] = (self.gms_w[l] * d) + (nabla_w[l] ** 2) * (1 - d)
+                    self.gms_b[l] = (self.gms_b[l] * d) + (nabla_b[l] ** 2) * (1 - d)
+                    # 3) Computar actualizaciones
+                    step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
+                    step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
+                    # 4) Acumular actualizaciones
+                    self.step_w[l] = step1w + step2w
+                    self.step_b[l] = step1b + step2b
+                    self.sms_w[l] = (self.sms_w[l] * d) + (self.step_w[l] ** 2) * (1 - d)
+                    self.sms_b[l] = (self.sms_b[l] * d) + (self.step_b[l] ** 2) * (1 - d)
+                # 5) Aplicar actualizaciones a todas las capas
+                self._update()
+
+            self.n_epoch += 1
+            yield {
+                'n_epoch': self.n_epoch,
+                'cost': cost
+            }
 
 class SGD:
     def __init__(self, train_data, epochs, mini_batch_size,
