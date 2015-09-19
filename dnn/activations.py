@@ -3,7 +3,6 @@ __author__ = 'leferrad'
 
 import numpy as np
 
-# Se define la funcion de activacion 'fun(x)' y su derivada respecto a x 'fun_d(x)'
 
 def tanh(x):
     return np.tanh(x)

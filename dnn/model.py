@@ -11,10 +11,11 @@ from neurons import DistributedNeurons, LocalNeurons
 from scipy import sparse
 from pyspark.mllib.regression import LabeledPoint
 from context import sc
+from utils.util import LearninspyLogger
 import copy
 import checks
 
-class NeuralLayer:
+class NeuralLayer(object):
     activation = act.relu
     activation_d = act.relu_d
 
@@ -93,12 +94,6 @@ class NeuralLayer:
     def get_bias(self):
         return self.bias
 
-    def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos
-        self.weights += step_w
-        self.weights_T += step_w.transpose()
-        self.bias += step_b
-        return
-
     def persist_layer(self):
         self.weights.persist()
         self.bias.persist()
@@ -109,22 +104,34 @@ class NeuralLayer:
         self.bias.unpersist()
         return
 
+    def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos
+        self.weights += step_w
+        self.weights_T += step_w.transpose()
+        self.bias += step_b
+        return
+
 
 class OutputLayer(NeuralLayer):
     def output(self, x, grad=False):
-        zRDD = self.weights.mul_array(x).sum_array(self.bias.matrix())
-        aRDD = zRDD.softmax()
-        return aRDD
+        wx = self.weights.mul_array(x)
+        z = wx.sum_array(self.bias)
+        a = z.softmax()  # La activacion es un clasificador softmax
+        if grad:
+            d_a = z.activation(self.activation_d)
+            a = (a, d_a)
+        return a
+
 
 # TODO: Ver la factibilidad de cambiarlo por un dict
 class DeepLearningParams:
+
     def __init__(self, units_layers, activation='ReLU', loss='MSE', layer_distributed=None, dropout_ratios=None,
                  mini_batch=100, minimizer='Adadelta', autoencoder=False, rng=None):
         if dropout_ratios is None:
             dropout_ratios = len(units_layers) * [0.3]  # Por defecto, todos los radios son de 0.3
         if layer_distributed is None:
             layer_distributed = len(units_layers) * [False]  # Por defecto, las capas no estan distribuidas
-        self.dropout_ratios = dropout_ratios
+        self.dropout_ratios = dropout_ratios  # Recordar que la capa de salida no sufre dropout
         # 'units_layers' es un vector que indica la cantidad de unidades de cada capa (1er elemento se refiere a capa visible)
         self.units_layers = units_layers
         self.layer_distributed = layer_distributed
@@ -147,6 +154,7 @@ class NeuralNetwork(object):
         self.loss = loss.fun_loss[self.params.loss]
         self.loss_d = loss.fun_loss_d[self.params.loss]
         self.opt_algo = opt.Minimizer[self.params.minimizer]
+        #self.logger = LearninspyLogger()
 
         if list_layers is None:
             self.list_layers = []  # Creo un arreglo vacio para ir agregando las capas que se inicializan
@@ -161,7 +169,7 @@ class NeuralNetwork(object):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
                                                 self.params.activation, self.params.layer_distributed[i]))
         # Ultima capa es de clasificacion, por lo que su activacion es softmax
-        self.list_layers.append(NeuralLayer(self.params.units_layers[num_layers - 2],
+        self.list_layers.append(OutputLayer(self.params.units_layers[num_layers - 2],
                                             self.params.units_layers[num_layers - 1],
                                             self.params.activation,
                                             self.params.layer_distributed[num_layers - 1]))
@@ -205,7 +213,7 @@ class NeuralNetwork(object):
 
     def backprop(self, x, y):
         # Ver http://neuralnetworksanddeeplearning.com/chap1.html#implementing_our_network_to_classify_digits
-        # x, y: RDD
+        # x, y: numpy array
         num_layers = self.num_layers
         drop_fraction = self.params.dropout_ratios  # Vector con las fracciones de DropOut para cada NeuralLayer
         mask = [None] * num_layers  # Vector que contiene None o la mascara de DropOut, segun corresponda
@@ -238,8 +246,8 @@ class NeuralNetwork(object):
             nabla_b[-l] = delta
         return cost, (nabla_w, nabla_b)
 
-    def cost(self, x, y):
-        cost, (nabla_w, nabla_b) = self.backprop(x, y)
+    def cost(self, features, label):
+        cost, (nabla_w, nabla_b) = self.backprop(features, label)
         if self.params.strength_l1 > 0.0:
             cost_l1, nabla_w_l1 = self.l1()
             cost += cost_l1
@@ -250,32 +258,32 @@ class NeuralNetwork(object):
             nabla_w += nabla_w_l2
         return cost, (nabla_w, nabla_b)
 
-    def minimize(self, data, options):
-        # TODO: ver improve_patience en deeplearning.net
-        func = self.cost
-        optimizer = self.opt_algo()
-        for info in optimizer:
-            # show every 50th result
-            if modulostop(info):
-                print "iteration %3i loss=%g" % (info['n_iter'], quadratic(wrt))
+    def optimize(self, batch, options=None):
+        model = copy.copy(self)
+        minimizer = self.opt_algo(model, batch, options)
+        for info in minimizer:
+            print info
+        return 0
 
-            # stop after total of 1000 iterations
-            if fullstop(info):
-                print "iteration %3i loss=%g" % (info['n_iter'], quadratic(wrt))
-                break
 
-        pass
 
     def train(self, data, label, options=None):
         # x, y son np.ndarray
+        # TODO: ver improve_patience en deeplearning.net
         assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
         labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
         mini_batch = self.params.mini_batch
         labeled_data = sc.parallelize(labeled_data, mini_batch)  # Particiono y distribuyo mini-batches
-        min_function = copy.copy(self.minimize)
-        minimized_partitions = labeled_data.mapPartitions(lambda batch: min_function(batch, options))
+        minimizer = self.optimize
+        minimized_partitions = (labeled_data.mapPartitions(lambda batch: minimizer(batch, options))
+                                )
 
-        pass
+        return minimized_partitions.count()
+
+    def update(self, stepw, stepb):
+        # Cada parametro step es una lista, para actualizar cada capa
+        for l in xrange(self.num_layers):
+            self.list_layers[l].update(stepw[l], stepb[l])
 
     def check_gradients(self):
         fun_act = self.params.activation
@@ -308,4 +316,6 @@ class NeuralNetwork(object):
     def unpersist_layers(self):
         for i in xrange(len(self.list_layers)):
             self.list_layers[i].unpersist_layer()
+
+
 

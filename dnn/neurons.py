@@ -283,7 +283,10 @@ class LocalNeurons(object):
     def mul_array(self, array):
         if isinstance(array, LocalNeurons):
             array = array.matrix()
-        shape = self.rows, array.shape[1]
+        arrshape = array.shape
+        if len(arrshape) == 1:
+            arrshape += (1,)  # Le agrego la dimension que le falta
+        shape = self.rows, arrshape[1]
         return LocalNeurons(self.mat.dot(array), shape)
 
     def mul_array2(self, array):

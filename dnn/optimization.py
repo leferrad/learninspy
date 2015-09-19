@@ -4,7 +4,6 @@ __author__ = 'leferrad'
 import numpy as np
 import loss
 
-
 class OptimizerParameters:
     def __init__(self, algorithm='Adadelta', num_epochs=100, mini_batch_size=100, options=None):
         if options is None:  # Agrego valores por defecto
@@ -28,60 +27,20 @@ class Optimizer(object):
     stochastic gradient descent.
     """
 
-    def __init__(self, data, layers, dropout_ratios=None, loss_func='MSE', parameters=None):
+    def __init__(self, model, data, parameters=None):
+        self.model = model
+        self.num_layers = model.num_layers
         self.data = data
-        self.list_layers = layers
-        self.num_layers = len(layers)
-        if dropout_ratios is None:
-            dropout_ratios = [0.0] * self.num_layers
-        self.dropout_ratios = dropout_ratios
-        self.loss = loss.fun_loss[loss_func]
-        self.loss_d = loss.fun_loss_d[loss_func]
         if parameters is None:
             parameters = OptimizerParameters()
         self.parameters = parameters
         self.n_epoch = 0
 
-    def func(self, x, y):
-        # func es el backpropagation
-        # Ver http://neuralnetworksanddeeplearning.com/chap1.html#implementing_our_network_to_classify_digits
-        num_layers = self.num_layers
-        drop_fraction = self.dropout_ratios  # Vector con las fracciones de DropOut para cada NeuralLayer
-        mask = [None] * num_layers  # Vector que contiene None o la mascara de DropOut, segun corresponda
-        a = [None] * (num_layers + 1)  # Vector que contiene las activaciones de las salidas de cada NeuralLayer
-        d_a = [None] * num_layers  # Vector que contiene las derivadas de las salidas activadas de cada NeuralLayer
-        nabla_w = [None] * num_layers  # Vector que contiene los gradientes del costo respecto a W
-        nabla_b = [None] * num_layers  # Vector que contiene los gradientes del costo respecto a b
-        # Feed-forward
-        a[0] = x  # Tomo como primer activacion la entrada x
-        for l in xrange(num_layers):
-            if drop_fraction[l] > 0.0:
-                (a[l + 1], d_a[l]), mask[l] = self.list_layers[l].dropoutput(a[l], drop_fraction[l], grad=True)
-            else:
-                (a[l + 1], d_a[l]) = self.list_layers[l].output(a[l], grad=True)
-        cost = a[-1].loss(self.loss, y)
-        # Backward pass
-        # TODO: tener en cuenta que la ultima capa no es softmax (segun UFLDL)
-        d_cost = a[-1].loss_d(self.loss_d, y)
-        delta = d_cost.mul_elemwise(d_a[-1])
-        if drop_fraction[-1] > 0.0:  # No actualizo las unidades "tiradas"
-            delta = delta.mul_elemwise(mask[-1])
-        nabla_w[-1] = delta.outer(a[-2])
-        nabla_b[-1] = delta
-        for l in xrange(2, num_layers + 1):
-            w_t = self.list_layers[-l + 1].weights_T
-            delta = w_t.mul_array(delta).mul_elemwise(d_a[-l])
-            if drop_fraction[-l] > 0.0:  # No actualizo las unidades "tiradas"
-                delta = delta.mul_elemwise(mask[-l])
-            nabla_w[-l] = delta.outer(a[-l - 1])
-            nabla_b[-l] = delta
-        return cost, (nabla_w, nabla_b)
+    def __iter__(self):
+        for info in self._iterate():
+            yield 'Epoca ' + str(info['n_epoch']) +'. Costo: ' + str(info['cost'])
 
-    def update(self, step_w, step_b, index):
-        step_w = -step_w
-        step_b = -step_b
-        self.list_layers[index].update(step_w, step_b)
-        return
+
 
 
 
@@ -93,16 +52,21 @@ class Adadelta(Optimizer):
        arXiv preprint arXiv:1212.5701 (2012).
     """
 
-    def __init__(self, data, layers, dropout_ratios=None, loss_func='MSE', parameters=None):
+    def __init__(self, model, data, parameters=None):
         """Create an Adadelta object.
 
         """
-        Optimizer.__init__(self, data, layers, dropout_ratios, loss_func, parameters)
+        super(Adadelta, self).__init__(model, data, parameters)
 
-        self.gms_w = 0
-        self.gms_b = 0
-        self.sms = 0
-        self.step = 0
+        self.gms_w = [.0] * self.num_layers
+        self.gms_b = [.0] * self.num_layers
+        self.sms_w = [.0] * self.num_layers
+        self.sms_b = [.0] * self.num_layers
+        self.step_w = [.0] * self.num_layers
+        self.step_b = [.0] * self.num_layers
+
+    def _update(self):
+        self.model.update(self.step_w, self.step_b)
 
     def _iterate(self):
         d = self.parameters.options['decay']
@@ -111,28 +75,30 @@ class Adadelta(Optimizer):
         sr = self.parameters.options['step-rate']
         for lp in self.data:  # Por cada LabeledPoint del conj de datos
             # 1) Computar el gradiente
-            cost, (nabla_w, nabla_b) = self.func(lp.features, lp.label)
+            cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
             for l in xrange(self.num_layers):
                 # ADICIONAL: Aplico momentum y step-rate (ANTE LA DUDA, COMENTAR ESTAS LINEAS)
-                step1w = self.stepw * m * sr
-                step1b = self.stepb * m * sr
-                self.update(step1w, step1b, l)
+                step1w = self.step_w[l] * m * sr
+                step1b = self.step_b[l] * m * sr
                 # 2) Acumular el gradiente
-                self.gms_w = (self.gms_w * d) + (nabla_w[l] ** 2) * (1 - d)
-                self.gms_b = (self.gms_b * d) + (nabla_b[l] ** 2) * (1 - d)
+                self.gms_w[l] = (self.gms_w[l] * d) + (nabla_w[l] ** 2) * (1 - d)
+                self.gms_b[l] = (self.gms_b[l] * d) + (nabla_b[l] ** 2) * (1 - d)
                 # 3) Computar actualizaciones
-                step2w = ((self.sms + o) ** 0.5) / ((self.gms_w + o) ** 0.5) * nabla_w[l] * sr
-                step2b = ((self.sms + o) ** 0.5) / ((self.gms_b + o) ** 0.5) * nabla_b[l] * sr
-                # 4) Aplicar actualizaciones
-                self.update(step2w, step2b, l)
-                self.stepw = step1w + step2w
-                self.stepb = step1b + step2b
-                # 5) Acumular actualizaciones
-                self.smsw = (self.smsw * d) + (self.stepw ** 2) * (1 - d)
-                self.smsb = (self.smsb * d) + (self.stepb ** 2) * (1 - d)
+                step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
+                step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
+                # 4) Acumular actualizaciones
+                self.step_w[l] = step1w + step2w
+                self.step_b[l] = step1b + step2b
+                self.sms_w[l] = (self.sms_w[l] * d) + (self.step_w[l] ** 2) * (1 - d)
+                self.sms_b[l] = (self.sms_b[l] * d) + (self.step_b[l] ** 2) * (1 - d)
+            # 5) Aplicar actualizaciones a todas las capas
+            self._update()
 
         self.n_epoch += 1
-        pass
+        yield {
+            'n_epoch': self.n_epoch,
+            'cost': cost
+        }
 
 class SGD:
     def __init__(self, train_data, epochs, mini_batch_size,

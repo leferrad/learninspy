@@ -3,27 +3,35 @@ __author__ = 'leferrad'
 # Se define la funcion de error 'fun(x)' y su derivada respecto a x 'fun_d(x)'
 
 import numpy as np
+from utils.util import label_to_vector
 
 def mse(y, t):
-    # Supongo o, t: np.array
+    num_classes = len(y)
+    #y = label_to_vector(np.argmax(y), num_classes)
+    t = label_to_vector(t, num_classes)
     err = y - t
     N = err.size
     return np.sum(np.square(err)) / (1.0 * N)
 
 
 def mse_d(y, t):
-    # Supongo o, t: np.array
-    if t.shape != y.shape:
-        y = y.T
+    num_classes = len(y)
+    #y = label_to_vector(np.argmax(y), num_classes)
+    t = label_to_vector(t, num_classes)
     err = y - t
     N = err.size
     return 2 * err / (1.0 * N)
 
 
 def cross_entropy(y, t):
-    return -sum(t * np.log(y))
+    num_classes = len(y)
+    t = label_to_vector(t, num_classes)
+    return -sum(t * np.log(y))[0]
+
 
 def cross_entropy_d(y, t):
+    num_classes = len(y)
+    t = label_to_vector(t, num_classes)
     return y - t
 
 
