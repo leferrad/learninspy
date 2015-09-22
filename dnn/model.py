@@ -131,7 +131,7 @@ class OutputLayer(NeuralLayer):
 class DeepLearningParams:
 
     def __init__(self, units_layers, activation='ReLU', loss='MSE', layer_distributed=None, dropout_ratios=None,
-                 mini_batch=50, minimizer='Adadelta', autoencoder=False, rng=None):
+                 minimizer='Adadelta', autoencoder=False, rng=None):
         if dropout_ratios is None:
             dropout_ratios = len(units_layers) * [0.3]  # Por defecto, todos los radios son de 0.3
         if layer_distributed is None:
@@ -142,7 +142,6 @@ class DeepLearningParams:
         self.layer_distributed = layer_distributed
         self.activation = activation
         self.loss = loss
-        self.mini_batch = mini_batch
         self.minimizer = minimizer
         self.autoencoder = autoencoder
         self.strength_l1 = 1e-5
@@ -213,6 +212,12 @@ class NeuralNetwork(object):
         return x
 
     def backprop(self, x, y):
+        """
+
+        :param x:
+        :param y:
+        :return:
+        """
         # Ver http://neuralnetworksanddeeplearning.com/chap1.html#implementing_our_network_to_classify_digits
         # x, y: numpy array
         num_layers = self.num_layers
@@ -262,12 +267,17 @@ class NeuralNetwork(object):
     def _optimize(self, batch, options=None):
         model = copy.deepcopy(self)
         data = list(batch)
+        self.params.rng.shuffle(data)  # Mezclo las filas del batch
         minimizer = self.opt_algo(model, data, options)
         final = None
         for result in minimizer:
             final = result
+            print 'Cant de iteraciones: ' + str(result['epochs']) +\
+                   '. Tasa de aciertos: ' + str(result['hits']) + \
+                   '. Costo: ' + str(result['cost'])
             if result['hits'] > 0.95:
                 break
+        print "BATCH", data
         yield final
 
     def evaluate(self, data):
@@ -304,24 +314,26 @@ class NeuralNetwork(object):
         leftdict['model'] = leftlayers
         return leftdict
 
-
-    def train(self, data, label, options=None):
+    def train(self, data, label, mini_batch=50, epochs=50, options=None):
         # x, y son np.ndarray
         # TODO: ver improve_patience en deeplearning.net
         assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
         labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
-        part = len(data) / self.params.mini_batch
-        labeled_data = sc.parallelize(labeled_data, part)  # Particiono y distribuyo mini-batches
+        part = len(data) / mini_batch
+        data_bc = sc.broadcast(labeled_data)  # creo un Broadcast, de manera de mandarlo una sola vez a todos los nodos
         # Funciones a usar en los RDD
         minimizer = self._optimize
         mixer = self._mix_models
-        results = labeled_data.mapPartitions(lambda batch: minimizer(batch, options))
-        mix_model = results.reduce(lambda left, right: mixer(left, right))
-        layers = mix_model['model']
-        final_list_layers = map(lambda layer: layer / part, layers)
-        self.list_layers = final_list_layers
-        #batch = labeled_data.takeSample(False,50)
-        #models = minimizer(batch, options)
+        for ep in xrange(epochs):
+            print "Epoca ", ep
+            #self.params.rng.shuffle(data_bc.value)
+            data_rdd = sc.parallelize(data_bc.value)
+            labeled_data = data_rdd.repartition(part)  # Particiono con shuffle interno
+            results = labeled_data.mapPartitions(lambda batch: minimizer(batch, options))
+            mix_model = results.reduce(lambda left, right: mixer(left, right))
+            layers = mix_model['model']
+            final_list_layers = map(lambda layer: layer / part, layers)
+            self.list_layers = copy.copy(final_list_layers)
         hits = self.evaluate(labeled_data.collect())
         return hits
 
