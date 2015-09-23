@@ -14,8 +14,8 @@ def label_to_vector(labels, nclasses):
         veclabel.append(lab)
     return np.array(veclabel)
 
-parametros_red = mod.DeepLearningParams([4, 6, 3], loss='CrossEntropy', activation='Tanh',
-                                    dropout_ratios=[0.3, 0.0],minimizer='Adadelta')
+parametros_red = mod.DeepLearningParams([4, 10, 5, 3], loss='CrossEntropy', activation='Tanh',
+                                    dropout_ratios=[0.5, 0.5, 0.0], minimizer='Adadelta')
 
 redneuronal = mod.NeuralNetwork(parametros_red)
 
