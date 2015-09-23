@@ -267,17 +267,23 @@ class NeuralNetwork(object):
     def _optimize(self, batch, options=None):
         model = copy.deepcopy(self)
         data = list(batch)
-        self.params.rng.shuffle(data)  # Mezclo las filas del batch
-        minimizer = self.opt_algo(model, data, options)
-        final = None
-        for result in minimizer:
-            final = result
-            print 'Cant de iteraciones: ' + str(result['epochs']) +\
-                   '. Tasa de aciertos: ' + str(result['hits']) + \
-                   '. Costo: ' + str(result['cost'])
-            if result['hits'] > 0.95:
-                break
-        print "BATCH", data
+        final = {
+            'model': self.list_layers,
+            'hits': 0.0,
+            'epochs': 0,
+            'cost': -1.0
+        }
+        if len(data) > 0:
+            self.params.rng.shuffle(data)  # Mezclo las filas del batch
+            print "BATCH", data
+            minimizer = self.opt_algo(model, data, options)
+            for result in minimizer:
+                final = result
+                print 'Cant de iteraciones: ' + str(result['epochs']) +\
+                       '. Tasa de aciertos: ' + str(result['hits']) + \
+                       '. Costo: ' + str(result['cost'])
+                if result['hits'] > 0.95:
+                    break
         yield final
 
     def evaluate(self, data):
@@ -326,7 +332,8 @@ class NeuralNetwork(object):
         mixer = self._mix_models
         for ep in xrange(epochs):
             print "Epoca ", ep
-            #self.params.rng.shuffle(data_bc.value)
+            # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
+            self.params.rng.shuffle(data_bc.value)
             data_rdd = sc.parallelize(data_bc.value)
             labeled_data = data_rdd.repartition(part)  # Particiono con shuffle interno
             results = labeled_data.mapPartitions(lambda batch: minimizer(batch, options))

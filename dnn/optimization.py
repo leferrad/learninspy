@@ -7,16 +7,15 @@ from neurons import LocalNeurons
 import copy
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', num_epochs=100, mini_batch_size=100, tolerance=0.99, options=None):
+    def __init__(self, algorithm='Adadelta', num_epochs=50, tolerance=0.99, options=None):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
-                options = {'step-rate': 1, 'decay': 0.9, 'momentum': 0.3}
-            elif algorithm == 'SGD':
-                options = {'step-rate': 1, 'momentum': 0.0}
+                options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
+            elif algorithm == 'GD':
+                options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standart'}
         self.options = options
         self.algorithm = algorithm
         self.num_epochs = num_epochs
-        self.mini_batch_size = mini_batch_size
         self.tolerance = tolerance
 
 
@@ -31,7 +30,7 @@ class Optimizer(object):
     """
 
     def __init__(self, model, data, parameters=None):
-        self.model = model
+        self.model = copy.copy(model)
         self.num_layers = model.num_layers
         self.data = data
         if parameters is None:
@@ -40,25 +39,25 @@ class Optimizer(object):
         self.cost = 0.0
         self.n_epoch = 0
         self.hits = 0.0
+        self.step_w = None
+        self.step_b = None
 
+    def _iterate(self):
+        # Implementacion hecha en las clases que heredan
+        yield
 
-    # def __iter__(self):
-    #     for info in self._iterate():
-    #         yield 'Epoca ' + str(info['n_epoch']) +\
-    #               '. Tasa de aciertos: ' + str(info['hits']) + \
-    #               '. Costo: ' + str(info['cost'])
+    def _update(self):
+        self.model.update(self.step_w, self.step_b)
+
     def __iter__(self):
         for info in self._iterate():
-            print 'Epoca ' + str(info['n_epoch']) +\
-                   '. Tasa de aciertos: ' + str(info['hits']) + \
-                   '. Costo: ' + str(info['cost'])
+            continue
         yield {
             'model': self.model.list_layers,
             'hits': self.hits,
             'epochs': self.n_epoch,
             'cost': self.cost
         }
-
 
     def check_criterion(self):
         epochs = self.n_epoch >= self.parameters.num_epochs
@@ -89,9 +88,6 @@ class Adadelta(Optimizer):
         self._init_acummulators()
 
 
-    def _update(self):
-        self.model.update(self.step_w, self.step_b)
-
     def _init_acummulators(self):
         """
         Inicializo acumuladores usados para la optimizacion
@@ -113,12 +109,10 @@ class Adadelta(Optimizer):
             self.step_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
             self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
-
-
     def _iterate(self):
         while self.check_criterion() is False:
             d = self.parameters.options['decay']
-            o = 1e-4  # offset
+            o = self.parameters.options['offset']  # offset
             m = self.parameters.options['momentum']
             sr = self.parameters.options['step-rate']
             # --- Entrenamiento ---
@@ -153,45 +147,58 @@ class Adadelta(Optimizer):
                 'cost': self.cost
             }
 
-class SGD:
-    def __init__(self, train_data, epochs, mini_batch_size,
-                 momentum, valid_data=None):
-        self.train_data = train_data
-        self.valid_data = valid_data
-        self.mini_batch_size = mini_batch_size
 
+class GD(Optimizer):
+    def __init__(self, model, data, parameters=None):
+        super(GD, self).__init__(model, data, parameters)
+        self._init_acummulators()
 
+    def _init_acummulators(self):
+        """
+        Inicializo acumuladores usados para la optimizacion
+        :return:
+        """
+        self.step_w = []
+        self.step_b = []
+        for layer in self.model.list_layers:
+            shape_w = layer.get_weights().shape()
+            shape_b = layer.get_bias().shape()
+            self.step_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
+            self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
+    def _iterate(self):
+        while self.check_criterion() is False:
+            m = self.parameters.options['momentum']
+            sr = self.parameters.options['step-rate']
+            # --- Entrenamiento ---
+            for lp in self.data:  # Por cada LabeledPoint del conj de datos
+                # 1) Computar el gradiente
+                cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
+                for l in xrange(self.num_layers):
+                    if self.parameters.options['momentum_type'] == 'standard':
+                        self.step_w[l] = nabla_w[l] * sr + self.step_w[l] * m
+                        self.step_b[l] = nabla_b[l] * sr + self.step_b[l] * m
+                    elif self.parameters.options['momentum_type'] == 'nesterov':
+                        big_jump_w = self.step_w[l] * m
+                        big_jump_b = self.step_b[l] * m
 
-        if valid_data: n_test = len(valid_data)
-        n = len(train_data)
-        for j in xrange(epochs):
-            mini_batches = [
-                train_data[k:k+mini_batch_size]
-                for k in xrange(0, n, mini_batch_size)]
-            for mini_batch in mini_batches:
-                self.update_mini_batch(mini_batch, momentum)
-            if valid_data:
-                print "Epoch {0}: {1} / {2}".format(
-                    j, self.evaluate(valid_data), n_test)
-            else:
-                print "Epoch {0} complete".format(j)
+                        correction_w = nabla_w[l] * sr
+                        correction_b = nabla_b[l] * sr
 
-    def update_mini_batch(self, mini_batch, eta):
-        """Update the network's weights and biases by applying
-        gradient descent using backpropagation to a single mini batch.
-        The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
-        is the learning rate."""
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
-        for x, y in mini_batch:
-            delta_nabla_b, delta_nabla_w = self.backprop(x, y)
-            nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-            nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        self.weights = [w-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)]
-        self.biases = [b-(eta/len(mini_batch))*nb
-                       for b, nb in zip(self.biases, nabla_b)]
+                        self.step_w[l] = big_jump_w + correction_w
+                        self.step_b[l] = big_jump_b + correction_b
 
+                # Aplicar actualizaciones a todas las capas
+                self.cost = cost
+                self._update()
+            # --- Error de clasificacion---
+            data = copy.deepcopy(self.data)
+            self.hits = self.model.evaluate(data)
+            self.n_epoch += 1
+            yield {
+                'n_epoch': self.n_epoch,
+                'hits': self.hits,
+                'cost': self.cost
+            }
 
-Minimizer = {'Adadelta': Adadelta}
+Minimizer = {'Adadelta': Adadelta, 'GD': GD}
