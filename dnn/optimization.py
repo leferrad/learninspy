@@ -7,7 +7,7 @@ from neurons import LocalNeurons
 import copy
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', num_epochs=50, tolerance=0.99, options=None):
+    def __init__(self, algorithm='Adadelta', num_epochs=10, tolerance=0.99, options=None):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}

@@ -15,6 +15,8 @@ from context import sc
 import itertools
 import copy
 import checks
+import time
+import random
 
 class NeuralLayer(object):
     activation = act.relu
@@ -264,27 +266,24 @@ class NeuralNetwork(object):
             nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l2))
         return cost, (nabla_w, nabla_b)
 
-    def _optimize(self, batch, options=None):
-        model = copy.deepcopy(self)
-        data = list(batch)
+    def _optimize(self, model, data, mini_batch=50, options=None, seed=123):
         final = {
-            'model': self.list_layers,
+            'model': model.list_layers,
             'hits': 0.0,
             'epochs': 0,
             'cost': -1.0
         }
-        if len(data) > 0:
-            self.params.rng.shuffle(data)  # Mezclo las filas del batch
-            print "BATCH", data
-            minimizer = self.opt_algo(model, data, options)
-            for result in minimizer:
-                final = result
-                print 'Cant de iteraciones: ' + str(result['epochs']) +\
-                       '. Tasa de aciertos: ' + str(result['hits']) + \
-                       '. Costo: ' + str(result['cost'])
-                if result['hits'] > 0.95:
-                    break
-        yield final
+        random.seed(seed)
+        batch = random.sample(data, mini_batch)
+        minimizer = self.opt_algo(model, batch, options)
+        for result in minimizer:
+            final = result
+            print 'Cant de iteraciones: ' + str(result['epochs']) +\
+                  '. Tasa de aciertos: ' + str(result['hits']) + \
+                  '. Costo: ' + str(result['cost'])
+            if result['hits'] > 0.95:
+                break
+        return final
 
     def evaluate(self, data):
         hits = 0.0
@@ -320,28 +319,27 @@ class NeuralNetwork(object):
         leftdict['model'] = leftlayers
         return leftdict
 
-    def train(self, data, label, mini_batch=50, epochs=50, options=None):
+    def train(self, data, label, mini_batch=50, epochs=50, parallelism=10, options=None):
         # x, y son np.ndarray
         # TODO: ver improve_patience en deeplearning.net
         assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
         labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
-        part = len(data) / mini_batch
+        part = parallelism
         data_bc = sc.broadcast(labeled_data)  # creo un Broadcast, de manera de mandarlo una sola vez a todos los nodos
         # Funciones a usar en los RDD
         minimizer = self._optimize
         mixer = self._mix_models
+        seeds = list(self.params.rng.randint(100, size=parallelism))
         for ep in xrange(epochs):
             print "Epoca ", ep
             # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
-            self.params.rng.shuffle(data_bc.value)
-            data_rdd = sc.parallelize(data_bc.value)
-            labeled_data = data_rdd.repartition(part)  # Particiono con shuffle interno
-            results = labeled_data.mapPartitions(lambda batch: minimizer(batch, options))
+            models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
+            results = models_rdd.map(lambda (model, seed): minimizer(model, data_bc.value, mini_batch, options, seed))
             mix_model = results.reduce(lambda left, right: mixer(left, right))
             layers = mix_model['model']
             final_list_layers = map(lambda layer: layer / part, layers)
             self.list_layers = copy.copy(final_list_layers)
-        hits = self.evaluate(labeled_data.collect())
+        hits = self.evaluate(data_bc.value)
         return hits
 
     def update(self, stepw, stepb):
