@@ -8,7 +8,7 @@ import copy
 import utils.util as util
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', n_iterations=20, tolerance=0.99, options=None):
+    def __init__(self, algorithm='Adadelta', n_iterations=50, tolerance=0.99, options=None):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
@@ -218,6 +218,8 @@ def optimize(model, data, mini_batch=50, options=None, seed=123):
     # TODO: modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
     batch = util.balanced_subsample(data, mini_batch, seed)
     minimizer = model.opt_algo(model, batch, options)
+    # TODO: OJO que al ser un iterator, result vuelve a iterar cada vez
+    # que se hace una accion desde la funcion 'train' (solucionado con .cache() para que no se vuelva a lanzar la task)
     for result in minimizer:
         final = result
         print 'Cant de iteraciones: ' + str(result['iterations']) +\
@@ -237,15 +239,8 @@ def mix_models(left, right):
     :param right: list of NeuralLayer
     :return: list of NeuralLayer
     """
-    # Los paso a dict ya q son generators
-    leftdict = dict(left)
-    rightdict = dict(right)
-    # Extraigo lista de capas en cada uno
-    rightlayers = rightdict['model']
-    leftlayers = leftdict['model']
-    for l in xrange(len(leftlayers)):
-        w = rightlayers[l].get_weights()
-        b = rightlayers[l].get_bias()
-        leftlayers[l].update(w, b)  # Update suma el w y el b
-    leftdict['model'] = leftlayers
-    return leftdict
+    for l in xrange(len(left)):
+        w = right[l].get_weights()
+        b = right[l].get_bias()
+        left[l].update(w, b)  # Update suma el w y el b
+    return left

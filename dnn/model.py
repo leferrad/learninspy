@@ -66,6 +66,11 @@ class NeuralLayer(object):
         self.bias /= other
         return self
 
+    def __mul__(self, other):
+        self.weights *= other
+        self.bias *= other
+        return self
+
     def l1(self):
         return self.weights.l1()
 
@@ -302,10 +307,12 @@ class NeuralNetwork(object):
             # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
             seeds = list(self.params.rng.randint(100, size=parallelism))
             models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
-            results = models_rdd.map(lambda (model, seed): minimizer(model, data_bc.value, mini_batch, options, seed))
-            mix_model = results.reduce(lambda left, right: mixer(left, right))
-            layers = mix_model['model']
-            final_list_layers = map(lambda layer: layer / part, layers)
+            results = models_rdd.map(lambda (model, seed): minimizer(model, data_bc.value, mini_batch, options, seed)).cache()
+            layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
+                             .reduce(lambda left, right: mixer(left, right)))
+            # Se realiza un promedio ponderado por la tasa de aciertos en el train
+            total_hits = results.map(lambda res: res['hits']).sum()
+            final_list_layers = map(lambda layer: layer / total_hits, layers)
             self.list_layers = copy.copy(final_list_layers)
         hits = self.evaluate(data_bc.value)
         return hits

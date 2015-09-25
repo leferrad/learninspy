@@ -19,7 +19,7 @@ print "Size de la data: ", features.shape
 
 print "Entrenando red neuronal ..."
 t1 = time.time()
-hits = redneuronal.train(features, labels, mini_batch=50, parallelism=4, epochs=10)
+hits = redneuronal.train(features, labels, mini_batch=50, parallelism=4, epochs=5)
 t1f = time.time() - t1
 
 print 'Tiempo: ', t1f, 'Tasa de acierto final: ', hits
