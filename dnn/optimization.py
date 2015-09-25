@@ -8,7 +8,7 @@ import copy
 import utils.util as util
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', n_iterations=30, tolerance=0.99, options=None):
+    def __init__(self, algorithm='Adadelta', n_iterations=20, tolerance=0.99, options=None):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
@@ -212,7 +212,8 @@ def optimize(model, data, mini_batch=50, options=None, seed=123):
         'model': model.list_layers,
         'hits': 0.0,
         'epochs': 0,
-        'cost': -1.0
+        'cost': -1.0,
+        'seed': seed
     }
     # TODO: modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
     batch = util.balanced_subsample(data, mini_batch, seed)
@@ -224,6 +225,7 @@ def optimize(model, data, mini_batch=50, options=None, seed=123):
               '. Costo: ' + str(result['cost'])
         if result['hits'] > 0.95:
             break
+    final['seed'] = seed
     return final
 
 

@@ -3,6 +3,8 @@ __author__ = 'leferrad'
 
 import numpy as np
 
+#TODO plotear en una parte del notebook la funcion de activacion elegida
+#TODO cambiar nombre de ReLU a rectifier ? ya que me refiero a la funcion, no a la unidad
 
 def tanh(x):
     return np.tanh(x)
@@ -48,16 +50,6 @@ def lrelu_d(x):
         ret = 0.01
     return ret
 
-
-def softmax(x):
-    # x es un vector
-    # Uso de tip de implementacion (http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression)
-    x = x - max(x)  # Se previene valores muy grandes del exp con valores altos de x
-    return np.exp(x) / (sum(np.exp(x)))
-
-def softmax_d(y, t):
-    # t, y son vectores
-    return t - y
 
 def softplus(x):
     return np.log(1.0 + np.exp(x))
