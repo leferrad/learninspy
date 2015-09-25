@@ -2,6 +2,7 @@ __author__ = 'leferrad'
 
 import logging
 import numpy as np
+import random
 
 class LearninspyLogger(object):
     def __init__(self, level='INFO'):
@@ -37,8 +38,28 @@ class LearninspyLogger(object):
     def info(self, msg):
         self.logger.info(msg)
 
-def label_to_vector(label, nclasses):
-    lab = np.zeros((nclasses, 1), dtype=np.int8)
+def label_to_vector(label, n_classes):
+    lab = np.zeros((n_classes, 1), dtype=np.int8)
     label = int(label)
     lab[label] = 1
     return np.array(lab)
+
+def balanced_subsample(data, size, seed=123):
+    """
+    Muestreo de data, con resultado balanceado por clases
+    :param data: list of LabeledPoint
+    :param size: int
+    :param seed: int
+    :return:
+
+    """
+    random.seed(seed)
+    n_classes = int(max(map(lambda lp: lp.label, data))) + 1
+    size = size / n_classes  # es un int, y puede resultar menor al ingresado (se trunca)
+    sample = []
+    for c in xrange(n_classes):
+        batch_class = filter(lambda lp: lp.label == c, data)  # Filtro entradas que pertenezcan a la clase c
+        batch = random.sample(batch_class, size)
+        sample.extend(batch)  # Agrego el batch al vector de muestreo
+    random.shuffle(sample)  # Mezclo para que no este segmentado por clases
+    return sample

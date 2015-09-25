@@ -5,9 +5,10 @@ import numpy as np
 import loss
 from neurons import LocalNeurons
 import copy
+import utils.util as util
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', num_epochs=10, tolerance=0.99, options=None):
+    def __init__(self, algorithm='Adadelta', n_iterations=30, tolerance=0.99, options=None):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
@@ -15,7 +16,7 @@ class OptimizerParameters:
                 options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standart'}
         self.options = options
         self.algorithm = algorithm
-        self.num_epochs = num_epochs
+        self.n_iterations = n_iterations
         self.tolerance = tolerance
 
 
@@ -37,7 +38,7 @@ class Optimizer(object):
             parameters = OptimizerParameters()
         self.parameters = parameters
         self.cost = 0.0
-        self.n_epoch = 0
+        self.n_iter = 0
         self.hits = 0.0
         self.step_w = None
         self.step_b = None
@@ -55,14 +56,14 @@ class Optimizer(object):
         yield {
             'model': self.model.list_layers,
             'hits': self.hits,
-            'epochs': self.n_epoch,
+            'iterations': self.n_iter,
             'cost': self.cost
         }
 
     def check_criterion(self):
-        epochs = self.n_epoch >= self.parameters.num_epochs
+        iterations = self.n_iter >= self.parameters.n_iterations
         tolerance = self.hits >= self.parameters.tolerance
-        return epochs or tolerance
+        return iterations or tolerance
 
 
 
@@ -140,9 +141,9 @@ class Adadelta(Optimizer):
             # --- Error de clasificacion---
             data = copy.deepcopy(self.data)
             self.hits = self.model.evaluate(data)
-            self.n_epoch += 1
+            self.n_iter += 1
             yield {
-                'n_epoch': self.n_epoch,
+                'iterations': self.n_iter,
                 'hits': self.hits,
                 'cost': self.cost
             }
@@ -194,11 +195,55 @@ class GD(Optimizer):
             # --- Error de clasificacion---
             data = copy.deepcopy(self.data)
             self.hits = self.model.evaluate(data)
-            self.n_epoch += 1
+            self.n_iter += 1
             yield {
-                'n_epoch': self.n_epoch,
+                'iterations': self.n_iter,
                 'hits': self.hits,
                 'cost': self.cost
             }
 
 Minimizer = {'Adadelta': Adadelta, 'GD': GD}
+
+# Funciones usadas en model
+
+
+def optimize(model, data, mini_batch=50, options=None, seed=123):
+    final = {
+        'model': model.list_layers,
+        'hits': 0.0,
+        'epochs': 0,
+        'cost': -1.0
+    }
+    # TODO: modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
+    batch = util.balanced_subsample(data, mini_batch, seed)
+    minimizer = model.opt_algo(model, batch, options)
+    for result in minimizer:
+        final = result
+        print 'Cant de iteraciones: ' + str(result['iterations']) +\
+              '. Tasa de aciertos: ' + str(result['hits']) + \
+              '. Costo: ' + str(result['cost'])
+        if result['hits'] > 0.95:
+            break
+    return final
+
+
+def mix_models(left, right):
+    """
+    Se devuelve el resultado de sumar las NeuralLayers
+    de left y right
+    :param left: list of NeuralLayer
+    :param right: list of NeuralLayer
+    :return: list of NeuralLayer
+    """
+    # Los paso a dict ya q son generators
+    leftdict = dict(left)
+    rightdict = dict(right)
+    # Extraigo lista de capas en cada uno
+    rightlayers = rightdict['model']
+    leftlayers = leftdict['model']
+    for l in xrange(len(leftlayers)):
+        w = rightlayers[l].get_weights()
+        b = rightlayers[l].get_bias()
+        leftlayers[l].update(w, b)  # Update suma el w y el b
+    leftdict['model'] = leftlayers
+    return leftdict

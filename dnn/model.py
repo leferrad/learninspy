@@ -16,7 +16,7 @@ import itertools
 import copy
 import checks
 import time
-import random
+import utils.util as util
 
 class NeuralLayer(object):
     activation = act.relu
@@ -118,7 +118,7 @@ class NeuralLayer(object):
         return
 
 
-class OutputLayer(NeuralLayer):
+class ClassificationLayer(NeuralLayer):
     def output(self, x, grad=False):
         wx = self.weights.mul_array(x)
         z = wx.sum_array(self.bias)
@@ -128,6 +128,14 @@ class OutputLayer(NeuralLayer):
             a = (a, d_a)
         return a
 
+    def dropoutput(self, x, p, grad=False):
+        raise Exception("Don't use dropout for output layer")
+
+
+class RegressionLayer(NeuralLayer):
+    #  El output es el mismo que una NeuralLayer
+    def dropoutput(self, x, p, grad=False):
+        raise Exception("Don't use dropout for output layer")
 
 # TODO: Ver la factibilidad de cambiarlo por un dict
 class DeepLearningParams:
@@ -175,7 +183,7 @@ class NeuralNetwork(object):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
                                                 self.params.activation, self.params.layer_distributed[i]))
         # Ultima capa es de clasificacion, por lo que su activacion es softmax
-        self.list_layers.append(OutputLayer(self.params.units_layers[num_layers - 2],
+        self.list_layers.append(ClassificationLayer(self.params.units_layers[num_layers - 2],
                                             self.params.units_layers[num_layers - 1],
                                             self.params.activation,
                                             self.params.layer_distributed[num_layers - 1]))
@@ -266,25 +274,6 @@ class NeuralNetwork(object):
             nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l2))
         return cost, (nabla_w, nabla_b)
 
-    def _optimize(self, model, data, mini_batch=50, options=None, seed=123):
-        final = {
-            'model': model.list_layers,
-            'hits': 0.0,
-            'epochs': 0,
-            'cost': -1.0
-        }
-        random.seed(seed)
-        batch = random.sample(data, mini_batch)
-        minimizer = self.opt_algo(model, batch, options)
-        for result in minimizer:
-            final = result
-            print 'Cant de iteraciones: ' + str(result['epochs']) +\
-                  '. Tasa de aciertos: ' + str(result['hits']) + \
-                  '. Costo: ' + str(result['cost'])
-            if result['hits'] > 0.95:
-                break
-        return final
-
     def evaluate(self, data):
         hits = 0.0
         for lp in data:  # Por cada LabeledPoint del conj de datos
@@ -298,27 +287,6 @@ class NeuralNetwork(object):
         hits /= float(size)
         return hits
 
-    def _mix_models(self, left, right):
-        """
-        Se devuelve el resultado de sumar las NeuralLayers
-        de left y right
-        :param left: list of NeuralLayer
-        :param right: list of NeuralLayer
-        :return: list of NeuralLayer
-        """
-        # Los paso a dict ya q son generators
-        leftdict = dict(left)
-        rightdict = dict(right)
-        # Extraigo lista de capas en cada uno
-        rightlayers = rightdict['model']
-        leftlayers = leftdict['model']
-        for l in xrange(len(leftlayers)):
-            w = rightlayers[l].get_weights()
-            b = rightlayers[l].get_bias()
-            leftlayers[l].update(w, b)  # Update suma el w y el b
-        leftdict['model'] = leftlayers
-        return leftdict
-
     def train(self, data, label, mini_batch=50, epochs=50, parallelism=10, options=None):
         # x, y son np.ndarray
         # TODO: ver improve_patience en deeplearning.net
@@ -327,12 +295,12 @@ class NeuralNetwork(object):
         part = parallelism
         data_bc = sc.broadcast(labeled_data)  # creo un Broadcast, de manera de mandarlo una sola vez a todos los nodos
         # Funciones a usar en los RDD
-        minimizer = self._optimize
-        mixer = self._mix_models
-        seeds = list(self.params.rng.randint(100, size=parallelism))
+        minimizer = opt.optimize
+        mixer = opt.mix_models
         for ep in xrange(epochs):
             print "Epoca ", ep
             # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
+            seeds = list(self.params.rng.randint(100, size=parallelism))
             models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
             results = models_rdd.map(lambda (model, seed): minimizer(model, data_bc.value, mini_batch, options, seed))
             mix_model = results.reduce(lambda left, right: mixer(left, right))
@@ -369,7 +337,6 @@ class NeuralNetwork(object):
         #     print 'Gradiente de loss OK!'
         # else:
         #     raise Exception('El gradiente de las funcion de error se encuentra mal implementado!')
-
 
     def persist_layers(self):
         for i in xrange(len(self.list_layers)):

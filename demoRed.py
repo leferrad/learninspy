@@ -25,8 +25,7 @@ labels = iris.target
 
 
 t1 = time.time()
-#redneuronal.persist_layers()
-hits = redneuronal.train(features, labels, mini_batch=50, epochs=10)
+hits = redneuronal.train(features, labels, mini_batch=50, parallelism=4, epochs=3)
 t1f = time.time() - t1
 
 print 'Tiempo: ', t1f, 'Tasa de acierto final: ', hits
