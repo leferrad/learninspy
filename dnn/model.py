@@ -138,6 +138,7 @@ class ClassificationLayer(NeuralLayer):
 
 
 class RegressionLayer(NeuralLayer):
+    #  Importante leer 'Word of caution' en http://cs231n.github.io/neural-networks-2/
     #  El output es el mismo que una NeuralLayer
     def dropoutput(self, x, p, grad=False):
         raise Exception("Don't use dropout for output layer")
@@ -145,8 +146,8 @@ class RegressionLayer(NeuralLayer):
 # TODO: Ver la factibilidad de cambiarlo por un dict
 class DeepLearningParams:
 
-    def __init__(self, units_layers, activation='ReLU', loss='MSE', layer_distributed=None, dropout_ratios=None,
-                 minimizer='Adadelta', classification=True, autoencoder=False, rng=None):
+    def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
+                 classification=True, strength_l1=1e-5, strength_l2=1e-4, rng=None):
         if dropout_ratios is None:
             dropout_ratios = len(units_layers) * [0.3]  # Por defecto, todos los radios son de 0.3
         if layer_distributed is None:
@@ -157,11 +158,12 @@ class DeepLearningParams:
         self.layer_distributed = layer_distributed
         self.activation = activation
         self.classification = classification
-        self.loss = loss
-        self.minimizer = minimizer
-        self.autoencoder = autoencoder
-        self.strength_l1 = 1e-5
-        self.strength_l2 = 1e-4
+        if classification is True:
+            self.loss = 'CrossEntropy'  # Loss para clasificacion
+        else:
+            self.loss = 'MSE'  # Loss para regresion
+        self.strength_l1 = strength_l1
+        self.strength_l2 = strength_l2
         if rng is None:
             rng = np.random.RandomState(1234)
         self.rng = rng
@@ -173,7 +175,6 @@ class NeuralNetwork(object):
         self.list_layers = list_layers  # En caso de que la red reciba capas ya inicializadas
         self.loss = loss.fun_loss[self.params.loss]
         self.loss_d = loss.fun_loss_d[self.params.loss]
-        self.opt_algo = opt.Minimizer[self.params.minimizer]
         #self.logger = LearninspyLogger()
 
         if list_layers is None:
@@ -235,7 +236,7 @@ class NeuralNetwork(object):
             x = self.list_layers[i].output(x, grad=False)
         return x
 
-    def backprop(self, x, y):
+    def _backprop(self, x, y):
         """
 
         :param x:
@@ -276,7 +277,7 @@ class NeuralNetwork(object):
         return cost, (nabla_w, nabla_b)
 
     def cost(self, features, label):
-        cost, (nabla_w, nabla_b) = self.backprop(features, label)
+        cost, (nabla_w, nabla_b) = self._backprop(features, label)
         if self.params.strength_l1 > 0.0:
             cost_l1, nabla_w_l1 = self.l1()
             cost += cost_l1
@@ -300,7 +301,7 @@ class NeuralNetwork(object):
         hits /= float(size)
         return hits
 
-    def train(self, data, label, mini_batch=50, epochs=50, parallelism=10, options=None):
+    def train(self, data, label, mini_batch=50, epochs=50, parallelism=10, optimizer_params=None):
         # x, y son np.ndarray
         # TODO: ver improve_patience en deeplearning.net
         assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
@@ -314,7 +315,8 @@ class NeuralNetwork(object):
             # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
             seeds = list(self.params.rng.randint(500, size=parallelism))
             models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
-            results = models_rdd.map(lambda (model, seed): minimizer(model, data_bc.value, mini_batch, options, seed)).cache()
+            results = models_rdd.map(lambda (model, seed):
+                                     minimizer(model, data_bc.value, mini_batch, optimizer_params, seed)).cache()
             if self.params.classification is True:
                 layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
                                  .reduce(lambda left, right: mixer(left, right)))

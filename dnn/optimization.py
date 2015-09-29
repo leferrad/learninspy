@@ -48,6 +48,9 @@ class Optimizer(object):
         yield
 
     def _update(self):
+        #  Tener en cuenta que las correcciones son restas, por lo cual se cambia el signo
+        self.step_w = [w * -1.0 for w in self.step_w]
+        self.step_b = [b * -1.0 for b in self.step_b]
         self.model.update(self.step_w, self.step_b)
 
     def __iter__(self):
@@ -131,8 +134,8 @@ class Adadelta(Optimizer):
                     step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
                     step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
                     # 4) Acumular actualizaciones
-                    self.step_w[l] = (step1w + step2w) * -1.0
-                    self.step_b[l] = (step1b + step2b) * -1.0
+                    self.step_w[l] = step1w + step2w
+                    self.step_b[l] = step1b + step2b
                     self.sms_w[l] = (self.sms_w[l] * d) + (self.step_w[l] ** 2) * (1 - d)
                     self.sms_b[l] = (self.sms_b[l] * d) + (self.step_b[l] ** 2) * (1 - d)
                 # 5) Aplicar actualizaciones a todas las capas
@@ -173,19 +176,32 @@ class GD(Optimizer):
             sr = self.parameters.options['step-rate']
             # --- Entrenamiento ---
             for lp in self.data:  # Por cada LabeledPoint del conj de datos
-                # 1) Computar el gradiente
-                cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
                 for l in xrange(self.num_layers):
+                    cost = 0.0
                     if self.parameters.options['momentum_type'] == 'standard':
+                        # Computar el gradiente
+                        cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
                         self.step_w[l] = nabla_w[l] * sr + self.step_w[l] * m
                         self.step_b[l] = nabla_b[l] * sr + self.step_b[l] * m
                     elif self.parameters.options['momentum_type'] == 'nesterov':
+                        # TODO: terminar, pq no anda hasta ahora
                         big_jump_w = self.step_w[l] * m
                         big_jump_b = self.step_b[l] * m
+                        #  Aplico primera correccion
+                        self.step_w[l] = big_jump_w
+                        self.step_b[l] = big_jump_b
+                        self._update()
+                        # Computar el gradiente
+                        cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
 
                         correction_w = nabla_w[l] * sr
                         correction_b = nabla_b[l] * sr
+                        #  Aplico segunda correccion
+                        self.step_w[l] = correction_w
+                        self.step_b[l] = correction_b
+                        self._update()
 
+                        #  Acumulo correcciones hechas
                         self.step_w[l] = big_jump_w + correction_w
                         self.step_b[l] = big_jump_b + correction_b
 
@@ -207,7 +223,7 @@ Minimizer = {'Adadelta': Adadelta, 'GD': GD}
 # Funciones usadas en model
 
 
-def optimize(model, data, mini_batch=50, options=None, seed=123):
+def optimize(model, data, mini_batch=50, params=None, seed=123):
     final = {
         'model': model.list_layers,
         'hits': 0.0,
@@ -218,7 +234,7 @@ def optimize(model, data, mini_batch=50, options=None, seed=123):
     # TODO: modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
     balanced = model.params.classification  # Bool que indica que se balanceen clases (problema de clasificacion)
     batch = util.subsample(data, mini_batch, balanced, seed)  # Se balancea si se trata con clases
-    minimizer = model.opt_algo(model, batch, options)
+    minimizer = Minimizer[params.algorithm](model, batch, params)
     # TODO: OJO que al ser un iterator, result vuelve a iterar cada vez
     # que se hace una accion desde la funcion 'train' (solucionado con .cache() para que no se vuelva a lanzar la task)
     for result in minimizer:
