@@ -7,7 +7,8 @@ import time
 from sklearn import datasets
 
 parametros_red = mod.DeepLearningParams([4, 10, 5, 3], loss='CrossEntropy', activation='Softplus',
-                                    dropout_ratios=[0.5, 0.5, 0.0], minimizer='Adadelta')
+                                        dropout_ratios=[0.5, 0.5, 0.0], classification=True,
+                                        minimizer='Adadelta')
 
 redneuronal = mod.NeuralNetwork(parametros_red)
 

@@ -216,7 +216,8 @@ def optimize(model, data, mini_batch=50, options=None, seed=123):
         'seed': seed
     }
     # TODO: modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
-    batch = util.balanced_subsample(data, mini_batch, seed)
+    balanced = model.params.classification  # Bool que indica que se balanceen clases (problema de clasificacion)
+    batch = util.subsample(data, mini_batch, balanced, seed)  # Se balancea si se trata con clases
     minimizer = model.opt_algo(model, batch, options)
     # TODO: OJO que al ser un iterator, result vuelve a iterar cada vez
     # que se hace una accion desde la funcion 'train' (solucionado con .cache() para que no se vuelva a lanzar la task)

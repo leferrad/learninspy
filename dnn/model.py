@@ -22,7 +22,7 @@ class NeuralLayer(object):
     activation = act.relu
     activation_d = act.relu_d
 
-    def __init__(self, n_in=2, n_out=2, activation='ReLU', distribute=True, w=None, b=None, sparsity=False, rng=None):
+    def __init__(self, n_in=2, n_out=2, activation='ReLU', distribute=False, w=None, b=None, sparsity=False, rng=None):
         self.n_out = n_out
         self.n_in = n_in
         self.activation = act.fun_activation[activation]
@@ -146,7 +146,7 @@ class RegressionLayer(NeuralLayer):
 class DeepLearningParams:
 
     def __init__(self, units_layers, activation='ReLU', loss='MSE', layer_distributed=None, dropout_ratios=None,
-                 minimizer='Adadelta', autoencoder=False, rng=None):
+                 minimizer='Adadelta', classification=True, autoencoder=False, rng=None):
         if dropout_ratios is None:
             dropout_ratios = len(units_layers) * [0.3]  # Por defecto, todos los radios son de 0.3
         if layer_distributed is None:
@@ -156,6 +156,7 @@ class DeepLearningParams:
         self.units_layers = units_layers
         self.layer_distributed = layer_distributed
         self.activation = activation
+        self.classification = classification
         self.loss = loss
         self.minimizer = minimizer
         self.autoencoder = autoencoder
@@ -187,11 +188,19 @@ class NeuralNetwork(object):
         for i in xrange(1, num_layers - 1):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
                                                 self.params.activation, self.params.layer_distributed[i]))
-        # Ultima capa es de clasificacion, por lo que su activacion es softmax
-        self.list_layers.append(ClassificationLayer(self.params.units_layers[num_layers - 2],
-                                            self.params.units_layers[num_layers - 1],
-                                            self.params.activation,
-                                            self.params.layer_distributed[num_layers - 1]))
+        if self.params.classification is True:
+            # Ultima capa es de clasificacion, por lo que su activacion es softmax
+            self.list_layers.append(ClassificationLayer(self.params.units_layers[num_layers - 2],
+                                                        self.params.units_layers[num_layers - 1],
+                                                        self.params.activation,
+                                                        self.params.layer_distributed[num_layers - 1]))
+        else:
+            # Ultima capa es de regresion, por lo que su activacion puede ser cualquiera
+            # (la misma que las ocultas por default)
+            self.list_layers.append(RegressionLayer(self.params.units_layers[num_layers - 2],
+                                                    self.params.units_layers[num_layers - 1],
+                                                    self.params.activation,
+                                                    self.params.layer_distributed[num_layers - 1]))
 
     def l1(self):
         cost = 0.0
@@ -251,7 +260,6 @@ class NeuralNetwork(object):
                 (a[l + 1], d_a[l]) = self.list_layers[l].output(a[l], grad=True)
         cost = a[-1].loss(self.loss, y)
         # Backward pass
-        # TODO: tener en cuenta que la ultima capa no es softmax (segun UFLDL)
         d_cost = a[-1].loss_d(self.loss_d, y)
         delta = d_cost.mul_elemwise(d_a[-1])
         if drop_fraction[-1] > 0.0:  # No actualizo las unidades "tiradas"
@@ -297,7 +305,6 @@ class NeuralNetwork(object):
         # TODO: ver improve_patience en deeplearning.net
         assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
         labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
-        part = parallelism
         data_bc = sc.broadcast(labeled_data)  # creo un Broadcast, de manera de mandarlo una sola vez a todos los nodos
         # Funciones a usar en los RDD
         minimizer = opt.optimize
@@ -305,15 +312,23 @@ class NeuralNetwork(object):
         for ep in xrange(epochs):
             print "Epoca ", ep
             # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
-            seeds = list(self.params.rng.randint(100, size=parallelism))
+            seeds = list(self.params.rng.randint(500, size=parallelism))
             models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
             results = models_rdd.map(lambda (model, seed): minimizer(model, data_bc.value, mini_batch, options, seed)).cache()
-            layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
-                             .reduce(lambda left, right: mixer(left, right)))
-            # Se realiza un promedio ponderado por la tasa de aciertos en el train
-            total_hits = results.map(lambda res: res['hits']).sum()
-            final_list_layers = map(lambda layer: layer / total_hits, layers)
+            if self.params.classification is True:
+                layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
+                                 .reduce(lambda left, right: mixer(left, right)))
+                # Se realiza un promedio ponderado por la tasa de aciertos en el train
+                # TODO: y si todas las tasas son 0.0 ?? se divide por 0?!
+                total_hits = results.map(lambda res: res['hits']).sum()
+                final_list_layers = map(lambda layer: layer / total_hits, layers)
+            else:
+                layers = (results.map(lambda res: [layer for layer in res['model']])
+                                 .reduce(lambda left, right: mixer(left, right)))
+                # Se realiza un promedio sin ponderacion
+                final_list_layers = map(lambda layer: layer / parallelism, layers)
             self.list_layers = copy.copy(final_list_layers)
+            results.unpersist()  # Saco de cache
         hits = self.evaluate(data_bc.value)
         return hits
 

@@ -6,18 +6,12 @@ import numpy as np
 from utils.util import label_to_vector
 
 def mse(y, t):
-    num_classes = len(y)
-    #y = label_to_vector(np.argmax(y), num_classes)
-    t = label_to_vector(t, num_classes)
     err = y - t
     N = err.size
     return np.sum(np.square(err)) / (1.0 * N)
 
 
 def mse_d(y, t):
-    num_classes = len(y)
-    #y = label_to_vector(np.argmax(y), num_classes)
-    t = label_to_vector(t, num_classes)
     err = y - t
     N = err.size
     return 2 * err / (1.0 * N)
