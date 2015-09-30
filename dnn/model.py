@@ -301,11 +301,10 @@ class NeuralNetwork(object):
         hits /= float(size)
         return hits
 
-    def train(self, train, valid=None, mini_batch=50, epochs=50, parallelism=4, optimizer_params=None):
+    def train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None):
         """
 
-        :param data: list
-        :param label: list
+        :param train_bc: sc.broadcast
         :param mini_batch:
         :param epochs:
         :param parallelism:
@@ -313,35 +312,44 @@ class NeuralNetwork(object):
         :return:
         """
         # TODO: ver improve_patience en deeplearning.net
-        # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
-        train_bc = sc.broadcast(train)
-        valid_bc = sc.broadcast(valid)
         # Funciones a usar en los RDD
         minimizer = opt.optimize
         mixer = opt.mix_models
-        for ep in xrange(epochs):
-            print "Epoca ", ep
-            # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
-            seeds = list(self.params.rng.randint(500, size=parallelism))
-            models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
-            results = models_rdd.map(lambda (model, seed):
-                                     minimizer(model, train_bc.value, mini_batch, optimizer_params, seed)).cache()
-            if self.params.classification is True:
-                layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
-                                 .reduce(lambda left, right: mixer(left, right)))
-                # Se realiza un promedio ponderado por la tasa de aciertos en el train
-                # TODO: y si todas las tasas son 0.0 ?? se divide por 0?!
-                total_hits = results.map(lambda res: res['hits']).sum()
-                final_list_layers = map(lambda layer: layer / total_hits, layers)
-            else:
-                layers = (results.map(lambda res: [layer for layer in res['model']])
-                                 .reduce(lambda left, right: mixer(left, right)))
-                # Se realiza un promedio sin ponderacion
-                final_list_layers = map(lambda layer: layer / parallelism, layers)
-            self.list_layers = copy.copy(final_list_layers)
-            results.unpersist()  # Saco de cache
+        # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
+        seeds = list(self.params.rng.randint(500, size=parallelism))
+        # Paralelizo modelo actual en los nodos dados por parallelism
+        models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
+        # Minimizo el costo de las redes en paralelo
+        results = models_rdd.map(lambda (model, seed):
+                                 minimizer(model, train_bc.value, mini_batch, optimizer_params, seed)).cache()
+        if self.params.classification is True:
+            layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
+                             .reduce(lambda left, right: mixer(left, right)))
+            # Se realiza un promedio ponderado por la tasa de aciertos en el train
+            # TODO: y si todas las tasas son 0.0 ?? se divide por 0?!
+            total_hits = results.map(lambda res: res['hits']).sum()
+            final_list_layers = map(lambda layer: layer / total_hits, layers)
+        else:
+            layers = (results.map(lambda res: [layer for layer in res['model']])
+                             .reduce(lambda left, right: mixer(left, right)))
+            # Se realiza un promedio sin ponderacion
+            final_list_layers = map(lambda layer: layer / parallelism, layers)
+        self.list_layers = copy.copy(final_list_layers)
+        results.unpersist()  # Saco de cache
+        # Evaluo tasa de aciertos de entrenamiento
         hits = self.evaluate(train_bc.value)
         return hits
+
+    def fit(self, train, valid=None, mini_batch=50, epochs=50, parallelism=4, optimizer_params=None):
+        # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
+        train_bc = sc.broadcast(train)
+        valid_bc = sc.broadcast(valid)  # Por ahora no es necesario el bc, pero puede q luego lo use en batchs p/ train
+        hits_valid = None
+        for ep in xrange(epochs):
+            hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
+            hits_valid = self.evaluate(valid_bc.value)
+            print "Epoca ", ep, ". Aciertos en train: ", hits_train, ". Aciertos en valid: ", hits_valid
+        return hits_valid
 
     def update(self, stepw, stepb):
         # Cada parametro step es una lista, para actualizar cada capa
