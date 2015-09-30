@@ -301,12 +301,21 @@ class NeuralNetwork(object):
         hits /= float(size)
         return hits
 
-    def train(self, data, label, mini_batch=50, epochs=50, parallelism=10, optimizer_params=None):
-        # x, y son np.ndarray
+    def train(self, train, valid=None, mini_batch=50, epochs=50, parallelism=4, optimizer_params=None):
+        """
+
+        :param data: list
+        :param label: list
+        :param mini_batch:
+        :param epochs:
+        :param parallelism:
+        :param optimizer_params:
+        :return:
+        """
         # TODO: ver improve_patience en deeplearning.net
-        assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
-        labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
-        data_bc = sc.broadcast(labeled_data)  # creo un Broadcast, de manera de mandarlo una sola vez a todos los nodos
+        # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
+        train_bc = sc.broadcast(train)
+        valid_bc = sc.broadcast(valid)
         # Funciones a usar en los RDD
         minimizer = opt.optimize
         mixer = opt.mix_models
@@ -316,7 +325,7 @@ class NeuralNetwork(object):
             seeds = list(self.params.rng.randint(500, size=parallelism))
             models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
             results = models_rdd.map(lambda (model, seed):
-                                     minimizer(model, data_bc.value, mini_batch, optimizer_params, seed)).cache()
+                                     minimizer(model, train_bc.value, mini_batch, optimizer_params, seed)).cache()
             if self.params.classification is True:
                 layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
                                  .reduce(lambda left, right: mixer(left, right)))
@@ -331,7 +340,7 @@ class NeuralNetwork(object):
                 final_list_layers = map(lambda layer: layer / parallelism, layers)
             self.list_layers = copy.copy(final_list_layers)
             results.unpersist()  # Saco de cache
-        hits = self.evaluate(data_bc.value)
+        hits = self.evaluate(train_bc.value)
         return hits
 
     def update(self, stepw, stepb):

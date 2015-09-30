@@ -3,7 +3,7 @@ __author__ = 'leferrad'
 # Se define la funcion de error 'fun(x)' y su derivada respecto a x 'fun_d(x)'
 
 import numpy as np
-from utils.util import label_to_vector
+from utils.data import label_to_vector
 
 def mse(y, t):
     err = y - t

@@ -1,15 +1,14 @@
 __author__ = 'leferrad'
 
 import dnn.model as mod
-import dnn.optimization as opt
 from dnn.optimization import OptimizerParameters
-import numpy as np
 import time
+from utils.data import split_data
 from sklearn import datasets
 
 parametros_red = mod.DeepLearningParams([4, 10, 5, 3], activation='Softplus', dropout_ratios=[0.5, 0.5, 0.0],
                                         classification=True)
-parametros_opt = opt.OptimizerParameters(algorithm='Adadelta', n_iterations=50)
+parametros_opt = OptimizerParameters(algorithm='Adadelta', n_iterations=50)
 
 redneuronal = mod.NeuralNetwork(parametros_red)
 
@@ -18,6 +17,8 @@ data = datasets.load_iris()
 features = data.data
 labels = data.target
 print "Size de la data: ", features.shape
+
+train, valid, test = split_data(zip(features, labels), [.7, .2, .1])
 
 print "Entrenando red neuronal ..."
 t1 = time.time()

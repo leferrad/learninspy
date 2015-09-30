@@ -1,3 +1,5 @@
+from utils.data import subsample
+
 __author__ = 'leferrad'
 
 
@@ -5,7 +7,6 @@ import numpy as np
 import loss
 from neurons import LocalNeurons
 import copy
-import utils.util as util
 
 class OptimizerParameters:
     def __init__(self, algorithm='Adadelta', n_iterations=50, tolerance=0.99, options=None):
@@ -233,7 +234,7 @@ def optimize(model, data, mini_batch=50, params=None, seed=123):
     }
     # TODO: modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
     balanced = model.params.classification  # Bool que indica que se balanceen clases (problema de clasificacion)
-    batch = util.subsample(data, mini_batch, balanced, seed)  # Se balancea si se trata con clases
+    batch = subsample(data, mini_batch, balanced, seed)  # Se balancea si se trata con clases
     minimizer = Minimizer[params.algorithm](model, batch, params)
     # TODO: OJO que al ser un iterator, result vuelve a iterar cada vez
     # que se hace una accion desde la funcion 'train' (solucionado con .cache() para que no se vuelva a lanzar la task)
