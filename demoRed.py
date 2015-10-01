@@ -4,6 +4,7 @@ import dnn.model as mod
 from dnn.optimization import OptimizerParameters
 import time
 from utils.data import split_data, label_data
+from dnn.evaluation import Metrics
 from sklearn import datasets
 
 parametros_red = mod.DeepLearningParams([4, 10, 5, 3], activation='Softplus', dropout_ratios=[0.5, 0.5, 0.0],
@@ -23,10 +24,15 @@ train, valid, test = split_data(label_data(features, labels), [.7, .2, .1])
 print "Entrenando red neuronal ..."
 t1 = time.time()
 hits_valid = redneuronal.fit(train, valid, mini_batch=50, parallelism=4, epochs=5, optimizer_params=parametros_opt)
-hits_test = redneuronal.evaluate(test)
+hits_test, predict = redneuronal.evaluate(test, predictions=True)
 t1f = time.time() - t1
 
 print 'Tiempo: ', t1f, 'Tasa de acierto final: ', hits_test
+labels = map(lambda lp: lp.label, test)
+metrics = Metrics(zip(predict, labels))
+print "Matriz de confusion:"
+print metrics.confusionMatrix()
+
 
 
 

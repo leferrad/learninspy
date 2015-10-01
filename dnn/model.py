@@ -293,19 +293,25 @@ class NeuralNetwork(object):
             nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l2))
         return cost, (nabla_w, nabla_b)
 
-    def evaluate(self, data):
+    def evaluate(self, data, predictions=False):
         hits = 0.0
+        predicts = []
         for lp in data:  # Por cada LabeledPoint del conj de datos
             out = self.predict(lp.features).matrix()
             if self.params.classification is True:
-                out = np.argmax(out)  # En problemas de clasificacion, se mira la unidad de softmax que predomina
+                out = float(np.argmax(out))  # En problemas de clasificacion, se mira la unidad de softmax que predomina
             if out == lp.label:
                 hits += 1.0
+            predicts.append(out)
         if type(data) is itertools.chain:
             data = list(data)
         size = len(data)
         hits /= float(size)
-        return hits
+        if predictions is True:  # Devuelvo ademas el vector de predicciones
+            ret = hits, predicts
+        else:
+            ret = hits
+        return ret
 
     def train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None):
         """
