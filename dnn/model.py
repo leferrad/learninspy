@@ -148,15 +148,18 @@ class DeepLearningParams:
 
     def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
                  classification=True, strength_l1=1e-5, strength_l2=1e-4, rng=None):
+        num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
         if dropout_ratios is None:
-            dropout_ratios = len(units_layers) * [0.3]  # Por defecto, todos los radios son de 0.3
+            dropout_ratios = [0.5] * (num_layers-1) + [0.0]  # Default, dropout de 0.5 menos la salida que no debe tener
         if layer_distributed is None:
-            layer_distributed = len(units_layers) * [False]  # Por defecto, las capas no estan distribuidas
+            layer_distributed = [False] * num_layers   # Por defecto, las capas no estan distribuidas
+        if type(activation) is not list:  # Si es un string, lo replico por la cant de capas
+            activation = [activation] * num_layers
+        self.activation = activation
         self.dropout_ratios = dropout_ratios  # Recordar que la capa de salida no sufre dropout
         # 'units_layers' es un vector que indica la cantidad de unidades de cada capa (1er elemento se refiere a capa visible)
         self.units_layers = units_layers
         self.layer_distributed = layer_distributed
-        self.activation = activation
         self.classification = classification
         if classification is True:
             self.loss = 'CrossEntropy'  # Loss para clasificacion
@@ -165,7 +168,7 @@ class DeepLearningParams:
         self.strength_l1 = strength_l1
         self.strength_l2 = strength_l2
         if rng is None:
-            rng = np.random.RandomState(1234)
+            rng = np.random.RandomState(123)
         self.rng = rng
 
 
@@ -188,19 +191,21 @@ class NeuralNetwork(object):
         num_layers = len(self.params.units_layers)
         for i in xrange(1, num_layers - 1):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
-                                                self.params.activation, self.params.layer_distributed[i]))
+                                                self.params.activation[i - 1], self.params.layer_distributed[i]))
         if self.params.classification is True:
             # Ultima capa es de clasificacion, por lo que su activacion es softmax
-            self.list_layers.append(ClassificationLayer(self.params.units_layers[num_layers - 2],
-                                                        self.params.units_layers[num_layers - 1],
-                                                        self.params.activation,
-                                                        self.params.layer_distributed[num_layers - 1]))
+            self.list_layers.append(ClassificationLayer(self.params.units_layers[-2],
+                                                        self.params.units_layers[-1],
+                                                        self.params.activation[-2],
+                                                        # Notar que no tomo la ultima, ya que la lista tiene 1 elem mas
+                                                        self.params.layer_distributed[-1]))
         else:
             # Ultima capa es de regresion, por lo que su activacion puede ser cualquiera
             # (la misma que las ocultas por default)
             self.list_layers.append(RegressionLayer(self.params.units_layers[num_layers - 2],
                                                     self.params.units_layers[num_layers - 1],
-                                                    self.params.activation,
+                                                    self.params.activation[-1],
+                                                    # Notar que ahora tomo la ultima, ya que se corresponde a la salida
                                                     self.params.layer_distributed[num_layers - 1]))
 
     def l1(self):
@@ -292,8 +297,9 @@ class NeuralNetwork(object):
         hits = 0.0
         for lp in data:  # Por cada LabeledPoint del conj de datos
             out = self.predict(lp.features).matrix()
-            pred = np.argmax(out)
-            if pred == lp.label:
+            if self.params.classification is True:
+                out = np.argmax(out)  # En problemas de clasificacion, se mira la unidad de softmax que predomina
+            if out == lp.label:
                 hits += 1.0
         if type(data) is itertools.chain:
             data = list(data)
