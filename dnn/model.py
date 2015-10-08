@@ -15,6 +15,7 @@ from context import sc
 import itertools
 import copy
 import checks
+from evaluation import ClassificationMetrics
 import time
 import utils.util as util
 
@@ -147,7 +148,7 @@ class RegressionLayer(NeuralLayer):
 class DeepLearningParams:
 
     def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
-                 classification=True, strength_l1=1e-5, strength_l2=1e-4, rng=None):
+                 classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
         num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
         if dropout_ratios is None:
             dropout_ratios = [0.5] * (num_layers-1) + [0.0]  # Default, dropout de 0.5 menos la salida que no debe tener
@@ -167,9 +168,7 @@ class DeepLearningParams:
             self.loss = 'MSE'  # Loss para regresion
         self.strength_l1 = strength_l1
         self.strength_l2 = strength_l2
-        if rng is None:
-            rng = np.random.RandomState(123)
-        self.rng = rng
+        self.rng = np.random.RandomState(seed)
 
 
 class NeuralNetwork(object):
@@ -294,21 +293,19 @@ class NeuralNetwork(object):
         return cost, (nabla_w, nabla_b)
 
     def evaluate(self, data, predictions=False):
-        hits = 0.0
-        predicts = []
-        for lp in data:  # Por cada LabeledPoint del conj de datos
-            out = self.predict(lp.features).matrix()
-            if self.params.classification is True:
-                out = float(np.argmax(out))  # En problemas de clasificacion, se mira la unidad de softmax que predomina
-            if out == lp.label:
-                hits += 1.0
-            predicts.append(out)
-        if type(data) is itertools.chain:
-            data = list(data)
-        size = len(data)
-        hits /= float(size)
+        actual = map(lambda lp: lp.label, data)
+        predicted = map(lambda lp: self.predict(lp.features).matrix(), data)
+        if self.params.classification is True:
+            # En problemas de clasificacion, se determina la prediccion por la unidad de softmax que predomina
+            predicted = map(lambda p: float(np.argmax(p)), predicted)
+        if self.params.classification is True:
+            n_classes = self.params.units_layers[-1]  # La cant de unidades de la ult capa define la cant de clases
+            metric = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
+            hits = metric.f_measure()
+        else:
+            hits = 0.0  # TODO hacer regresion
         if predictions is True:  # Devuelvo ademas el vector de predicciones
-            ret = hits, predicts
+            ret = hits, predicted
         else:
             ret = hits
         return ret
@@ -357,10 +354,16 @@ class NeuralNetwork(object):
         train_bc = sc.broadcast(train)
         valid_bc = sc.broadcast(valid)  # Por ahora no es necesario el bc, pero puede q luego lo use en batchs p/ train
         hits_valid = None
+        best_model = self.list_layers
+        best_hits = 0.0
         for ep in xrange(epochs):
             hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
             hits_valid = self.evaluate(valid_bc.value)
-            print "Epoca ", ep, ". Aciertos en train: ", hits_train, ". Aciertos en valid: ", hits_valid
+            print "Epoca ", ep, ". Hits en train: ", hits_train, ". Hits en valid: ", hits_valid
+            if hits_valid >= best_hits:
+                best_hits = hits_valid
+                best_model = self.list_layers
+        self.list_layers = copy.copy(best_model)
         return hits_valid
 
     def update(self, stepw, stepb):
