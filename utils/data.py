@@ -61,6 +61,5 @@ def split_data(data, fractions, seed=123):
 
 
 def label_data(data, label):
-    assert data.shape[0] == label.shape[0], 'Datos y labels deben tener igual cantidad de entradas'
     labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
     return labeled_data

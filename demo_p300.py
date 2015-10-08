@@ -11,7 +11,7 @@ def parsePoint(line):
     values = [float(x) for x in line.split(';')]
     return values[-1], values[0:-1]
 
-
+# TODO: incoportar posibilidad de admitir Ctrl+c sin perder todo el trabajo
 parametros_red = mod.DeepLearningParams(units_layers=[230, 300, 20, 2], activation='Softplus',
                                         dropout_ratios=[0.5, 0.5, 0.0], classification=True)
 parametros_opt = OptimizerParameters(algorithm='Adadelta', n_iterations=50)
