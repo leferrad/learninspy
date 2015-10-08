@@ -6,7 +6,9 @@ class ClassificationMetrics(object):
     # Ver http://machine-learning.tumblr.com/post/1209400132/mathematical-definitions-for-precisionrecall-for
     def __init__(self, predicted_actual, n_classes):
         self.predicted_actual = predicted_actual
-        self.tp = self.fp = self.fn = []
+        self.tp = []
+        self.fp = []
+        self.fn = []
         for c in xrange(n_classes):
             self.tp.append(sum(map(lambda (p, a): p == c and a == c, predicted_actual)))
             self.fp.append(sum(map(lambda (p, a): p == c and a != c, predicted_actual)))

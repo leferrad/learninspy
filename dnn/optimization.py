@@ -241,7 +241,7 @@ def optimize(model, data, mini_batch=50, params=None, seed=123):
     for result in minimizer:
         final = result
         print 'Cant de iteraciones: ' + str(result['iterations']) +\
-              '. Tasa de aciertos: ' + str(result['hits']) + \
+              '. Hits : ' + str(result['hits']) + \
               '. Costo: ' + str(result['cost'])
         if result['hits'] > 0.95:
             break
