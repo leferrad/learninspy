@@ -15,7 +15,7 @@ from context import sc
 #from utils.util import LearninspyLogger
 import copy
 import checks
-from evaluation import ClassificationMetrics
+from evaluation import ClassificationMetrics, RegressionMetrics
 import time
 import utils.util as util
 
@@ -304,6 +304,12 @@ class NeuralNetwork(object):
         return stop
 
     def evaluate(self, data, predictions=False):
+        """
+
+        :param data: list of LabeledPoint
+        :param predictions: bool, for returning predictions too
+        :return:
+        """
         actual = map(lambda lp: lp.label, data)
         predicted = map(lambda lp: self.predict(lp.features).matrix(), data)
         if self.params.classification is True:
@@ -312,9 +318,10 @@ class NeuralNetwork(object):
         if self.params.classification is True:
             n_classes = self.params.units_layers[-1]  # La cant de unidades de la ult capa define la cant de clases
             metric = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
-            hits = metric.accuracy()
+            hits = metric.f_measure()
         else:
-            hits = 0.0  # TODO hacer regresion
+            metric = RegressionMetrics(zip(predicted, actual))
+            hits = metric.r2()
         if predictions is True:  # Devuelvo ademas el vector de predicciones
             ret = hits, predicted
         else:
@@ -426,5 +433,5 @@ class NeuralNetwork(object):
         for i in xrange(len(self.list_layers)):
             self.list_layers[i].unpersist_layer()
 
-
+    # TODO: metodo para guardar modelo en binario
 
