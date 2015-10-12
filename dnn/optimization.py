@@ -4,12 +4,12 @@ __author__ = 'leferrad'
 
 
 import numpy as np
-import loss
 from neurons import LocalNeurons
+from stops import criterion
 import copy
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', n_iterations=50, tolerance=0.99, options=None):
+    def __init__(self, algorithm='Adadelta', options=None, criterions=None):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
@@ -17,8 +17,10 @@ class OptimizerParameters:
                 options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standart'}
         self.options = options
         self.algorithm = algorithm
-        self.n_iterations = n_iterations
-        self.tolerance = tolerance
+        if criterions is None:
+            criterions = [criterion['MaxIterations'](10),
+                          criterion['AchieveTolerance'](0.99, key='hits')]
+        self.criterions = criterions
 
 
 
@@ -26,9 +28,7 @@ class OptimizerParameters:
 # https://github.com/vitruvianscience/OpenDeep/blob/master/opendeep/optimization/optimizer.py
 class Optimizer(object):
     """
-    Default interface for an optimizer implementation - this provides the necessary parameter updates when
-    training a model on a dataset using an online stochastic process. The base framework for performing
-    stochastic gradient descent.
+
     """
 
     def __init__(self, model, data, parameters=None):
@@ -54,20 +54,26 @@ class Optimizer(object):
         self.step_b = [b * -1.0 for b in self.step_b]
         self.model.update(self.step_w, self.step_b)
 
-    def __iter__(self):
-        for info in self._iterate():
-            continue
-        yield {
+    def results(self):
+        return {
             'model': self.model.list_layers,
             'hits': self.hits,
             'iterations': self.n_iter,
             'cost': self.cost
         }
 
-    def check_criterion(self):
-        iterations = self.n_iter >= self.parameters.n_iterations
-        tolerance = self.hits >= self.parameters.tolerance
-        return iterations or tolerance
+    def __iter__(self):
+        results = None
+        for stop in self._iterate():
+            results = self.results()
+        yield results
+
+    def check_stop(self, check_all=False):
+        if check_all is True:
+            stop = all(c(self.results()) for c in self.parameters.criterions)
+        else:
+            stop = any(c(self.results()) for c in self.parameters.criterions)
+        return stop
 
 
 
@@ -115,7 +121,7 @@ class Adadelta(Optimizer):
             self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
     def _iterate(self):
-        while self.check_criterion() is False:
+        while self.check_stop() is False:
             d = self.parameters.options['decay']
             o = self.parameters.options['offset']  # offset
             m = self.parameters.options['momentum']
@@ -146,11 +152,7 @@ class Adadelta(Optimizer):
             data = copy.deepcopy(self.data)
             self.hits = self.model.evaluate(data)
             self.n_iter += 1
-            yield {
-                'iterations': self.n_iter,
-                'hits': self.hits,
-                'cost': self.cost
-            }
+            yield self.check_stop()
 
 
 class GD(Optimizer):
@@ -172,7 +174,7 @@ class GD(Optimizer):
             self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
     def _iterate(self):
-        while self.check_criterion() is False:
+        while self.check_stop() is False:
             m = self.parameters.options['momentum']
             sr = self.parameters.options['step-rate']
             # --- Entrenamiento ---
@@ -213,11 +215,7 @@ class GD(Optimizer):
             data = copy.deepcopy(self.data)
             self.hits = self.model.evaluate(data)
             self.n_iter += 1
-            yield {
-                'iterations': self.n_iter,
-                'hits': self.hits,
-                'cost': self.cost
-            }
+            yield self.check_stop()
 
 Minimizer = {'Adadelta': Adadelta, 'GD': GD}
 
@@ -241,10 +239,8 @@ def optimize(model, data, mini_batch=50, params=None, seed=123):
     for result in minimizer:
         final = result
         print 'Cant de iteraciones: ' + str(result['iterations']) +\
-              '. Hits : ' + str(result['hits']) + \
+              '. Hits en batch: ' + str(result['hits']) + \
               '. Costo: ' + str(result['cost'])
-        if result['hits'] > 0.95:
-            break
     final['seed'] = seed
     return final
 

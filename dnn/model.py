@@ -7,12 +7,12 @@ import numpy as np
 import activations as act
 import optimization as opt
 import loss
+from stops import criterion
 from neurons import DistributedNeurons, LocalNeurons
 from scipy import sparse
 from pyspark.mllib.regression import LabeledPoint
 from context import sc
 #from utils.util import LearninspyLogger
-import itertools
 import copy
 import checks
 from evaluation import ClassificationMetrics
@@ -184,6 +184,8 @@ class NeuralNetwork(object):
             self.__init_weights()
 
         self.num_layers = len(self.list_layers)
+        self.hits_train = 0.0
+        self.hits_valid = 0.0
         self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
 
     def __init_weights(self):  # Metodo privado
@@ -292,6 +294,15 @@ class NeuralNetwork(object):
             nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l2))
         return cost, (nabla_w, nabla_b)
 
+    def check_stop(self, epochs, criterions, check_all=False):
+        results = {'hits': self.hits_valid,
+                   'iterations': epochs}
+        if check_all is True:
+            stop = all(c(results) for c in criterions)
+        else:
+            stop = any(c(results) for c in criterions)
+        return stop
+
     def evaluate(self, data, predictions=False):
         actual = map(lambda lp: lp.label, data)
         predicted = map(lambda lp: self.predict(lp.features).matrix(), data)
@@ -301,7 +312,7 @@ class NeuralNetwork(object):
         if self.params.classification is True:
             n_classes = self.params.units_layers[-1]  # La cant de unidades de la ult capa define la cant de clases
             metric = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
-            hits = metric.f_measure()
+            hits = metric.accuracy()
         else:
             hits = 0.0  # TODO hacer regresion
         if predictions is True:  # Devuelvo ademas el vector de predicciones
@@ -349,22 +360,35 @@ class NeuralNetwork(object):
         hits = self.evaluate(train_bc.value)
         return hits
 
-    def fit(self, train, valid=None, mini_batch=50, epochs=50, parallelism=4, optimizer_params=None):
+    def fit(self, train, valid=None, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
+            keep_best=False):
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
         train_bc = sc.broadcast(train)
         valid_bc = sc.broadcast(valid)  # Por ahora no es necesario el bc, pero puede q luego lo use en batchs p/ train
-        hits_valid = None
-        best_model = self.list_layers
-        best_hits = 0.0
-        for ep in xrange(epochs):
-            hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
-            hits_valid = self.evaluate(valid_bc.value)
-            print "Epoca ", ep, ". Hits en train: ", hits_train, ". Hits en valid: ", hits_valid
-            if hits_valid >= best_hits:
-                best_hits = hits_valid
-                best_model = self.list_layers
-        self.list_layers = copy.copy(best_model)
-        return hits_valid
+        # TODO: ver si hay mas opciones que quedarse con el mejor
+        if keep_best is True:
+            best_model = self.list_layers
+            best_valid = 0.0
+            best_train = 0.0
+        if criterions is None:
+            criterions = [criterion['MaxIterations'](5),
+                          criterion['AchieveTolerance'](0.95, key='hits')]
+        epoch = 0
+        while self.check_stop(epoch, criterions) is False:
+            self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
+            self.hits_valid = self.evaluate(valid_bc.value)
+            print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid
+            if keep_best is True:
+                if self.hits_valid >= best_valid:
+                    best_valid = self.hits_valid
+                    best_train = self.hits_train
+                    best_model = self.list_layers
+            epoch += 1
+        if keep_best is True:
+            self.list_layers = copy.copy(best_model)
+            self.hits_train = best_train
+            self.hits_valid = best_valid
+        return self.hits_valid
 
     def update(self, stepw, stepb):
         # Cada parametro step es una lista, para actualizar cada capa
