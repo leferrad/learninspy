@@ -8,13 +8,13 @@ from utils.data import split_data, label_data
 from dnn.evaluation import RegressionMetrics
 from sklearn import datasets
 
-net_params = mod.DeepLearningParams(units_layers=[13, 20, 1], activation='Identity',
+net_params = mod.DeepLearningParams(units_layers=[13, 8, 1], activation='Identity',
                                     dropout_ratios=[0.0, 0.0, 0.0], classification=False)
 
 local_criterions = [criterion['MaxIterations'](50),
                     criterion['AchieveTolerance'](0.99, key='hits')]
 
-global_criterions = [criterion['MaxIterations'](10),
+global_criterions = [criterion['MaxIterations'](30),
                      criterion['AchieveTolerance'](0.99, key='hits')]
 
 opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterions)
@@ -33,7 +33,7 @@ train, valid, test = split_data(label_data(features, labels), [.7, .2, .1])
 print "Entrenando red neuronal ..."
 t1 = time.time()
 hits_valid = neural_net.fit(train, valid, mini_batch=50, parallelism=4, criterions=global_criterions,
-                            optimizer_params=opt_params)
+                            optimizer_params=opt_params, keep_best=True)
 hits_test, predict = neural_net.evaluate(test, predictions=True)
 t1f = time.time() - t1
 
