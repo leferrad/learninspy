@@ -25,3 +25,13 @@ if 'sc' not in locals() or sc is None:
 
 #if 'logger' not in locals():
 #    logger = LearninspyLogger('INFO')
+
+#TODO: ver que hacer con esto
+class LearninspyContext(object):
+    def __init__(self, app_name='LearninspyDemo', master='local', xmx='2g', log_conf='false'):
+        self.app_name = app_name
+        self.master = master
+        self.conf = (SparkConf().setAppName(self.app_name)
+                     .set("Xmx", xmx).setMaster(self.master)
+                     .set("spark.logConf", log_conf))
+        self.sc = SparkContext(conf=self.conf)

@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>dnn package &mdash; learninspy 0 documentation</title>
+    <title>dnn package &mdash; learninspy  documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0',
+        VERSION:     '',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,27 +23,23 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="learninspy 0 documentation" href="index.html" /> 
+    <link rel="top" title="learninspy  documentation" href="index.html" /> 
   </head>
   <body>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li><a href="index.html">learninspy 0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>learninspy  documentation</span></a></h1>
+        <h2 class="heading"><span>dnn package</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body">
-            
+      </div>
+      <div class="content">
+        
+        
   <div class="section" id="dnn-package">
 <h1>dnn package<a class="headerlink" href="#dnn-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="submodules">
@@ -99,16 +95,6 @@
 <dl class="function">
 <dt id="dnn.activations.sin_d">
 <tt class="descclassname">dnn.activations.</tt><tt class="descname">sin_d</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#dnn.activations.sin_d" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="dnn.activations.softmax">
-<tt class="descclassname">dnn.activations.</tt><tt class="descname">softmax</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#dnn.activations.softmax" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="dnn.activations.softmax_d">
-<tt class="descclassname">dnn.activations.</tt><tt class="descname">softmax_d</tt><big>(</big><em>y</em>, <em>t</em><big>)</big><a class="headerlink" href="#dnn.activations.softmax_d" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -204,7 +190,8 @@
 <dl class="class">
 <dt id="dnn.model.NeuralLayer">
 <em class="property">class </em><tt class="descclassname">dnn.model.</tt><tt class="descname">NeuralLayer</tt><big>(</big><em>n_in=2</em>, <em>n_out=2</em>, <em>activation='ReLU'</em>, <em>distribute=True</em>, <em>w=None</em>, <em>b=None</em>, <em>sparsity=False</em>, <em>rng=None</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralLayer" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><p>Bases: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<dl class="method">
 <dt id="dnn.model.NeuralLayer.activation">
 <tt class="descname">activation</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralLayer.activation" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -263,7 +250,7 @@
 
 <dl class="class">
 <dt id="dnn.model.DeepLearningParams">
-<em class="property">class </em><tt class="descclassname">dnn.model.</tt><tt class="descname">DeepLearningParams</tt><big>(</big><em>units_layers</em>, <em>activation='ReLU'</em>, <em>loss='MSE'</em>, <em>layer_distributed=None</em>, <em>dropout_ratios=None</em>, <em>mini_batch=100</em>, <em>minimizer='Adadelta'</em>, <em>autoencoder=False</em>, <em>rng=None</em><big>)</big><a class="headerlink" href="#dnn.model.DeepLearningParams" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">dnn.model.</tt><tt class="descname">DeepLearningParams</tt><big>(</big><em>units_layers</em>, <em>activation='ReLU'</em>, <em>loss='MSE'</em>, <em>layer_distributed=None</em>, <em>dropout_ratios=None</em>, <em>minimizer='Adadelta'</em>, <em>autoencoder=False</em>, <em>rng=None</em><big>)</big><a class="headerlink" href="#dnn.model.DeepLearningParams" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="class">
@@ -273,7 +260,22 @@
 <dl class="method">
 <dt id="dnn.model.NeuralNetwork.backprop">
 <tt class="descname">backprop</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.backprop" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> &#8211; </li>
+<li><strong>y</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="dnn.model.NeuralNetwork.check_gradients">
@@ -282,12 +284,12 @@
 
 <dl class="method">
 <dt id="dnn.model.NeuralNetwork.cost">
-<tt class="descname">cost</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.cost" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">cost</tt><big>(</big><em>features</em>, <em>label</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.cost" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="dnn.model.NeuralNetwork.feedforward">
-<tt class="descname">feedforward</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.feedforward" title="Permalink to this definition">¶</a></dt>
+<dt id="dnn.model.NeuralNetwork.evaluate">
+<tt class="descname">evaluate</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.evaluate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -301,23 +303,28 @@
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="dnn.model.NeuralNetwork.minimize">
-<tt class="descname">minimize</tt><big>(</big><em>data</em>, <em>options</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.minimize" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="dnn.model.NeuralNetwork.persist_layers">
 <tt class="descname">persist_layers</tt><big>(</big><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.persist_layers" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
+<dt id="dnn.model.NeuralNetwork.predict">
+<tt class="descname">predict</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.predict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="dnn.model.NeuralNetwork.train">
-<tt class="descname">train</tt><big>(</big><em>data</em>, <em>label</em>, <em>options=None</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.train" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">train</tt><big>(</big><em>data</em>, <em>label</em>, <em>mini_batch=50</em>, <em>epochs=50</em>, <em>parallelism=10</em>, <em>options=None</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.train" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="dnn.model.NeuralNetwork.unpersist_layers">
 <tt class="descname">unpersist_layers</tt><big>(</big><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.unpersist_layers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="dnn.model.NeuralNetwork.update">
+<tt class="descname">update</tt><big>(</big><em>stepw</em>, <em>stepb</em><big>)</big><a class="headerlink" href="#dnn.model.NeuralNetwork.update" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -592,7 +599,7 @@
 <span id="dnn-optimization-module"></span><h2>dnn.optimization module<a class="headerlink" href="#module-dnn.optimization" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="dnn.optimization.Adadelta">
-<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">Adadelta</tt><big>(</big><em>data</em>, <em>layers</em>, <em>dropout_ratios=None</em>, <em>loss_func='MSE'</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.Adadelta" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">Adadelta</tt><big>(</big><em>model</em>, <em>data</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.Adadelta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#dnn.optimization.Optimizer" title="dnn.optimization.Optimizer"><tt class="xref py py-class docutils literal"><span class="pre">dnn.optimization.Optimizer</span></tt></a></p>
 <p>Adadelta optimizer.
 <a class="reference external" href="https://github.com/BRML/climin/blob/master/climin/adadelta.py">https://github.com/BRML/climin/blob/master/climin/adadelta.py</a>
@@ -603,42 +610,44 @@ arXiv preprint arXiv:1212.5701 (2012).</div></blockquote>
 </dd></dl>
 
 <dl class="class">
+<dt id="dnn.optimization.GD">
+<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">GD</tt><big>(</big><em>model</em>, <em>data</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.GD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dnn.optimization.Optimizer" title="dnn.optimization.Optimizer"><tt class="xref py py-class docutils literal"><span class="pre">dnn.optimization.Optimizer</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
 <dt id="dnn.optimization.Optimizer">
-<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">Optimizer</tt><big>(</big><em>data</em>, <em>layers</em>, <em>dropout_ratios=None</em>, <em>loss_func='MSE'</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.Optimizer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">Optimizer</tt><big>(</big><em>model</em>, <em>data</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.Optimizer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
 <p>Default interface for an optimizer implementation - this provides the necessary parameter updates when
 training a model on a dataset using an online stochastic process. The base framework for performing
 stochastic gradient descent.</p>
 <dl class="method">
-<dt id="dnn.optimization.Optimizer.func">
-<tt class="descname">func</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="headerlink" href="#dnn.optimization.Optimizer.func" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="dnn.optimization.Optimizer.update">
-<tt class="descname">update</tt><big>(</big><em>step_w</em>, <em>step_b</em>, <em>index</em><big>)</big><a class="headerlink" href="#dnn.optimization.Optimizer.update" title="Permalink to this definition">¶</a></dt>
+<dt id="dnn.optimization.Optimizer.check_criterion">
+<tt class="descname">check_criterion</tt><big>(</big><big>)</big><a class="headerlink" href="#dnn.optimization.Optimizer.check_criterion" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
 
 <dl class="class">
 <dt id="dnn.optimization.OptimizerParameters">
-<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">OptimizerParameters</tt><big>(</big><em>algorithm='Adadelta'</em>, <em>num_epochs=100</em>, <em>mini_batch_size=100</em>, <em>options=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.OptimizerParameters" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">OptimizerParameters</tt><big>(</big><em>algorithm='Adadelta'</em>, <em>n_iterations=50</em>, <em>tolerance=0.99</em>, <em>options=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.OptimizerParameters" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="class">
-<dt id="dnn.optimization.SGD">
-<em class="property">class </em><tt class="descclassname">dnn.optimization.</tt><tt class="descname">SGD</tt><big>(</big><em>train_data</em>, <em>epochs</em>, <em>mini_batch_size</em>, <em>momentum</em>, <em>valid_data=None</em><big>)</big><a class="headerlink" href="#dnn.optimization.SGD" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="dnn.optimization.SGD.update_mini_batch">
-<tt class="descname">update_mini_batch</tt><big>(</big><em>mini_batch</em>, <em>eta</em><big>)</big><a class="headerlink" href="#dnn.optimization.SGD.update_mini_batch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Update the network&#8217;s weights and biases by applying
-gradient descent using backpropagation to a single mini batch.
-The <tt class="docutils literal"><span class="pre">mini_batch</span></tt> is a list of tuples <tt class="docutils literal"><span class="pre">(x,</span> <span class="pre">y)</span></tt>, and <tt class="docutils literal"><span class="pre">eta</span></tt>
-is the learning rate.</p>
+<dl class="function">
+<dt id="dnn.optimization.mix_models">
+<tt class="descclassname">dnn.optimization.</tt><tt class="descname">mix_models</tt><big>(</big><em>left</em>, <em>right</em><big>)</big><a class="headerlink" href="#dnn.optimization.mix_models" title="Permalink to this definition">¶</a></dt>
+<dd><p>Se devuelve el resultado de sumar las NeuralLayers
+de left y right
+:param left: list of NeuralLayer
+:param right: list of NeuralLayer
+:return: list of NeuralLayer</p>
 </dd></dl>
 
-</dd></dl>
+<dl class="function">
+<dt id="dnn.optimization.optimize">
+<tt class="descclassname">dnn.optimization.</tt><tt class="descname">optimize</tt><big>(</big><em>model</em>, <em>data</em>, <em>mini_batch=50</em>, <em>options=None</em>, <em>seed=123</em><big>)</big><a class="headerlink" href="#dnn.optimization.optimize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="module-dnn">
@@ -647,61 +656,15 @@ is the learning rate.</p>
 </div>
 
 
-          </div>
-        </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">dnn package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#module-dnn.activations">dnn.activations module</a></li>
-<li><a class="reference internal" href="#module-dnn.checks">dnn.checks module</a></li>
-<li><a class="reference internal" href="#module-dnn.evaluation">dnn.evaluation module</a></li>
-<li><a class="reference internal" href="#module-dnn.loss">dnn.loss module</a></li>
-<li><a class="reference internal" href="#module-dnn.model">dnn.model module</a></li>
-<li><a class="reference internal" href="#module-dnn.neurons">dnn.neurons module</a></li>
-<li><a class="reference internal" href="#module-dnn.optimization">dnn.optimization module</a></li>
-<li><a class="reference internal" href="#module-dnn">Module contents</a></li>
-</ul>
-</li>
-</ul>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
 
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/dnn.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="py-modindex.html" title="Python Module Index"
-             >modules</a> |</li>
-        <li><a href="index.html">learninspy 0 documentation</a> &raquo;</li> 
-      </ul>
-    </div>
+
     <div class="footer">
         &copy; Copyright 2015, leferrad.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.

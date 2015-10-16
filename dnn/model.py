@@ -3,21 +3,27 @@ __author__ = 'leferrad'
 # Modulos a exportar
 __all__ = ['NeuralLayer', 'DeepLearningParams', 'NeuralNetwork']
 
+# Dependencias externas
 import numpy as np
+from scipy import sparse
+from pyspark.mllib.regression import LabeledPoint
+
+# Librerias de Learninspy
 import activations as act
 import optimization as opt
 import loss
 from stops import criterion
 from neurons import DistributedNeurons, LocalNeurons
-from scipy import sparse
-from pyspark.mllib.regression import LabeledPoint
 from context import sc
+from evaluation import ClassificationMetrics, RegressionMetrics
+import utils.util as util
 #from utils.util import LearninspyLogger
+
+# Librerias de Python
 import copy
 import checks
-from evaluation import ClassificationMetrics, RegressionMetrics
+import cPickle as pickle
 import time
-import utils.util as util
 
 class NeuralLayer(object):
     activation = act.relu
@@ -148,10 +154,14 @@ class RegressionLayer(NeuralLayer):
 class DeepLearningParams:
 
     def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
-                 classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
+                 classification=True, strength_l1=1e-5, strength_l2=1e-4,
+                 sparsity_param=0.05, sparsity_beta=0, seed=123):
         num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
         if dropout_ratios is None:
-            dropout_ratios = [0.5] * (num_layers-1) + [0.0]  # Default, dropout de 0.5 menos la salida que no debe tener
+            if classification is True:
+                dropout_ratios = [0.5] * (num_layers-1) + [0.0]  # Default, dropout de 0.5 menos la salida que no debe tener
+            else:
+                dropout_ratios = [0.0] * num_layers  # Nunca recomendado hacer dropout en regresion
         if layer_distributed is None:
             layer_distributed = [False] * num_layers   # Por defecto, las capas no estan distribuidas
         if type(activation) is not list:  # Si es un string, lo replico por la cant de capas
@@ -169,10 +179,15 @@ class DeepLearningParams:
         self.strength_l1 = strength_l1
         self.strength_l2 = strength_l2
         self.rng = np.random.RandomState(seed)
+        self.sparsity_param = sparsity_param
+        self.sparsity_beta = sparsity_beta
+
 
 
 class NeuralNetwork(object):
     def __init__(self, params=None, list_layers=None):
+        if params is None:
+            params = DeepLearningParams([3,3,3])  # Creo cualquier cosa por defecto, para que no explote TODO: cambiar!
         self.params = params
         self.list_layers = list_layers  # En caso de que la red reciba capas ya inicializadas
         self.loss = loss.fun_loss[self.params.loss]
@@ -433,5 +448,28 @@ class NeuralNetwork(object):
         for i in xrange(len(self.list_layers)):
             self.list_layers[i].unpersist_layer()
 
-    # TODO: metodo para guardar modelo en binario
+    def save(self, name, path):
+        file = open(path+name+'.lea', 'w')
+        pickler = pickle.Pickler(file, -1)
+        pickler.dump(self)
+        file.close()
+        return
+
+    def load(self, name, path):
+        file = open(path+name+'.lea')
+        model = pickle.load(file)
+        self.__dict__.update(model.__dict__)
+        return
+
+
+class AutoEncoder(NeuralNetwork):
+    def __init__(self, params=None, list_layers=None):
+        # Aseguro algunos parametros
+        params.classification = False
+        n_in = params.units_layers[0]
+        params.units_layers[-1] = n_in  # Unidades en la salida en igual cantidad que la entrada
+        params.dropout_ratios = [0.0] * len(params.units_layers)  # Sin dropout por ser regresion
+        if params.sparsity_beta == 0:
+            params.sparsity_beta = 3
+        NeuralNetwork.__init__(self, params, list_layers)
 

@@ -11,7 +11,7 @@ def label_to_vector(label, n_classes):
     lab[label] = 1
     return np.array(lab)
 
-
+# TODO: hacer sample ponderando las clases por error en validacion
 def subsample(data, size, balanced=True, seed=123):
     """
     Muestreo de data, con resultado balanceado por clases si se lo pide
@@ -55,7 +55,7 @@ def split_data(data, fractions, seed=123):
         # Segmento conjuntos
         size_data = len(data)
         size_split = map(lambda f: int(size_data * f), fractions)
-        index_split = [0]+ size_split[:-1]
+        index_split = [0] + size_split[:-1]
         sets = [data[i:i+size] for i, size in zip(index_split, size_split)]
     return sets
 

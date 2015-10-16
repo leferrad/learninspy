@@ -5,6 +5,7 @@ import signal
 import sys
 import time
 
+# TODO: no se si aca, pero estaria bueno hacer un metodo que cuando ve que se sobreentrena la red, le agregue capacidad
 
 class MaxIterations(object):
 
@@ -108,8 +109,8 @@ class Patience(object):
     def __call__(self, results):
         i = results['iterations']
         value = results[self.key]
-        if value < self.best_value:
-            if (self.best_value - value) > self.threshold and i > 0:
+        if value > self.best_value:
+            if (value - self.best_value) > self.threshold and i > 0:
                 self.patience = max(i * self.grow_factor + self.grow_offset,
                                     self.patience)
             self.best_value = value
