@@ -3,33 +3,54 @@ __author__ = 'leferrad'
 
 import numpy as np
 import pyspark.rdd
-from sklearn.decomposition import PCA
+from pyspark.mllib.regression import LabeledPoint
 
 
-class PCA_Whitening:
-    trained = False
+class PCA(object):
     # Ver explicacion en http://cs231n.github.io/neural-networks-2/
-    def __call__(self, data, num_comp=None, whiten=True):
-        if isinstance(data,pyspark.rdd.PipelinedRDD):
-            # data debe ser un np.array()
-            data = np.array(data.collect())
-        self.data = data
-        if num_comp is None:
-            num_comp = data.shape[1] / 2  # Por defecto, que se reduzca a la mitad de dimensiones
-        self.num_comp = num_comp
-        self.whiten = whiten
-        # Notar que se debe entrenar solo con el conjunto de entrenamiento (fit) y luego se aplica transformacion
-        # al conjunto de validacion/test (Para no hacer "trampa" usando las propiedades estadisticas en la prediccion
-        self.pca = PCA(n_components=num_comp, whiten=whiten)
+    def __init__(self, x):
+        if isinstance(x,pyspark.rdd.PipelinedRDD):
+            x = x.collect()
+        self.x = x
+        if isinstance(x[0], LabeledPoint):
+            x = np.array(map(lambda lp: lp.features, x))
+        self.mean = np.mean(x, axis=0)
+        self.std = np.std(x, axis=0)
+        self.whitening_offset = 1e-5
 
-    def train(self):
-        data_pca = self.pca.fit_transform(self.data)
-        self.trained = True
-        return data_pca
+        # Se computa la matriz de covarianza
+        cov = np.dot(x.T, x) / x.shape[0]
 
-    def test(self,data):
-        assert self.trained is True, 'PCA no entrenado!'
-        if isinstance(data,pyspark.rdd.PipelinedRDD):
-            # data debe ser un np.array()
-            data = np.array(data.collect())
-        return self.pca.transform(data)
+        # SVD factorizacion de la matriz de covarianza
+        u, s, v = np.linalg.svd(cov)
+
+        # Columnas de U son los eigenvectores (ordenados por sus eigenvalores)
+        # S contiene los valores singulares (eigenvalores al cuadrado)
+        self.u = u
+        self.v = v
+        self.s = s
+
+    def transform(self, k=None, data=None, standarize=True, whitening=True):
+        if k is None:
+            k = int(self.x.shape[1] * .85)  # retengo 85% de la varianza
+        if data is None:
+            data = self.x
+        lp_data = False  # Flag que indica que data es LabeledPoint, y debo preservar sus labels
+        label = None
+        if isinstance(data[0], LabeledPoint):
+            label = map(lambda lp: lp.label, data)  # Guardo labels para concatenarlos al final
+            data = np.array(map(lambda lp: lp.features, data))
+            lp_data = True
+        data -= self.mean  # zero-center sobre data (importante)
+        if standarize is True:
+            data /= self.std
+        xrot = np.dot(data, self.u[:, :k])
+        if whitening is True:
+            xrot = xrot / np.sqrt(self.s[:k] + self.whitening_offset)
+        if lp_data is True:
+            xrot = map(lambda (f, l): LabeledPoint(l, f), zip(xrot.tolist(), label))
+        return xrot
+
+
+
+
