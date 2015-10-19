@@ -5,6 +5,7 @@ import numpy as np
 import pyspark.rdd
 from pyspark.mllib.regression import LabeledPoint
 
+
 def label_to_vector(label, n_classes):
     lab = np.zeros((n_classes, 1), dtype=np.int8)
     label = int(label)

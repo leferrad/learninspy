@@ -5,14 +5,14 @@ __author__ = 'leferrad'
 import numpy as np
 from utils.data import label_to_vector
 
-def mse(y, t):
-    err = y - t
+def mse(value, target):
+    err = np.array(map(lambda(y, t): y - t, zip(value, target)))
     N = err.size
     return np.sum(np.square(err)) / (1.0 * N)
 
 
-def mse_d(y, t):
-    err = y - t
+def mse_d(value, target):
+    err = np.array(map(lambda (y, t): y - t, zip(value, target)))
     N = err.size
     return 2 * err / (1.0 * N)
 
