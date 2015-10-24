@@ -6,7 +6,6 @@ __all__ = ['NeuralLayer', 'DeepLearningParams', 'NeuralNetwork']
 # Dependencias externas
 import numpy as np
 from scipy import sparse
-from pyspark.mllib.regression import LabeledPoint
 
 # Librerias de Learninspy
 import activations as act
@@ -16,6 +15,7 @@ from stops import criterion
 from neurons import DistributedNeurons, LocalNeurons
 from context import sc
 from evaluation import ClassificationMetrics, RegressionMetrics
+from utils.data import label_data
 import utils.util as util
 #from utils.util import LearninspyLogger
 
@@ -26,8 +26,6 @@ import cPickle as pickle
 import time
 
 class NeuralLayer(object):
-    activation = act.relu
-    activation_d = act.relu_d
 
     def __init__(self, n_in=2, n_out=2, activation='ReLU', distribute=False, w=None, b=None, sparsity=False, rng=None):
         self.n_out = n_out
@@ -154,8 +152,7 @@ class RegressionLayer(NeuralLayer):
 class DeepLearningParams:
 
     def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
-                 classification=True, strength_l1=1e-5, strength_l2=1e-4,
-                 sparsity_param=0.05, sparsity_beta=0, seed=123):
+                 classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
         num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
         if dropout_ratios is None:
             if classification is True:
@@ -179,15 +176,13 @@ class DeepLearningParams:
         self.strength_l1 = strength_l1
         self.strength_l2 = strength_l2
         self.rng = np.random.RandomState(seed)
-        self.sparsity_param = sparsity_param
-        self.sparsity_beta = sparsity_beta
 
 
 
 class NeuralNetwork(object):
     def __init__(self, params=None, list_layers=None):
         if params is None:
-            params = DeepLearningParams([3,3,3])  # Creo cualquier cosa por defecto, para que no explote TODO: cambiar!
+            params = DeepLearningParams([3, 3, 3])  # Creo cualquier cosa por defecto, para que no explote TODO: cambiar!
         self.params = params
         self.list_layers = list_layers  # En caso de que la red reciba capas ya inicializadas
         self.loss = loss.fun_loss[self.params.loss]
@@ -201,7 +196,7 @@ class NeuralNetwork(object):
         self.num_layers = len(self.list_layers)
         self.hits_train = 0.0
         self.hits_valid = 0.0
-        self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
+        #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
 
     def __init_weights(self):  # Metodo privado
         num_layers = len(self.params.units_layers)
@@ -231,7 +226,7 @@ class NeuralNetwork(object):
             c_l1, g_l1 = layer.l1()
             cost += c_l1
             gradient.append(g_l1)
-        cost = cost * self.params.strength_l1
+        cost *= self.params.strength_l1
         gradient[:] = [grad * self.params.strength_l1 for grad in gradient]
         return cost, gradient
 
@@ -243,19 +238,10 @@ class NeuralNetwork(object):
             c_l2, g_l2 = layer.l2()
             cost += c_l2
             gradient.append(g_l2)
-        cost = cost * self.params.strength_l2 * 0.5  # Multiplico por 0.5 para hacer mas simple el gradiente
+        cost *= self.params.strength_l2 * 0.5  # Multiplico por 0.5 para hacer mas simple el gradiente
         gradient[:] = [grad * self.params.strength_l2 for grad in gradient]
         return cost, gradient
-
-
     # Ante la duda, l2 consigue por lo general mejores resultados que l1 pero se pueden combinar
-
-    def predict(self, x):
-        num_layers = self.num_layers
-        # Tener en cuenta que en la prediccion no se aplica el dropout
-        for i in xrange(num_layers):
-            x = self.list_layers[i].output(x, grad=False)
-        return x
 
     def _backprop(self, x, y):
         """
@@ -308,6 +294,15 @@ class NeuralNetwork(object):
             cost += cost_l2
             nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l2))
         return cost, (nabla_w, nabla_b)
+
+    def predict(self, x):
+        if isinstance(x, list):
+            x = map(lambda lp: self.predict(lp.features).matrix(), x)
+        else:
+            # Tener en cuenta que en la prediccion no se aplica el dropout
+            for i in xrange(self.num_layers):
+                x = self.list_layers[i].output(x, grad=False)
+        return x
 
     def check_stop(self, epochs, criterions, check_all=False):
         results = {'hits': self.hits_valid,
@@ -463,13 +458,99 @@ class NeuralNetwork(object):
 
 
 class AutoEncoder(NeuralNetwork):
-    def __init__(self, params=None, list_layers=None):
+    def __init__(self, params=None, list_layers=None, sparsity_beta=0, sparsity_param=0.05):
         # Aseguro algunos parametros
         params.classification = False
         n_in = params.units_layers[0]
         params.units_layers[-1] = n_in  # Unidades en la salida en igual cantidad que la entrada
         params.dropout_ratios = [0.0] * len(params.units_layers)  # Sin dropout por ser regresion
-        if params.sparsity_beta == 0:
-            params.sparsity_beta = 3
+        self.sparsity_beta = sparsity_beta
+        self.sparsity_param = sparsity_param
+        self.num_layers = 2
         NeuralNetwork.__init__(self, params, list_layers)
 
+
+    # Override del backpropagation, para que sea de una sola capa oculta (TODO que incluya sparsity)
+    def _backprop(self, x, y):
+        # y es el label del aprendizaje supervisado. lo omito
+        num_layers = self.num_layers
+        a = [None] * (num_layers + 1)  # Vector que contiene las activaciones de las salidas de cada NeuralLayer
+        d_a = [None] * num_layers  # Vector que contiene las derivadas de las salidas activadas de cada NeuralLayer
+        nabla_w = [None] * num_layers  # Vector que contiene los gradientes del costo respecto a W
+        nabla_b = [None] * num_layers  # Vector que contiene los gradientes del costo respecto a b
+        # Feed-forward
+        a[0] = x  # Tomo como primer activacion la entrada x
+        y = np.array(x)  # Debe aprender a reconstruir la entrada x
+        for l in xrange(num_layers):
+            (a[l + 1], d_a[l]) = self.list_layers[l].output(a[l], grad=True)
+        cost = a[-1].loss(self.loss, y)
+        # Backward pass
+        d_cost = a[-1].loss_d(self.loss_d, y)
+        delta = d_cost.mul_elemwise(d_a[-1])
+        nabla_w[-1] = delta.outer(a[-2])
+        nabla_b[-1] = delta
+        for l in xrange(2, num_layers + 1):
+            w_t = self.list_layers[-l + 1].weights_T
+            delta = w_t.mul_array(delta).mul_elemwise(d_a[-l])
+            nabla_w[-l] = delta.outer(a[-l - 1])
+            nabla_b[-l] = delta
+        return cost, (nabla_w, nabla_b)
+
+    def evaluate(self, data, predictions=False):
+        actual = map(lambda lp: lp.features, data)  # Tiene que aprender a reconstruir la entrada
+        predicted = map(lambda lp: self.predict(lp.features).matrix(), data)
+        if self.params.classification is True:
+            # En problemas de clasificacion, se determina la prediccion por la unidad de softmax que predomina
+            predicted = map(lambda p: float(np.argmax(p)), predicted)
+        metric = RegressionMetrics(zip(predicted, actual))
+        hits = metric.r2()
+        if predictions is True:  # Devuelvo ademas el vector de predicciones
+            ret = hits, predicted
+        else:
+            ret = hits
+        return ret
+
+
+    def kl_divergence(self, x):
+        pass
+
+    def encode(self, x):
+        if isinstance(x, list):
+            x = map(lambda lp: self.encode(lp.features).matrix(), x)
+        else:
+            x = self.list_layers[0].output(x, grad=False)   # Solo la salida de la capa oculta
+        return x
+
+
+class StackedAutoencoder(NeuralNetwork):
+
+    def __init__(self, params=None, list_layers=None, sparsity_beta=0, sparsity_param=0.05):
+        self.sparsity_beta = sparsity_beta
+        self.sparsity_param = sparsity_param
+        self.params = params
+        self.num_layers = len(params.units_layers)
+        NeuralNetwork.__init__(self, params, list_layers=None)
+
+    def fit(self, train, valid=None, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
+            keep_best=False):
+        # Inicializo Autoencoders
+        train_ae = train
+        valid_ae = valid
+        labels_train = map(lambda lp: lp.label, train_ae)
+        labels_valid = map(lambda lp: lp.label, valid_ae)
+        for l in xrange(len(self.list_layers)):
+            print "Creando Autoencoder ", l, "..."
+            # Genero nueva estructura de parametros acorde al Autoencoder a crear
+            params = DeepLearningParams(self.params.units_layers[l:l+3], activation=self.params.activation,
+                                        layer_distributed=self.params.layer_distributed, dropout_ratios=None,
+                                        classification=False, strength_l1=self.params.strength_l1,
+                                        strength_l2=self.params.strength_l2)
+            ae = AutoEncoder(params=params, sparsity_beta=self.sparsity_beta, sparsity_param=self.sparsity_param)
+            ae.fit(train_ae, valid_ae, criterions=criterions, mini_batch=mini_batch, parallelism=parallelism,
+                   optimizer_params=optimizer_params, keep_best=keep_best)
+            # Siguen siendo importantes los labels para el sample balanceado por clases
+            train_ae = label_data(ae.encode(train_ae), labels_train)
+            valid_ae = label_data(ae.encode(valid_ae), labels_valid)
+            self.list_layers[l] = copy.copy(ae.list_layers[0])  # Copio el autoencoder como nueva capa oculta
+        self.hits_valid = self.evaluate(valid)
+        return self.hits_valid

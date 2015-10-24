@@ -1,6 +1,6 @@
 __author__ = 'leferrad'
 
-import dnn.model as mod
+import dnn.models as mod
 from dnn.optimization import OptimizerParameters
 from dnn.stops import criterion
 import time
