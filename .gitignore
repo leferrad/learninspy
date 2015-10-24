@@ -36,6 +36,10 @@
 *.pyc
 **./*.pyc
 
+# IPython Notebook stuff
+*.egg-info
+.ipynb_checkpoints
+
 # Spark stuff
 /sparkdata
 
