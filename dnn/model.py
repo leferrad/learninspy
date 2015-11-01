@@ -498,10 +498,7 @@ class AutoEncoder(NeuralNetwork):
 
     def evaluate(self, data, predictions=False):
         actual = map(lambda lp: lp.features, data)  # Tiene que aprender a reconstruir la entrada
-        predicted = map(lambda lp: self.predict(lp.features).matrix(), data)
-        if self.params.classification is True:
-            # En problemas de clasificacion, se determina la prediccion por la unidad de softmax que predomina
-            predicted = map(lambda p: float(np.argmax(p)), predicted)
+        predicted = map(lambda lp: self.predict(lp.features).matrix().T, data)  # TODO notar que tuve q transponer
         metric = RegressionMetrics(zip(predicted, actual))
         hits = metric.r2()
         if predictions is True:  # Devuelvo ademas el vector de predicciones
@@ -509,7 +506,6 @@ class AutoEncoder(NeuralNetwork):
         else:
             ret = hits
         return ret
-
 
     def kl_divergence(self, x):
         pass

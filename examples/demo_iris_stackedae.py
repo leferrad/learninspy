@@ -8,9 +8,9 @@ from utils.data import split_data, label_data
 from dnn.evaluation import ClassificationMetrics
 from sklearn import datasets
 
-net_params = mod.DeepLearningParams(units_layers=[4, 10, 5, 3], activation='Softplus',
-                                    dropout_ratios=[0.5, 0.5, 0.0], classification=True)
-sae_params = mod.DeepLearningParams(units_layers=[4, 10, 5, 3], activation='Softplus')
+net_params = mod.DeepLearningParams(units_layers=[4, 4, 3], activation='Softplus',
+                                    dropout_ratios=[0.5, 0.0], classification=True)
+sae_params = mod.DeepLearningParams(units_layers=[4, 4, 3], activation='Tanh')
 
 local_criterions = [criterion['MaxIterations'](50),
                     criterion['AchieveTolerance'](0.99, key='hits')]
