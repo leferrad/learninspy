@@ -514,9 +514,19 @@ class AutoEncoder(NeuralNetwork):
         if isinstance(x, list):
             x = map(lambda lp: self.encode(lp.features).matrix(), x)
         else:
-            x = self.list_layers[0].output(x, grad=False)   # Solo la salida de la capa oculta
+            x = self.encoder_layer().output(x, grad=False)   # Solo la salida de la capa oculta
         return x
 
+    def encoder_layer(self):
+        return self.list_layers[0]
+
+    def assert_regression(self):
+        # Aseguro que el autoencoder tenga capas de regresion
+        for l in xrange(self.num_layers):
+            if type(self.list_layers[l]) is ClassificationLayer:
+                layer = RegressionLayer()
+                layer.__dict__ = self.list_layers[l].__dict__.copy()
+                self.list_layers[l] = layer
 
 class StackedAutoencoder(NeuralNetwork):
 
@@ -526,6 +536,17 @@ class StackedAutoencoder(NeuralNetwork):
         self.params = params
         self.num_layers = len(params.units_layers)
         NeuralNetwork.__init__(self, params, list_layers=None)
+        self._init_ae()  # Creo autoencoders que se guardan en list_layers
+
+    def _init_ae(self):
+        for l in xrange(len(self.list_layers)):
+            # Genero nueva estructura de parametros acorde al Autoencoder a crear
+            params = DeepLearningParams(self.params.units_layers[l:l+3], activation=self.params.activation,
+                                        layer_distributed=self.params.layer_distributed, dropout_ratios=None,
+                                        classification=False, strength_l1=self.params.strength_l1,
+                                        strength_l2=self.params.strength_l2)
+            self.list_layers[l] = AutoEncoder(params=params, sparsity_beta=self.sparsity_beta,
+                                              sparsity_param=self.sparsity_param)
 
     def fit(self, train, valid=None, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
@@ -534,19 +555,31 @@ class StackedAutoencoder(NeuralNetwork):
         valid_ae = valid
         labels_train = map(lambda lp: lp.label, train_ae)
         labels_valid = map(lambda lp: lp.label, valid_ae)
-        for l in xrange(len(self.list_layers)):
-            print "Creando Autoencoder ", l, "..."
-            # Genero nueva estructura de parametros acorde al Autoencoder a crear
-            params = DeepLearningParams(self.params.units_layers[l:l+3], activation=self.params.activation,
-                                        layer_distributed=self.params.layer_distributed, dropout_ratios=None,
-                                        classification=False, strength_l1=self.params.strength_l1,
-                                        strength_l2=self.params.strength_l2)
-            ae = AutoEncoder(params=params, sparsity_beta=self.sparsity_beta, sparsity_param=self.sparsity_param)
+        for ae in self.list_layers:
+            ae.assert_regression()
             ae.fit(train_ae, valid_ae, criterions=criterions, mini_batch=mini_batch, parallelism=parallelism,
                    optimizer_params=optimizer_params, keep_best=keep_best)
             # Siguen siendo importantes los labels para el sample balanceado por clases
             train_ae = label_data(ae.encode(train_ae), labels_train)
             valid_ae = label_data(ae.encode(valid_ae), labels_valid)
-            self.list_layers[l] = copy.copy(ae.list_layers[0])  # Copio el autoencoder como nueva capa oculta
         self.hits_valid = self.evaluate(valid)
         return self.hits_valid
+
+    def finetune(self, train, valid, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
+                 keep_best=False):
+        list_layers = map(lambda ae: ae.encoder_layer(), self.list_layers)  # Tomo solo la capa de encoder de cada ae
+        nn = NeuralNetwork(self.params, list_layers=list_layers)
+        hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, criterions=criterions,
+                            optimizer_params=optimizer_params)
+        for l in xrange(len(self.list_layers)):
+            # Copio capa con ajuste fino al autoencoder
+            self.list_layers[l].list_layers[0] = nn.list_layers[l]  # TODO mejorar esto, para que sea mas legible
+        return hits_valid
+
+    def predict(self, x):
+        if isinstance(x, list):
+            x = map(lambda lp: self.predict(lp.features).matrix(), x)
+        else:
+            for i in xrange(self.num_layers):
+                x = self.list_layers[i].encode(x)
+        return x
