@@ -1,10 +1,10 @@
 __author__ = 'leferrad'
 
-import dnn.models as mod
+import dnn.model as mod
 from dnn.optimization import OptimizerParameters
 from dnn.stops import criterion
 import time
-from utils.data import split_data, label_data
+from utils.data import split_data, label_data, StandardScaler, LabeledDataSet
 from dnn.evaluation import ClassificationMetrics
 from context import sc
 
@@ -27,12 +27,27 @@ opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterio
 neural_net = mod.NeuralNetwork(net_params)
 
 print "Cargando base de datos ..."
-data = sc.textFile("/home/leeandro04/Documentos/Datos/EEG/P300-Disabled/datalabels_cat5_FIRDec_Norm.dat").map(parsePoint)
+#data = sc.textFile("/home/leeandro04/Documentos/Datos/EEG/P300-Disabled/datalabels_cat5_FIRDec_Norm.dat").map(parsePoint)
+data = sc.textFile("/media/leeandro04/Data/Backup/P300/concatData/datalabels_cat5_FIRDec.dat").map(parsePoint)
+
 features = data.map(lambda (l,f): f).collect()
 labels = data.map(lambda (l,f): l).collect()
 print "Size de la data: ", len(features), " x ", len(features[0])
 
-train, valid, test = split_data(label_data(features, labels), [.7, .2, .1], seed=seed)
+
+# Uso clase hecha para manejo de DataSet (almacena en RDD)
+dataset = LabeledDataSet(zip(labels, features))
+train, valid, test = dataset.split_data([.7, .2, .1])  # Particiono conjuntos
+# Standarize data
+std = StandardScaler()
+std.fit(train)
+train = std.transform(train)
+valid = std.transform(valid)
+test = std.transform(test)
+# Collect de RDD en list
+train = train.collect()
+valid = valid.collect()
+test = test.collect()
 
 print "Entrenando red neuronal ..."
 t1 = time.time()

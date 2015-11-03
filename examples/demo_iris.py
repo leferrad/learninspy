@@ -1,12 +1,18 @@
 __author__ = 'leferrad'
 
+# Dependencias externas
+from sklearn import datasets
+
+# Librerias de Python
+import time
+
+# Librerias internas
 import dnn.model as mod
 from dnn.optimization import OptimizerParameters
 from dnn.stops import criterion
-import time
-from utils.data import split_data, label_data
+from utils.data import split_data, label_data, StandardScaler, LabeledDataSet
 from dnn.evaluation import ClassificationMetrics
-from sklearn import datasets
+
 
 net_params = mod.DeepLearningParams(units_layers=[4, 10, 5, 3], activation='Softplus',
                                     dropout_ratios=[0.5, 0.5, 0.0], classification=True)
@@ -28,7 +34,19 @@ features = data.data
 labels = data.target
 print "Size de la data: ", features.shape
 
-train, valid, test = split_data(label_data(features, labels), [.7, .2, .1])
+# Uso clase hecha para manejo de DataSet (almacena en RDD)
+dataset = LabeledDataSet(zip(labels, features))
+train, valid, test = dataset.split_data([.7, .2, .1])  # Particiono conjuntos
+# Standarize data
+std = StandardScaler()
+std.fit(train)
+train = std.transform(train)
+valid = std.transform(valid)
+test = std.transform(test)
+# Collect de RDD en list
+train = train.collect()
+valid = valid.collect()
+test = test.collect()
 
 print "Entrenando red neuronal ..."
 t1 = time.time()
