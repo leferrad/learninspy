@@ -192,11 +192,26 @@ class NeuralNetwork(object):
         if list_layers is None:
             self.list_layers = []  # Creo un arreglo vacio para ir agregando las capas que se inicializan
             self.__init_weights()
-
+        else:
+            # Me aseguro que la capa de salida sea acorde al problema en cuestion (dado por flag params.classification)
+            self.__assert_type_outputlayer()
         self.num_layers = len(self.list_layers)
         self.hits_train = 0.0
         self.hits_valid = 0.0
         #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
+
+    def __assert_type_outputlayer(self):
+        if self.params.classification is True:  # Problema de clasificacion
+            if type(self.list_layers[-1]) is not ClassificationLayer:  # Capa de salida no es de clasificacion
+                new_outputlayer = ClassificationLayer()
+                new_outputlayer.__dict__.update(self.list_layers[-1].__dict__)
+                self.list_layers[-1] = new_outputlayer  # Cambio tipo de capa de salida
+        else:  # Problema de regresion
+            if type(self.list_layers[-1]) is not RegressionLayer:
+                new_outputlayer = RegressionLayer()
+                new_outputlayer.__dict__.update(self.list_layers[-1].__dict__)
+                self.list_layers[-1] = new_outputlayer  # Cambio tipo de capa de salida
+        return
 
     def __init_weights(self):  # Metodo privado
         num_layers = len(self.params.units_layers)
@@ -462,7 +477,7 @@ class AutoEncoder(NeuralNetwork):
         # Aseguro algunos parametros
         params.classification = False
         n_in = params.units_layers[0]
-        params.units_layers[-1] = n_in  # Unidades en la salida en igual cantidad que la entrada
+        params.units_layers.append(n_in) # Unidades en la salida en igual cantidad que la entrada
         params.dropout_ratios = [0.0] * len(params.units_layers)  # Sin dropout por ser regresion
         self.sparsity_beta = sparsity_beta
         self.sparsity_param = sparsity_param
@@ -528,6 +543,7 @@ class AutoEncoder(NeuralNetwork):
                 layer.__dict__ = self.list_layers[l].__dict__.copy()
                 self.list_layers[l] = layer
 
+
 class StackedAutoencoder(NeuralNetwork):
 
     def __init__(self, params=None, list_layers=None, sparsity_beta=0, sparsity_param=0.05):
@@ -541,7 +557,7 @@ class StackedAutoencoder(NeuralNetwork):
     def _init_ae(self):
         for l in xrange(len(self.list_layers)):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
-            params = DeepLearningParams(self.params.units_layers[l:l+3], activation=self.params.activation,
+            params = DeepLearningParams(self.params.units_layers[l:l+2], activation=self.params.activation,
                                         layer_distributed=self.params.layer_distributed, dropout_ratios=None,
                                         classification=False, strength_l1=self.params.strength_l1,
                                         strength_l2=self.params.strength_l2)
@@ -556,6 +572,7 @@ class StackedAutoencoder(NeuralNetwork):
         labels_train = map(lambda lp: lp.label, train_ae)
         labels_valid = map(lambda lp: lp.label, valid_ae)
         for ae in self.list_layers:
+            print "Entrenando Autoencoder ", ae.params.units_layers
             ae.assert_regression()
             ae.fit(train_ae, valid_ae, criterions=criterions, mini_batch=mini_batch, parallelism=parallelism,
                    optimizer_params=optimizer_params, keep_best=keep_best)
