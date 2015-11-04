@@ -4,7 +4,7 @@ import dnn.model as mod
 from dnn.optimization import OptimizerParameters
 from dnn.stops import criterion
 import time
-from utils.data import split_data, label_data, StandardScaler, LabeledDataSet
+from utils.data import StandardScaler, LabeledDataSet
 from dnn.evaluation import ClassificationMetrics
 from context import sc
 
@@ -27,7 +27,6 @@ opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterio
 neural_net = mod.NeuralNetwork(net_params)
 
 print "Cargando base de datos ..."
-#data = sc.textFile("/home/leeandro04/Documentos/Datos/EEG/P300-Disabled/datalabels_cat5_FIRDec_Norm.dat").map(parsePoint)
 data = sc.textFile("/media/leeandro04/Data/Backup/P300/concatData/datalabels_cat5_FIRDec.dat").map(parsePoint)
 
 features = data.map(lambda (l,f): f).collect()

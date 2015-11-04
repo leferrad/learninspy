@@ -16,11 +16,12 @@ def parsePoint(line):
 # -----
 seed = 123
 print "Cargando base de datos ..."
-data = (sc.textFile("/home/leeandro04/Documentos/Datos/EEG/ImaginedSpeech-Brainliner/alldatalabel_cat3_Norm.dat")
-        .map(parsePoint))
+data = sc.textFile("/media/leeandro04/Data/Backup/P300/concatData/datalabels_cat5_FIRDec.dat").map(parsePoint)
+
 features = data.map(lambda (l,f): f).collect()
 labels = data.map(lambda (l,f): l).collect()
 print "Size de la data: ", len(features), " x ", len(features[0])
+
 
 # Uso clase hecha para manejo de DataSet (almacena en RDD)
 dataset = LabeledDataSet(zip(labels, features))
@@ -28,11 +29,11 @@ train, valid, test = dataset.split_data([.7, .2, .1])  # Particiono conjuntos
 
 # -----
 # Aplico PCA
-pca = PCA(train)
-train = pca.transform()
-valid = pca.transform(data=valid)
-test = pca.transform(data=test)
-k = pca.k
+#pca = PCA(train)
+#train = pca.transform()
+#valid = pca.transform(data=valid)
+#test = pca.transform(data=test)
+#k = pca.k
 
 # -----
 # Standarize data
@@ -47,13 +48,13 @@ train = train.collect()
 valid = valid.collect()
 test = test.collect()
 
-net_params = mod.DeepLearningParams(units_layers=[k, 25, 10, 3], activation='ReLU',
-                                    dropout_ratios=[0.5, 0.5, 0.0], classification=True, seed=seed)
+net_params = mod.DeepLearningParams(units_layers=[230, 100, 50, 20, 2], activation='ReLU',
+                                    dropout_ratios=[0.5, 0.5, 0.5, 0.0], classification=True, seed=seed)
 
-local_criterions = [criterion['MaxIterations'](50),
+local_criterions = [criterion['MaxIterations'](10),
                     criterion['AchieveTolerance'](0.90, key='hits')]
 
-ae_criterions = [criterion['Patience'](8, grow_offset=0.5),
+ae_criterions = [criterion['MaxIterations'](20),
                      criterion['AchieveTolerance'](0.95, key='hits')]
 
 ft_criterions = [criterion['MaxIterations'](20),
@@ -77,7 +78,7 @@ print 'Tiempo: ', t1f, 'Tasa de acierto final: ', hits_test
 
 print "Metricas: "
 labels = map(lambda lp: float(lp.label), test)
-metrics = ClassificationMetrics(zip(predict, labels), 3)
+metrics = ClassificationMetrics(zip(predict, labels), 2)
 print "Precision: ", metrics.precision()
 print "Recall: ", metrics.recall()
 print "Confusion: "

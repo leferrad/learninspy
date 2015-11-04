@@ -1,6 +1,7 @@
 __author__ = 'leferrad'
 
 import dnn.model as mod
+from dnn.autoencoder import StackedAutoencoder
 from dnn.optimization import OptimizerParameters
 from dnn.stops import criterion
 import time
@@ -30,7 +31,7 @@ opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterio
 
 print "Entrenando stacked autoencoder ..."
 t1 = time.time()
-sae = mod.StackedAutoencoder(net_params)
+sae = StackedAutoencoder(net_params)
 hits_valid = sae.fit(train, valid, mini_batch=20, parallelism=4,
                          criterions=global_criterions, optimizer_params=opt_params)
 hits_test = sae.evaluate(test, predictions=False)
