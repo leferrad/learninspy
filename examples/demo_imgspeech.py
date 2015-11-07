@@ -41,13 +41,13 @@ global_criterions = [criterion['Patience'](100, key='hits', grow_factor=1., grow
                                            threshold=0.02),
                      criterion['AchieveTolerance'](0.99, key='hits')]
 
-opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterions)
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_criterions)
 
 neural_net = mod.NeuralNetwork(net_params)
 # -----
 print "Entrenando red neuronal ..."
 t1 = time.time()
-hits_valid = neural_net.fit(train, valid, mini_batch=100, parallelism=4, criterions=global_criterions,
+hits_valid = neural_net.fit(train, valid, mini_batch=100, parallelism=4, stops=global_criterions,
                             optimizer_params=opt_params, keep_best=True)
 hits_test, predict = neural_net.evaluate(test, predictions=True)
 t1f = time.time() - t1

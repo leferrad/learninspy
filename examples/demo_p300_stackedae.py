@@ -10,6 +10,7 @@ from dnn.evaluation import ClassificationMetrics
 from context import sc
 from utils.feature import PCA
 
+
 def parsePoint(line):
     values = [float(x) for x in line.split(';')]
     return values[-1], values[0:-1]
@@ -51,25 +52,25 @@ test = test.collect()
 net_params = mod.DeepLearningParams(units_layers=[230, 100, 50, 20, 2], activation='ReLU',
                                     dropout_ratios=[0.5, 0.5, 0.5, 0.0], classification=True, seed=seed)
 
-local_criterions = [criterion['MaxIterations'](10),
-                    criterion['AchieveTolerance'](0.90, key='hits')]
+local_stops = [criterion['MaxIterations'](10),
+               criterion['AchieveTolerance'](0.90, key='hits')]
 
-ae_criterions = [criterion['MaxIterations'](20),
-                     criterion['AchieveTolerance'](0.95, key='hits')]
+ae_stops = [criterion['MaxIterations'](20),
+            criterion['AchieveTolerance'](0.95, key='hits')]
 
-ft_criterions = [criterion['MaxIterations'](20),
-                     criterion['AchieveTolerance'](0.95, key='hits')]
+ft_stops = [criterion['MaxIterations'](20),
+            criterion['AchieveTolerance'](0.95, key='hits')]
 
-opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterions)
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
 
 print "Entrenando stacked autoencoder ..."
 t1 = time.time()
 sae = StackedAutoencoder(net_params)
 hits_valid = sae.fit(train, valid, mini_batch=100, parallelism=4,
-                     criterions=ae_criterions, optimizer_params=opt_params)
+                     stops=ae_stops, optimizer_params=opt_params)
 
 print "Ajuste fino ..."
-hits_valid = sae.finetune(train, valid, mini_batch=100, parallelism=4, criterions=ft_criterions,
+hits_valid = sae.finetune(train, valid, mini_batch=100, parallelism=4, criterions=ft_stops,
                           optimizer_params=opt_params)
 hits_test, predict = sae.evaluate(test, predictions=True)
 t1f = time.time() - t1

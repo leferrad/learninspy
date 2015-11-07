@@ -50,25 +50,25 @@ test = test.collect()
 net_params = mod.DeepLearningParams(units_layers=[k, 25, 10, 3], activation='ReLU',
                                     dropout_ratios=[0.5, 0.5, 0.0], classification=True, seed=seed)
 
-local_criterions = [criterion['MaxIterations'](50),
+local_stops = [criterion['MaxIterations'](50),
                     criterion['AchieveTolerance'](0.90, key='hits')]
 
-ae_criterions = [criterion['Patience'](8, grow_offset=0.5),
+ae_stops = [criterion['Patience'](8, grow_offset=0.5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
 
-ft_criterions = [criterion['MaxIterations'](20),
+ft_stops = [criterion['MaxIterations'](20),
                      criterion['AchieveTolerance'](0.95, key='hits')]
 
-opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterions)
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
 
 print "Entrenando stacked autoencoder ..."
 t1 = time.time()
 sae = StackedAutoencoder(net_params)
 hits_valid = sae.fit(train, valid, mini_batch=100, parallelism=4,
-                     criterions=ae_criterions, optimizer_params=opt_params)
+                     stops=ae_stops, optimizer_params=opt_params)
 
 print "Ajuste fino ..."
-hits_valid = sae.finetune(train, valid, mini_batch=100, parallelism=4, criterions=ft_criterions,
+hits_valid = sae.finetune(train, valid, mini_batch=100, parallelism=4, criterions=ft_stops,
                           optimizer_params=opt_params)
 hits_test, predict = sae.evaluate(test, predictions=True)
 t1f = time.time() - t1

@@ -8,6 +8,7 @@ from utils.data import StandardScaler, LabeledDataSet
 from dnn.evaluation import ClassificationMetrics
 from context import sc
 
+
 def parsePoint(line):
     values = [float(x) for x in line.split(';')]
     return values[-1], values[0:-1]
@@ -16,13 +17,13 @@ seed = 123
 net_params = mod.DeepLearningParams(units_layers=[230, 150, 20, 2], activation='Softplus',
                                         dropout_ratios=[0.5, 0.5, 0.0], classification=True, seed=seed)
 
-local_criterions = [criterion['MaxIterations'](20),
-                    criterion['AchieveTolerance'](0.99, key='hits')]
+local_stops = [criterion['MaxIterations'](20),
+               criterion['AchieveTolerance'](0.99, key='hits')]
 
-global_criterions = [criterion['MaxIterations'](10),
-                     criterion['AchieveTolerance'](0.99, key='hits')]
+global_stops = [criterion['MaxIterations'](10),
+                criterion['AchieveTolerance'](0.99, key='hits')]
 
-opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterions)
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
 
 neural_net = mod.NeuralNetwork(net_params)
 
@@ -50,7 +51,7 @@ test = test.collect()
 
 print "Entrenando red neuronal ..."
 t1 = time.time()
-hits_valid = neural_net.fit(train, valid, mini_batch=100, parallelism=4, criterions=global_criterions,
+hits_valid = neural_net.fit(train, valid, mini_batch=100, parallelism=4, stops=global_stops,
                             optimizer_params=opt_params)
 hits_test, predict = neural_net.evaluate(test, predictions=True)
 t1f = time.time() - t1

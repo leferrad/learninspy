@@ -13,10 +13,10 @@ net_params = mod.DeepLearningParams(units_layers=[4, 4, 3], activation='Softplus
                                     dropout_ratios=[0.5, 0.0], classification=True)
 sae_params = mod.DeepLearningParams(units_layers=[4, 4, 3], activation='Tanh')
 
-local_criterions = [criterion['MaxIterations'](50),
+local_stops = [criterion['MaxIterations'](50),
                     criterion['AchieveTolerance'](0.99, key='hits')]
 
-global_criterions = [criterion['MaxIterations'](10),
+global_stops = [criterion['MaxIterations'](10),
                      criterion['AchieveTolerance'](0.99, key='hits')]
 
 print "Cargando base de datos ..."
@@ -27,18 +27,18 @@ print "Size de la data: ", features.shape
 
 train, valid, test = split_data(label_data(features, labels), [.7, .2, .1])
 
-opt_params = OptimizerParameters(algorithm='Adadelta', criterions=local_criterions)
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
 
 print "Entrenando stacked autoencoder ..."
 t1 = time.time()
 sae = StackedAutoencoder(net_params)
 hits_valid = sae.fit(train, valid, mini_batch=20, parallelism=4,
-                         criterions=global_criterions, optimizer_params=opt_params)
+                         stops=global_stops, optimizer_params=opt_params)
 hits_test = sae.evaluate(test, predictions=False)
 print "Tasa de aciertos de SAE en test: ", hits_test
 
 print "Ajuste fino ..."
-hits_valid = sae.finetune(train, valid, mini_batch=50, parallelism=4, criterions=global_criterions,
+hits_valid = sae.finetune(train, valid, mini_batch=50, parallelism=4, criterions=global_stops,
                           optimizer_params=opt_params)
 hits_test, predict = sae.evaluate(test, predictions=True)
 t1f = time.time() - t1
