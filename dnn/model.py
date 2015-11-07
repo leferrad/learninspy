@@ -15,15 +15,12 @@ from stops import criterion
 from neurons import DistributedNeurons, LocalNeurons
 from context import sc
 from evaluation import ClassificationMetrics, RegressionMetrics
-from utils.data import label_data
-import utils.util as util
 #from utils.util import LearninspyLogger
 
 # Librerias de Python
 import copy
 import checks
 import cPickle as pickle
-import time
 
 class NeuralLayer(object):
 
@@ -176,7 +173,6 @@ class DeepLearningParams:
         self.strength_l1 = strength_l1
         self.strength_l2 = strength_l2
         self.rng = np.random.RandomState(seed)
-
 
 
 class NeuralNetwork(object):
@@ -356,43 +352,35 @@ class NeuralNetwork(object):
     def train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None):
         """
 
-        :param train_bc: sc.broadcast
+        :param train_bc:
         :param mini_batch:
-        :param epochs:
         :param parallelism:
         :param optimizer_params:
         :return:
         """
-        # TODO: ver improve_patience en deeplearning.net
-        # Funciones a usar en los RDD
+        # Funcion para minimizar funcion de costo sobre cada modelo del RDD
         minimizer = opt.optimize
-        mixer = opt.mix_models
         # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
         seeds = list(self.params.rng.randint(500, size=parallelism))
         # Paralelizo modelo actual en los nodos dados por parallelism
         models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
         # Minimizo el costo de las redes en paralelo
         results = models_rdd.map(lambda (model, seed):
-                                 minimizer(model, train_bc.value, mini_batch, optimizer_params, seed)).cache()
+                                 minimizer(model, train_bc.value, mini_batch, optimizer_params, seed))
+        # Junto modelos entrenados en paralelo, en base a un criterio de ponderacion sobre un valor objetivo
         if self.params.classification is True:
-            layers = (results.map(lambda res: [layer * res['hits'] for layer in res['model']])
-                             .reduce(lambda left, right: mixer(left, right)))
-            # Se realiza un promedio ponderado por la tasa de aciertos en el train
-            # TODO: y si todas las tasas son 0.0 ?? se divide por 0?!
-            total_hits = results.map(lambda res: res['hits']).sum()
-            final_list_layers = map(lambda layer: layer / total_hits, layers)
+            list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
         else:
-            layers = (results.map(lambda res: [layer for layer in res['model']])
-                             .reduce(lambda left, right: mixer(left, right)))
-            # Se realiza un promedio sin ponderacion
-            final_list_layers = map(lambda layer: layer / parallelism, layers)
-        self.list_layers = copy.copy(final_list_layers)
-        results.unpersist()  # Saco de cache
+            # Se realiza un promedio de hits sin ponderacion TODO cambiar esta distincion
+            list_layers = opt.merge_models(results, criter='avg', goal='hits')
+        # Copio el resultado de las capas mezcladas en el modelo actual
+        self.list_layers = copy.copy(list_layers)
+        del results, list_layers, models_rdd
         # Evaluo tasa de aciertos de entrenamiento
         hits = self.evaluate(train_bc.value)
         return hits
 
-    def fit(self, train, valid=None, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
+    def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
         train_bc = sc.broadcast(train)
@@ -402,11 +390,11 @@ class NeuralNetwork(object):
             best_model = self.list_layers
             best_valid = 0.0
             best_train = 0.0
-        if criterions is None:
-            criterions = [criterion['MaxIterations'](5),
-                          criterion['AchieveTolerance'](0.95, key='hits')]
+        if stops is None:
+            stops = [criterion['MaxIterations'](5),
+                     criterion['AchieveTolerance'](0.95, key='hits')]
         epoch = 0
-        while self.check_stop(epoch, criterions) is False:
+        while self.check_stop(epoch, stops) is False:
             self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
             self.hits_valid = self.evaluate(valid_bc.value)
             print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid

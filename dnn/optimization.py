@@ -8,8 +8,10 @@ from neurons import LocalNeurons
 from stops import criterion
 import copy
 
+
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', options=None, criterions=None):
+    def __init__(self, algorithm='Adadelta', options=None, stops=None,
+                 merge_criter='w_avg', merge_goal='hits'):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
@@ -17,15 +19,14 @@ class OptimizerParameters:
                 options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standart'}
         self.options = options
         self.algorithm = algorithm
-        if criterions is None:
-            criterions = [criterion['MaxIterations'](10),
-                          criterion['AchieveTolerance'](0.99, key='hits')]
-        self.criterions = criterions
+        if stops is None:
+            stops = [criterion['MaxIterations'](10),
+                     criterion['AchieveTolerance'](0.99, key='hits')]
+        self.stops = stops
+        self.merge = {'criter': merge_criter, 'goal': merge_goal}
 
 
 
-
-# https://github.com/vitruvianscience/OpenDeep/blob/master/opendeep/optimization/optimizer.py
 class Optimizer(object):
     """
 
@@ -70,9 +71,9 @@ class Optimizer(object):
 
     def check_stop(self, check_all=False):
         if check_all is True:
-            stop = all(c(self.results()) for c in self.parameters.criterions)
+            stop = all(c(self.results()) for c in self.parameters.stops)
         else:
-            stop = any(c(self.results()) for c in self.parameters.criterions)
+            stop = any(c(self.results()) for c in self.parameters.stops)
         return stop
 
 
@@ -258,3 +259,35 @@ def mix_models(left, right):
         b = right[l].get_bias()
         left[l].update(w, b)  # Update suma el w y el b
     return left
+
+
+def merge_models(results_rdd, criter='w_avg', goal='hits'):
+    """
+    Funcion para hacer merge de modelos, en base a un criterio de ponderacion sobre un valor objetivo
+    :param results_rdd:
+    :param criter:
+    :param goal:
+    :return:
+    """
+    assert goal == 'hits' or goal == 'cost', "Solo se puede ponderar por hits o cost!"
+    if criter == 'avg':
+        # Promedio sin ponderacion
+        merge_fun = lambda res: [layer for layer in res['model']]
+        weights = lambda res: 1
+    elif criter == 'w_avg':
+        # Promedio con ponderacion lineal
+        # TODO: y si todas las tasas son 0.0 ?? se divide por 0?!
+        merge_fun = lambda res: [layer * res[goal] for layer in res['model']]
+        weights = lambda res: res[goal]
+    elif criter == 'log_avg':
+        # Promedio con ponderacion logaritmica
+        merge_fun = lambda res: [layer * np.log(res[goal]) for layer in res['model']]
+        weights = lambda res: np.log(res[goal])
+    else:
+        raise ValueError('No existe tal criterio para merge!')
+    # Mezclo modelos con la funcion de merge definida
+    layers = (results_rdd.map(merge_fun).reduce(lambda left, right: mix_models(left, right)))
+    total = results_rdd.map(weights).sum()
+    # Promedio sobre todas las capas
+    final_list_layers = map(lambda layer: layer / total, layers)
+    return final_list_layers

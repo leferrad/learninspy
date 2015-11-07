@@ -102,7 +102,7 @@ class StackedAutoencoder(NeuralNetwork):
             self.list_layers[l] = AutoEncoder(params=params, sparsity_beta=self.sparsity_beta,
                                               sparsity_param=self.sparsity_param)
 
-    def fit(self, train, valid=None, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
+    def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
         # Inicializo Autoencoders
         train_ae = train
@@ -112,7 +112,7 @@ class StackedAutoencoder(NeuralNetwork):
         for ae in self.list_layers:
             print "Entrenando Autoencoder ", ae.params.units_layers
             ae.assert_regression()
-            ae.fit(train_ae, valid_ae, criterions=criterions, mini_batch=mini_batch, parallelism=parallelism,
+            ae.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
                    optimizer_params=optimizer_params, keep_best=keep_best)
             # Siguen siendo importantes los labels para el sample balanceado por clases
             train_ae = label_data(ae.encode(train_ae), labels_train)
@@ -124,7 +124,7 @@ class StackedAutoencoder(NeuralNetwork):
                  keep_best=False):
         list_layers = map(lambda ae: ae.encoder_layer(), self.list_layers)  # Tomo solo la capa de encoder de cada ae
         nn = NeuralNetwork(self.params, list_layers=list_layers)
-        hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, criterions=criterions,
+        hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, stops=criterions,
                             optimizer_params=optimizer_params)
         for l in xrange(len(self.list_layers)):
             # Copio capa con ajuste fino al autoencoder
