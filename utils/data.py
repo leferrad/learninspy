@@ -105,8 +105,11 @@ class LabeledDataSet(object):
         sets = [LabeledDataSet(data) for data in sets]
         return sets
 
-    def collect(self):
-        return self.data.collect()
+    def collect(self, unpersist=True):
+        data_list = self.data.collect()
+        if unpersist is True:
+            self.data.unpersist()
+        return data_list
 
 
 def label_to_vector(label, n_classes):

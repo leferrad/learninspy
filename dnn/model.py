@@ -365,8 +365,9 @@ class NeuralNetwork(object):
         # Paralelizo modelo actual en los nodos dados por parallelism
         models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
         # Minimizo el costo de las redes en paralelo
+        # NOTA: cache() es importante porque se traza varias veces el grafo de acciones sobre el RDD results
         results = models_rdd.map(lambda (model, seed):
-                                 minimizer(model, train_bc.value, mini_batch, optimizer_params, seed))
+                                 minimizer(model, train_bc.value, mini_batch, optimizer_params, seed)).cache()
         # Junto modelos entrenados en paralelo, en base a un criterio de ponderacion sobre un valor objetivo
         if self.params.classification is True:
             list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
@@ -375,7 +376,9 @@ class NeuralNetwork(object):
             list_layers = opt.merge_models(results, criter='avg', goal='hits')
         # Copio el resultado de las capas mezcladas en el modelo actual
         self.list_layers = copy.copy(list_layers)
-        del results, list_layers, models_rdd
+        # Quito de cache
+        results.unpersist()
+        models_rdd.unpersist()
         # Evaluo tasa de aciertos de entrenamiento
         hits = self.evaluate(train_bc.value)
         return hits
