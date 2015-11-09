@@ -281,8 +281,8 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
         weights = lambda res: res[goal]
     elif criter == 'log_avg':
         # Promedio con ponderacion logaritmica
-        merge_fun = lambda res: [layer * np.log(res[goal]) for layer in res['model']]
-        weights = lambda res: np.log(res[goal])
+        merge_fun = lambda res: [layer * (1.0 + np.log(res[goal])) for layer in res['model']]
+        weights = lambda res: (1.0 +np.log(res[goal]))
     else:
         raise ValueError('No existe tal criterio para merge!')
     # Mezclo modelos con la funcion de merge definida
