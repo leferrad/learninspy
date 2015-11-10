@@ -9,14 +9,16 @@ import matplotlib.gridspec as gridspec
 from dnn.activations import fun_activation, fun_activation_d
 
 
-def plot_matrix(matrix, xlabel='X', ylabel='Y',  name='Matrix', values=True):
+def plot_matrix(matrix, ax=None, values=True, show=True):
 
         m, n = matrix.shape
         total_row = map(lambda row: sum(row), matrix)
 
-        # Configuro el ploteo
-        fig, ax = plt.subplots()
-        ax.set_title(name, color='b')
+        if ax is None:
+            # Configuro el ploteo
+            fig, ax = plt.subplots()
+            ax.set_title('Matrix', color='b')
+            plt.setp(ax, xticks=range(n), yticks=range(m), xlabel='X', ylabel='Y')
 
         # Matriz de confusion final normalizada (para pintar las celdas)
         normalized = map(lambda (row, tot): [r / (tot * 1.0) for r in row], zip(matrix, total_row))
@@ -30,17 +32,48 @@ def plot_matrix(matrix, xlabel='X', ylabel='Y',  name='Matrix', values=True):
                     ax.annotate(str(matrix[x][y]), xy=(y, x), horizontalalignment='center', verticalalignment='center')
 
         #fig.colorbar(res, fraction=0.05)
-        plt.setp(ax, xticks=range(n), yticks=range(m), xlabel=xlabel, ylabel=ylabel)
-        fig.tight_layout()
+        #plt.tight_layout()
         #mpld3.plugins.clear(fig)
-        plt.show()
+        if show is True:
+            plt.show()
         return
 
 
 def plot_confusion_matrix(matrix):
-    plot_matrix(matrix, xlabel='Actual', ylabel='Predicted', name='Confusion Matrix', values=True)
+    m, n = matrix.shape
+    fig, ax = plt.subplots()
+    ax.set_title('Confusion Matrix', color='b')
+    plt.setp(ax, xticks=range(n), yticks=range(m), xlabel='Actual', ylabel='Predicted')
+    plot_matrix(matrix, ax, values=True)
     return
 
+
+def plot_neurons(network):
+    n_layers = len(network.list_layers)
+    # Configuro el ploteo
+    gs = gridspec.GridSpec(n_layers, 2)  # N capas, 2 graficos (W, b)
+    for l in xrange(len(network.list_layers)):
+        layer = network.list_layers[l]
+
+        # Preparo plot de W
+        ax_w = plt.subplot(gs[l, 0])
+        ax_w.set_title('W'+str(l+1), color='r')
+        plt.setp(ax_w, xlabel='j', ylabel='i')
+        ax_w.get_xaxis().set_visible(False)
+        ax_w.get_yaxis().set_visible(False)
+
+        # Preparo plot de b
+        ax_b = plt.subplot(gs[l, 1])
+        ax_b.set_title('b'+str(l+1), color='r')
+        plt.setp(ax_b, ylabel='i')
+        ax_b.get_xaxis().set_visible(False)
+        ax_b.get_yaxis().set_visible(False)
+
+        # Ploteo
+        plot_matrix(layer.weights.matrix(), ax_w, values=False)
+        plot_matrix(layer.bias.matrix().T, ax_b, values=False)
+
+    #plt.tight_layout()
 
 def plot_activations(params):
     # Si la activacion es la misma para todas las capas, la ploteo una sola vez
