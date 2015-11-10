@@ -65,7 +65,7 @@ class LabeledDataSet(object):
             if type(data.take(2)[0]) is LabeledPoint:
                 self.with_lp = True
         self.data = data
-        if self.with_lp is False:  # Por ahora que quede etiquetado con LabeledPoints
+        if self.with_lp is False and self.data is not None:  # Por ahora que quede etiquetado con LabeledPoints
             self.labeled_point()
 
     # TODO ver si conviene que sean properties
@@ -94,10 +94,12 @@ class LabeledDataSet(object):
 
     def labeled_point(self):
         if self.with_lp is False:
-            self.data = self.data.map(lambda (l, f): LabeledPoint(l, f))
+            if self.data is not None:
+                self.data = self.data.map(lambda (l, f): LabeledPoint(l, f))
             self.with_lp = True
         else:
-            self.data = self.data.map(lambda lp: (lp.label, lp.features))
+            if self.data is not None:
+                self.data = self.data.map(lambda lp: (lp.label, lp.features))
             self.with_lp = False
 
     def split_data(self, fractions, seed=123):

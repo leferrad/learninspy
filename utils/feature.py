@@ -53,8 +53,8 @@ class PCA(object):
             xrot = LabeledDataSet(zip(label, xrot.tolist()))
         return xrot
 
-    def _optimal_k(self, threshold=0.95):
-        # Barrido de k hasta cubrir un threshold de varianza (e.g 85%)
+    def _optimal_k(self, threshold=0.98):
+        # Barrido de k hasta cubrir un threshold de varianza (e.g 95%)
         var_total = sum(self.s)
         k_opt = 1
         for k in xrange(1, len(self.s)):
