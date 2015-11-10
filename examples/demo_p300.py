@@ -23,7 +23,7 @@ local_stops = [criterion['MaxIterations'](20),
 global_stops = [criterion['MaxIterations'](10),
                 criterion['AchieveTolerance'](0.99, key='hits')]
 
-opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops, merge_criter='log_avg')
 
 neural_net = mod.NeuralNetwork(net_params)
 
