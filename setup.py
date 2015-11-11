@@ -11,7 +11,7 @@ setup(
 
     include_package_data=True,
 
-    packages=["app"],
+    packages=["learninspy"],
     scripts=[],
 
     license="LICENSE",
