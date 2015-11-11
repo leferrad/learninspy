@@ -1,24 +1,22 @@
 __author__ = 'leferrad'
 
-# Dependencias externas
-from sklearn import datasets
-
 # Librerias de Python
 import time
+import os
 
 # Librerias internas
-import dnn.model as mod
-from dnn.optimization import OptimizerParameters
-from dnn.stops import criterion
-from utils.data import StandardScaler, LabeledDataSet
-from dnn.evaluation import ClassificationMetrics
+import learninspy.dnn.model as mod
+from learninspy.dnn.optimization import OptimizerParameters
+from learninspy.dnn.stops import criterion
+from learninspy.utils.data import StandardScaler, LabeledDataSet
+from learninspy.dnn.evaluation import ClassificationMetrics
 
 
 net_params = mod.DeepLearningParams(units_layers=[4, 10, 5, 3], activation='Softplus',
                                     dropout_ratios=[0.5, 0.5, 0.0], classification=True)
 
 local_stops = [criterion['MaxIterations'](50),
-               criterion['AchieveTolerance'](0.99, key='hits')]
+               criterion['AchieveTolerance'](0.95, key='hits')]
 
 global_stops = [criterion['MaxIterations'](5),
                 criterion['AchieveTolerance'](0.99, key='hits')]
@@ -29,13 +27,15 @@ opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
 neural_net = mod.NeuralNetwork(net_params)
 
 print "Cargando base de datos ..."
-data = datasets.load_iris()
-features = data.data
-labels = data.target
-print "Size de la data: ", features.shape
+# data = datasets.load_iris()
+# features = data.data
+# labels = data.target
+dataset = LabeledDataSet()
+dataset.load_file(os.curdir+'/datasets/iris.csv')
+print "Size de la data: "
+print dataset.shape
 
-# Uso clase hecha para manejo de DataSet (almacena en RDD)
-dataset = LabeledDataSet(zip(labels, features))
+print "Creando conjuntos de train, valid y test ..."
 train, valid, test = dataset.split_data([.7, .2, .1])  # Particiono conjuntos
 # Standarize data
 std = StandardScaler()

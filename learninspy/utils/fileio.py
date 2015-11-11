@@ -4,12 +4,13 @@ __author__ = 'leferrad'
 from scipy.io import loadmat, savemat
 
 # Librerias internas
-from context import sc
+from learninspy.context import sc
 
 text_extensions = ['.dat', '.txt', '.csv']
 
 
 def parse_point(line):
+    # TODO dar posibilidad de cambiar separador
     values = [float(x) for x in line.split(';')]
     return values[-1], values[0:-1]
 

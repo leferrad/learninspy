@@ -1,10 +1,10 @@
 __author__ = 'leferrad'
 
-
+# Dependencias externas
 import numpy as np
 
-#TODO plotear en una parte del notebook la funcion de activacion elegida
-#TODO cambiar nombre de ReLU a rectifier ? ya que me refiero a la funcion, no a la unidad
+
+# TODO cambiar nombre de ReLU a rectifier ? ya que me refiero a la funcion, no a la unidad
 
 def tanh(x):
     return np.tanh(x)
@@ -67,18 +67,19 @@ def identity_d(x):
     return 1
 
 
-def sin(x):
-    return np.sin(x)
-
-
-def sin_d(x):
-    return np.cos(x)
+# TODO definirlas mejor
+# def sin(x):
+#     return np.sin(x)
+#
+#
+# def sin_d(x):
+#     return np.cos(x)
 
 
 fun_activation = {'Tanh': tanh, 'Sigmoid': sigmoid, 'ReLU': relu, 'Softplus': softplus,
-                                'Identity': identity, 'Sin': sin, 'LeakyReLU': lrelu}
+                                'Identity': identity, 'LeakyReLU': lrelu}
 fun_activation_d = {'Tanh': tanh_d, 'Sigmoid': sigmoid_d, 'ReLU': relu_d, 'Softplus': softplus_d,
-                                    'Identity': identity_d, 'Sin': sin_d, 'LeakyReLU': lrelu_d}
+                                    'Identity': identity_d, 'LeakyReLU': lrelu_d}
 
 
 

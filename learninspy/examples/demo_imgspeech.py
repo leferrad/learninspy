@@ -1,13 +1,15 @@
 __author__ = 'leferrad'
 
-import dnn.model as mod
-from dnn.optimization import OptimizerParameters
-from dnn.stops import criterion
 import time
-from utils.data import split_data, label_data
-from dnn.evaluation import ClassificationMetrics
-from context import sc
+
+from learninspy import dnn as mod
+from learninspy.dnn.optimization import OptimizerParameters
+from learninspy.dnn.stops import criterion
+from learninspy.utils.data import split_data, label_data
+from learninspy.dnn.evaluation import ClassificationMetrics
+from learninspy.context import sc
 from utils.feature import PCA
+
 
 def parsePoint(line):
     values = [float(x) for x in line.split(';')]

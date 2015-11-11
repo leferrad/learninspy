@@ -1,10 +1,10 @@
 __author__ = 'leferrad'
 
-
+# Dependencias externas
 import numpy as np
-import pyspark.rdd
-from pyspark.mllib.regression import LabeledPoint
-from utils.data import LabeledDataSet
+
+# Librerias internas
+from learninspy.utils.data import LabeledDataSet
 
 
 class PCA(object):

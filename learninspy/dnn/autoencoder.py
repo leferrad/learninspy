@@ -4,9 +4,9 @@ __author__ = 'leferrad'
 import numpy as np
 
 # Librerias de Learninspy
-from evaluation import ClassificationMetrics, RegressionMetrics
-from utils.data import label_data
-from model import NeuralNetwork, DeepLearningParams, RegressionLayer, ClassificationLayer
+from learninspy.dnn.evaluation import RegressionMetrics
+from learninspy.utils.data import label_data
+from learninspy.dnn.model import NeuralNetwork, DeepLearningParams, RegressionLayer, ClassificationLayer
 
 
 
@@ -43,7 +43,7 @@ class AutoEncoder(NeuralNetwork):
         nabla_w[-1] = delta.outer(a[-2])
         nabla_b[-1] = delta
         for l in xrange(2, num_layers + 1):
-            w_t = self.list_layers[-l + 1].weights_T
+            w_t = self.list_layers[-l + 1].weights.transpose()
             delta = w_t.mul_array(delta).mul_elemwise(d_a[-l])
             nabla_w[-l] = delta.outer(a[-l - 1])
             nabla_b[-l] = delta
@@ -51,7 +51,7 @@ class AutoEncoder(NeuralNetwork):
 
     def evaluate(self, data, predictions=False):
         actual = map(lambda lp: lp.features, data)  # Tiene que aprender a reconstruir la entrada
-        predicted = map(lambda lp: self.predict(lp.features).matrix().T, data)  # TODO notar que tuve q transponer
+        predicted = map(lambda lp: self.predict(lp.features).matrix.T, data)  # TODO notar que tuve q transponer
         metric = RegressionMetrics(zip(predicted, actual))
         hits = metric.r2()
         if predictions is True:  # Devuelvo ademas el vector de predicciones
@@ -65,7 +65,7 @@ class AutoEncoder(NeuralNetwork):
 
     def encode(self, x):
         if isinstance(x, list):
-            x = map(lambda lp: self.encode(lp.features).matrix(), x)
+            x = map(lambda lp: self.encode(lp.features).matrix, x)
         else:
             x = self.encoder_layer().output(x, grad=False)   # Solo la salida de la capa oculta
         return x

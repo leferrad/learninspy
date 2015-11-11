@@ -10,9 +10,9 @@ from pyspark.mllib.feature import StandardScaler as StdSc
 import random
 
 # Librerias internas
-import utils.fileio as fileio
-from context import sc
-from common.asserts import assert_features_label
+import learninspy.utils.fileio as fileio
+from learninspy.context import sc
+from learninspy.common.asserts import assert_features_label
 
 
 class StandardScaler(object):
@@ -112,6 +112,15 @@ class LabeledDataSet(object):
         if unpersist is True:
             self.data.unpersist()
         return data_list
+
+    @property
+    def shape(self):
+        shape = None
+        if self.data is not None:
+            rows = self.data.count()
+            cols = len(self.features.take(1)[0].toArray())
+            shape = (rows, cols)
+        return shape
 
 
 def label_to_vector(label, n_classes):

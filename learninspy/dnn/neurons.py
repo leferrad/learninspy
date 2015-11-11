@@ -1,9 +1,11 @@
 __author__ = 'leferrad'
 
-import numpy as np
+# Dependencias externas
 import pyspark.rdd
-from context import sc as sc
-from common.asserts import *
+
+# Dependencias internas
+from learninspy.context import sc as sc
+from learninspy.common.asserts import *
 
 
 class DistributedNeurons(object):
@@ -26,37 +28,37 @@ class DistributedNeurons(object):
     # OPERADORES:
 
     def __mul__(self, other):
-        return DistributedNeurons(self.matRDD.map(lambda x: x * other), self.shape())
+        return DistributedNeurons(self.matRDD.map(lambda x: x * other), self.shape)
 
     def __div__(self, other):
-        return DistributedNeurons(self.matRDD.map(lambda x: x / other), self.shape())
+        return DistributedNeurons(self.matRDD.map(lambda x: x / other), self.shape)
 
     def __add__(self, other):
         rdd = other.matrix()
-        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x + y), self.shape())
+        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x + y), self.shape)
 
     def __sub__(self, other):
         rdd = other.matrix()
-        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x - y), self.shape())
+        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x - y), self.shape)
 
     def __pow__(self, power, modulo=None):
-        return DistributedNeurons(self.matRDD.map(lambda x: x ** power), self.shape())
+        return DistributedNeurons(self.matRDD.map(lambda x: x ** power), self.shape)
 
     # TRANSFORMACIONES:
     @assert_typearray
     @assert_samedimension
     def mul_elemwise(self, rdd):
         rdd = rdd.matrix()
-        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x * y), self.shape())
+        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x * y), self.shape)
 
     @assert_typearray
     @assert_samedimension
     def sum_array(self, rdd):
         rdd = rdd.matrix()
-        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x + y), self.shape())
+        return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x + y), self.shape)
 
     def activation(self, fun):
-        return DistributedNeurons(self.matRDD.map(lambda x: fun(x)), self.shape())
+        return DistributedNeurons(self.matRDD.map(lambda x: fun(x)), self.shape)
 
     @assert_typearray
     @assert_samedimension
@@ -65,17 +67,17 @@ class DistributedNeurons(object):
         n = self.count()
         error = self.matRDD.zip(y).map(lambda (o, t): t - o)
         errorDiv = error.map(lambda val: val * (2.0 / n))
-        return DistributedNeurons(errorDiv, self.shape())
+        return DistributedNeurons(errorDiv, self.shape)
 
     def dropout(self, p):
         # Aplicable para vectores unicamente
-        index = np.random.rand(*self.shape()) > p
+        index = np.random.rand(*self.shape) > p
         indexRDD = sc.parallelize(index)  # Vector RDD de bools, que indican que valor "tirar"
         # Notar que se escala el resultado diviendo por p
         # Retorno arreglo con dropout, y el vector con indices de las unidades "tiradas"
         zipped = self.matRDD.zip(indexRDD)
         dropped = zipped.map(lambda (x, y): (x * y) / p)
-        return DistributedNeurons(dropped, self.shape()), indexRDD
+        return DistributedNeurons(dropped, self.shape), indexRDD
 
     def zip(self, rdd):
         return self.matRDD.zip(rdd)
@@ -137,12 +139,12 @@ class DistributedNeurons(object):
     def l1(self):
         gradient = self.matRDD.map(lambda x: np.sign(x))
         cost = self.matRDD.map(lambda x: abs(x).sum()).sum()
-        return cost, DistributedNeurons(gradient, self.shape())
+        return cost, DistributedNeurons(gradient, self.shape)
 
     def l2(self):
         gradient = self.matRDD
         cost = self.matRDD.map(lambda x: (x ** 2).sum()).sum()
-        return cost, DistributedNeurons(gradient, self.shape())
+        return cost, DistributedNeurons(gradient, self.shape)
 
     def loss(self, fun, y):
         y = DistributedNeurons(y, y.shape)
@@ -169,7 +171,7 @@ class DistributedNeurons(object):
         matexp = matminus.map(lambda o: exp(o))
         sumexp = matexp.sum()
         softmat = matexp.map(lambda o: o / sumexp)
-        return DistributedNeurons(softmat, self.shape())
+        return DistributedNeurons(softmat, self.shape)
 
     def collect(self):
         return np.array(self.matRDD.collect()).T  # Se transpone para retornar por filas
@@ -187,19 +189,19 @@ class DistributedNeurons(object):
         self.matRDD.unpersist()
         return
 
+    @property
     def shape(self):
         return self.rows, self.cols
 
     def count(self):
-        rows, cols = self.shape()
+        rows, cols = self.shape
         return rows * cols
 
     def matrix(self):
         return self.matRDD
 
 
-#----------------------------------------------------------------------------------
-#----------------------------------------------------------------------------------
+#----------------------------
 
 class LocalNeurons(object):
     # Vectores son guardados como vectores columna
@@ -211,7 +213,7 @@ class LocalNeurons(object):
             shape += (1,)  # Le agrego la dimension que le falta
         if isinstance(mat, list):
             mat = np.array(mat)
-        self.mat = mat.reshape(shape)
+        self.matrix = mat.reshape(shape)
         self.rows = shape[0]
         self.cols = shape[1]
 
@@ -219,60 +221,60 @@ class LocalNeurons(object):
 
     def __mul__(self, other):
         if isinstance(other, LocalNeurons):
-            other = other.matrix()
-        return LocalNeurons(self.mat * other, self.shape())
+            other = other.matrix
+        return LocalNeurons(self.matrix * other, self.shape)
 
     def __div__(self, other):
         if isinstance(other, LocalNeurons):
-            other = other.matrix()
-        return LocalNeurons(self.mat / other, self.shape())
+            other = other.matrix
+        return LocalNeurons(self.matrix / other, self.shape)
 
     def __sub__(self, other):
         if isinstance(other, LocalNeurons):
-            other = other.matrix()
-        return LocalNeurons(self.mat - other, self.shape())
+            other = other.matrix
+        return LocalNeurons(self.matrix - other, self.shape)
 
     def __add__(self, other):
         if isinstance(other, LocalNeurons):
-            other = other.matrix()
-        return LocalNeurons(self.mat + other, self.shape())
+            other = other.matrix
+        return LocalNeurons(self.matrix + other, self.shape)
 
     def __pow__(self, power, modulo=None):
-        return LocalNeurons(self.mat ** power, self.shape())
+        return LocalNeurons(self.matrix ** power, self.shape)
 
     def __sizeof__(self):
-        return self.mat.nbytes + 88
+        return self.matrix.nbytes + 88
 
     # TRANSFORMACIONES:
     #@assert_samedimension
     def mul_elemwise(self, array):
         if isinstance(array, LocalNeurons):
-            array = array.matrix()
-        return LocalNeurons(np.multiply(self.mat, array), self.shape())
+            array = array.matrix
+        return LocalNeurons(np.multiply(self.matrix, array), self.shape)
 
     #@assert_samedimension
     def sum_array(self, array):
         if isinstance(array, LocalNeurons):
-            array = array.matrix()
-        return LocalNeurons(self.mat + array, self.shape())
+            array = array.matrix
+        return LocalNeurons(self.matrix + array, self.shape)
 
     def activation(self, fun):
-        return LocalNeurons(map(lambda x: fun(x), self.mat), self.shape())
+        return LocalNeurons(map(lambda x: fun(x), self.matrix), self.shape)
 
     #@assert_samedimension
     def mse_d(self, y):
         n = self.count()
-        error = y - self.mat
+        error = y - self.matrix
         errorDiv = error * (2.0 / n)
-        return LocalNeurons(errorDiv, self.shape())
+        return LocalNeurons(errorDiv, self.shape)
 
     def dropout(self, p):
         # Aplicable para vectores unicamente
-        index = np.random.rand(*self.shape()) > p  # Vector de bools, que indican que valor "tirar"
+        index = np.random.rand(*self.shape) > p  # Vector de bools, que indican que valor "tirar"
         # Notar que se escala el resultado diviendo por p
         # Retorno arreglo con dropout, y el vector con indices de las unidades "tiradas"
-        dropped = self.mat * index / p
-        return LocalNeurons(dropped, self.shape()), index
+        dropped = self.matrix * index / p
+        return LocalNeurons(dropped, self.shape), index
 
     def zip(self, rdd):
         pass
@@ -282,12 +284,12 @@ class LocalNeurons(object):
     #@assert_matchdimension
     def mul_array(self, array):
         if isinstance(array, LocalNeurons):
-            array = array.matrix()
+            array = array.matrix
         arrshape = array.shape
         if len(arrshape) == 1:
             arrshape += (1,)  # Le agrego la dimension que le falta
         shape = self.rows, arrshape[1]
-        return LocalNeurons(self.mat.dot(array), shape)
+        return LocalNeurons(self.matrix.dot(array), shape)
 
     def mul_array2(self, array):
         pass
@@ -297,55 +299,63 @@ class LocalNeurons(object):
 
     def outer(self, array):
         if isinstance(array, LocalNeurons):
-            array = array.matrix()
-        res = np.outer(self.mat, array)
+            array = array.matrix
+        res = np.outer(self.matrix, array)
         shape = res.shape
         return LocalNeurons(res, shape)
 
     #@assert_samedimension
     def dot(self, vec):
-        return self.mat.dot(vec)
+        return self.matrix.dot(vec)
 
     def l1(self):
-        cost = sum(sum(abs(self.mat)))
-        gradient = np.sign(self.mat)  # en x=0 no es diferenciable, pero que sea igual a 0 la derivada anda bien
-        return cost, LocalNeurons(gradient, self.shape())
+        cost = sum(sum(abs(self.matrix)))
+        gradient = np.sign(self.matrix)  # en x=0 no es diferenciable, pero que sea igual a 0 la derivada anda bien
+        return cost, LocalNeurons(gradient, self.shape)
 
     def l2(self):
-        cost = sum(sum(self.mat ** 2))
-        gradient = self.mat
-        return cost, LocalNeurons(gradient, self.shape())
+        cost = sum(sum(self.matrix ** 2))
+        gradient = self.matrix
+        return cost, LocalNeurons(gradient, self.shape)
 
     def loss(self, fun, y):
-        return fun(self.mat, y)
+        return fun(self.matrix, y)
 
     def loss_d(self, fun, y):
-        return LocalNeurons(fun(self.mat, y), self.shape())
+        return LocalNeurons(fun(self.matrix, y), self.shape)
 
     #@assert_samedimension
     def mse(self, y):
         n = self.count()
-        error = (y - self.mat) ** 2
+        error = (y - self.matrix) ** 2
         sumError = sum(error)
         return sumError / (1.0 * n)
 
     def softmax(self):
         # Uso de tip de implementacion (http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression)
-        x = self.mat
+        x = self.matrix
         x = x - max(x)  # Se previene valores muy grandes del exp con valores altos de x
         softmat = np.exp(x) / (sum(np.exp(x)))
-        return LocalNeurons(softmat, self.shape())
+        return LocalNeurons(softmat, self.shape)
 
     def transpose(self):
-        return LocalNeurons(self.mat.transpose(), self.shape[::-1])
+        return LocalNeurons(self.matrix.transpose(), self.shape[::-1])
 
     def collect(self):
-        return self.mat
+        return self.matrix
 
     def sum(self):
-        return sum(self.mat)
+        return sum(self.matrix)
 
     # MISC
+
+    @property
+    def shape(self):
+        return self.rows, self.cols
+
+    def count(self):
+        rows, cols = self.shape
+        return rows * cols
 
     def persist(self):
         pass
@@ -353,13 +363,4 @@ class LocalNeurons(object):
     def unpersist(self):
         pass
 
-    def shape(self):
-        return self.rows, self.cols
-
-    def count(self):
-        rows, cols = self.shape()
-        return rows * cols
-
-    def matrix(self):
-        return self.mat
 

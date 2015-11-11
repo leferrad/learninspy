@@ -1,26 +1,20 @@
 __author__ = 'leferrad'
 
-# Modulos a exportar
-__all__ = ['NeuralLayer', 'DeepLearningParams', 'NeuralNetwork']
-
 # Dependencias externas
 import numpy as np
 from scipy import sparse
 
-# Librerias de Learninspy
-import activations as act
-import optimization as opt
-import loss
-from stops import criterion
-from neurons import DistributedNeurons, LocalNeurons
-from context import sc
-from evaluation import ClassificationMetrics, RegressionMetrics
-#from utils.util import LearninspyLogger
+# Dependencias internas
+from learninspy.dnn import activations as act, checks, loss, optimization as opt
+from learninspy.dnn.stops import criterion
+from learninspy.dnn.neurons import DistributedNeurons, LocalNeurons
+from learninspy.dnn.evaluation import ClassificationMetrics, RegressionMetrics
+from learninspy.context import sc
 
 # Librerias de Python
 import copy
-import checks
 import cPickle as pickle
+
 
 class NeuralLayer(object):
 
@@ -29,7 +23,7 @@ class NeuralLayer(object):
         self.n_in = n_in
         self.activation = act.fun_activation[activation]
         self.activation_d = act.fun_activation_d[activation]
-        self.sparsity = sparsity
+        self.sparsity = False  # TODO completar esta funcionalidad
 
         if rng is None:
             rng = np.random.RandomState(1234)
@@ -54,13 +48,15 @@ class NeuralLayer(object):
             if sparsity is True:  # Hago que el vector sea sparse
                 b = sparse.csr_matrix(b)
 
+        # TODO weights_T era p/ poder hacer operaciones distribuidas, pero se deja como experimental DistributedNeurons
+        distribute = False
         if distribute is True:
             self.weights = DistributedNeurons(w, self.shape_w)
-            self.weights_T = DistributedNeurons(w.T, self.shape_w[::-1])
+            #self.weights_T = DistributedNeurons(w.T, self.shape_w[::-1])
             self.bias = DistributedNeurons(b, self.shape_b)
         else:
             self.weights = LocalNeurons(w, self.shape_w)
-            self.weights_T = LocalNeurons(w.transpose(), self.shape_w[::-1])
+            #self.weights_T = LocalNeurons(w.transpose(), self.shape_w[::-1])
             self.bias = LocalNeurons(b, self.shape_b)
 
     def __div__(self, other):
@@ -89,7 +85,6 @@ class NeuralLayer(object):
         return a
 
     # Basado en http://cs231n.github.io/neural-networks-2/
-
     def dropoutput(self, x, p, grad=False):
         out = self.output(x, grad)
         if grad:
@@ -99,7 +94,6 @@ class NeuralLayer(object):
         else:
             out, mask = out.dropout(p)
         return out, mask  # Devuelvo ademas la mascara utilizada, para el backprop
-
     # NOTA: durante la etapa de testeo no se debe usar dropout
 
     def get_weights(self):
@@ -153,7 +147,8 @@ class DeepLearningParams:
         num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
         if dropout_ratios is None:
             if classification is True:
-                dropout_ratios = [0.5] * (num_layers-1) + [0.0]  # Default, dropout de 0.5 menos la salida que no debe tener
+                # Default, dropout de 0.2 en entrada, de 0.5 en ocultas y la salida no debe tener
+                dropout_ratios = [0.2] + [0.5] * (num_layers-2) + [0.0]
             else:
                 dropout_ratios = [0.0] * num_layers  # Nunca recomendado hacer dropout en regresion
         if layer_distributed is None:
@@ -183,7 +178,6 @@ class NeuralNetwork(object):
         self.list_layers = list_layers  # En caso de que la red reciba capas ya inicializadas
         self.loss = loss.fun_loss[self.params.loss]
         self.loss_d = loss.fun_loss_d[self.params.loss]
-        #self.logger = LearninspyLogger()
 
         if list_layers is None:
             self.list_layers = []  # Creo un arreglo vacio para ir agregando las capas que se inicializan
@@ -241,7 +235,7 @@ class NeuralNetwork(object):
         gradient[:] = [grad * self.params.strength_l1 for grad in gradient]
         return cost, gradient
 
-
+    # Ante la duda, l2 consigue por lo general mejores resultados que l1 pero se pueden combinar
     def l2(self):
         cost = 0.0
         gradient = []
@@ -252,7 +246,6 @@ class NeuralNetwork(object):
         cost *= self.params.strength_l2 * 0.5  # Multiplico por 0.5 para hacer mas simple el gradiente
         gradient[:] = [grad * self.params.strength_l2 for grad in gradient]
         return cost, gradient
-    # Ante la duda, l2 consigue por lo general mejores resultados que l1 pero se pueden combinar
 
     def _backprop(self, x, y):
         """
@@ -286,7 +279,7 @@ class NeuralNetwork(object):
         nabla_w[-1] = delta.outer(a[-2])
         nabla_b[-1] = delta
         for l in xrange(2, num_layers + 1):
-            w_t = self.list_layers[-l + 1].weights_T
+            w_t = self.list_layers[-l + 1].weights.transpose()
             delta = w_t.mul_array(delta).mul_elemwise(d_a[-l])
             if drop_fraction[-l] > 0.0:  # No actualizo las unidades "tiradas"
                 delta = delta.mul_elemwise(mask[-l])
@@ -332,7 +325,7 @@ class NeuralNetwork(object):
         :return:
         """
         actual = map(lambda lp: lp.label, data)
-        predicted = map(lambda lp: self.predict(lp.features).matrix(), data)
+        predicted = map(lambda lp: self.predict(lp.features).matrix, data)
         if self.params.classification is True:
             # En problemas de clasificacion, se determina la prediccion por la unidad de softmax que predomina
             predicted = map(lambda p: float(np.argmax(p)), predicted)

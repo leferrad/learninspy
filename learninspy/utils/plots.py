@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 # Librerias internas
-from dnn.activations import fun_activation, fun_activation_d
+from learninspy.dnn.activations import fun_activation, fun_activation_d
 
 
 def plot_matrix(matrix, ax=None, values=True, show=True):
@@ -70,8 +70,8 @@ def plot_neurons(network):
         ax_b.get_yaxis().set_visible(False)
 
         # Ploteo
-        plot_matrix(layer.weights.matrix(), ax_w, values=False)
-        plot_matrix(layer.bias.matrix().T, ax_b, values=False)
+        plot_matrix(layer.weights.matrix, ax_w, values=False)
+        plot_matrix(layer.bias.matrix.T, ax_b, values=False)
 
     #plt.tight_layout()
 

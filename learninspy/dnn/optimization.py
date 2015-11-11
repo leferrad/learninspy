@@ -1,11 +1,11 @@
-from utils.data import subsample
+from learninspy.utils.data import subsample
 
 __author__ = 'leferrad'
 
 
 import numpy as np
-from neurons import LocalNeurons
-from stops import criterion
+from learninspy.dnn.neurons import LocalNeurons
+from learninspy.dnn.stops import criterion
 import copy
 
 
@@ -112,8 +112,8 @@ class Adadelta(Optimizer):
         self.step_w = []
         self.step_b = []
         for layer in self.model.list_layers:
-            shape_w = layer.get_weights().shape()
-            shape_b = layer.get_bias().shape()
+            shape_w = layer.get_weights().shape
+            shape_b = layer.get_bias().shape
             self.gms_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
             self.gms_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
             self.sms_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
@@ -169,8 +169,8 @@ class GD(Optimizer):
         self.step_w = []
         self.step_b = []
         for layer in self.model.list_layers:
-            shape_w = layer.get_weights().shape()
-            shape_b = layer.get_bias().shape()
+            shape_w = layer.get_weights().shape
+            shape_b = layer.get_bias().shape
             self.step_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
             self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
