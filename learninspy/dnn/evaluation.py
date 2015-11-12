@@ -1,5 +1,6 @@
 __author__ = 'leferrad'
 
+# Dependencias externas
 import numpy as np
 
 class ClassificationMetrics(object):

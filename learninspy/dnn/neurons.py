@@ -4,8 +4,8 @@ __author__ = 'leferrad'
 import pyspark.rdd
 
 # Dependencias internas
-from context import sc as sc
-from common.asserts import *
+from learninspy.context import sc as sc
+from learninspy.common.asserts import *
 
 
 class DistributedNeurons(object):

@@ -1,11 +1,11 @@
-from dnn import loss
-
 __author__ = 'leferrad'
 
+# Dependencias externas
 import numpy as np
 
-import dnn.activations as act
-import dnn.loss as loss
+# Dependencias internas
+import activations as act
+import loss as loss
 
 
 class CheckGradient(object):

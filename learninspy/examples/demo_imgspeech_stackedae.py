@@ -3,13 +3,13 @@ __author__ = 'leferrad'
 import time
 
 from learninspy import dnn as mod
-from learninspy.dnn.autoencoder import StackedAutoencoder
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
-from learninspy.utils.data import LabeledDataSet, StandardScaler
-from learninspy.dnn.evaluation import ClassificationMetrics
-from learninspy.context import sc
-from utils.feature import PCA
+from ..dnn.autoencoder import StackedAutoencoder
+from ..dnn.optimization import OptimizerParameters
+from ..dnn.stops import criterion
+from ..utils.data import LabeledDataSet, StandardScaler
+from ..dnn.evaluation import ClassificationMetrics
+from ..context import sc
+from ..utils.feature import PCA
 
 
 def parsePoint(line):

@@ -1,11 +1,14 @@
-from utils.data import subsample
-
 __author__ = 'leferrad'
 
-
+# Dependencias externas
 import numpy as np
-from dnn.neurons import LocalNeurons
-from dnn.stops import criterion
+
+# Dependencias internas
+from neurons import LocalNeurons
+from stops import criterion
+from learninspy.utils.data import subsample
+
+# Librerias de Python
 import copy
 
 

@@ -1,11 +1,12 @@
 __author__ = 'leferrad'
 
-# Se define la funcion de error 'fun(x)' y su derivada respecto a x 'fun_d(x)'
-
+# Dependencias externas
 import numpy as np
 
-from utils.data import label_to_vector
+# Dependencias internas
+from learninspy.utils.data import label_to_vector
 
+# Se define la funcion de error 'fun(x)' y su derivada respecto a x 'fun_d(x)'
 
 def mse(value, target):
     err = np.array(map(lambda(y, t): y - t, zip(value, target)))

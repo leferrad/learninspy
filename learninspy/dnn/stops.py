@@ -1,6 +1,6 @@
 __author__ = 'leeandro04'
 
-import itertools
+# Librerias de Python
 import signal
 import sys
 import time

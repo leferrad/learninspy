@@ -4,7 +4,7 @@ __author__ = 'leferrad'
 from scipy.io import loadmat, savemat
 
 # Librerias internas
-from learninspy.context import sc
+from ..context import sc
 
 text_extensions = ['.dat', '.txt', '.csv']
 
