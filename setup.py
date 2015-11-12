@@ -9,8 +9,6 @@ setup(
     author_email="ljferrado@gmail.com",
     url="https://github.com/leferrad/learninspy",
 
-    include_package_data=True,
-
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     scripts=[],
@@ -20,5 +18,5 @@ setup(
     description="Framework of deep learning for PySpark",
     long_description=open("README.md").read(),
 
-    install_requires=open("requeriments.txt").read().split()
+    install_requires=open("requirements.txt").read().split()
 )
