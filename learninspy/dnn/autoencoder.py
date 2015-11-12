@@ -11,12 +11,12 @@ from model import NeuralNetwork, DeepLearningParams, RegressionLayer, Classifica
 
 
 class AutoEncoder(NeuralNetwork):
-    def __init__(self, params=None, list_layers=None, sparsity_beta=0, sparsity_param=0.05):
+    def __init__(self, params=None, list_layers=None, dropout_in=0.0, sparsity_beta=0, sparsity_param=0.05):
         # Aseguro algunos parametros
         params.classification = False
         n_in = params.units_layers[0]
         params.units_layers.append(n_in) # Unidades en la salida en igual cantidad que la entrada
-        params.dropout_ratios = [0.0] * len(params.units_layers)  # Sin dropout por ser regresion
+        params.dropout_ratios = [dropout_in, 0.0]  # Dropout en encoder, pero nulo en decoder
         self.sparsity_beta = sparsity_beta
         self.sparsity_param = sparsity_param
         self.num_layers = 2
@@ -84,22 +84,26 @@ class AutoEncoder(NeuralNetwork):
 
 class StackedAutoencoder(NeuralNetwork):
 
-    def __init__(self, params=None, list_layers=None, sparsity_beta=0, sparsity_param=0.05):
+    def __init__(self, params=None, list_layers=None, dropout=None, sparsity_beta=0, sparsity_param=0.05):
         self.sparsity_beta = sparsity_beta
         self.sparsity_param = sparsity_param
         self.params = params
         self.num_layers = len(params.units_layers)
+        if dropout is None:
+            dropout = [0.0] * self.num_layers
+        self.dropout = dropout
         NeuralNetwork.__init__(self, params, list_layers=None)
         self._init_ae()  # Creo autoencoders que se guardan en list_layers
 
     def _init_ae(self):
-        for l in xrange(len(self.list_layers)):
+        for l in xrange(self.num_layers):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
             params = DeepLearningParams(self.params.units_layers[l:l+2], activation=self.params.activation,
                                         layer_distributed=self.params.layer_distributed, dropout_ratios=None,
                                         classification=False, strength_l1=self.params.strength_l1,
                                         strength_l2=self.params.strength_l2)
             self.list_layers[l] = AutoEncoder(params=params, sparsity_beta=self.sparsity_beta,
+                                              dropout_in=self.dropout[l],
                                               sparsity_param=self.sparsity_param)
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,

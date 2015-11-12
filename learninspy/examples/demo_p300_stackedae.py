@@ -2,7 +2,7 @@ __author__ = 'leferrad'
 
 import time
 
-from learninspy import dnn as mod
+from learninspy.dnn.model import DeepLearningParams
 from learninspy.dnn.autoencoder import StackedAutoencoder
 from learninspy.dnn.optimization import OptimizerParameters
 from learninspy.dnn.stops import criterion
@@ -49,13 +49,16 @@ train = train.collect()
 valid = valid.collect()
 test = test.collect()
 
-net_params = mod.DeepLearningParams(units_layers=[230, 100, 50, 20, 2], activation='ReLU',
-                                    dropout_ratios=[0.5, 0.5, 0.5, 0.0], classification=True, seed=seed)
+units = [230, 100, 20, 2]
+dropout_ae = [0.2, 0.2, 0.0]
+dropout = [0.2, 0.5, 0.0]
+net_params = DeepLearningParams(units_layers=units, activation='ReLU',
+                                    dropout_ratios=dropout, classification=True, seed=seed)
 
 local_stops = [criterion['MaxIterations'](10),
                criterion['AchieveTolerance'](0.90, key='hits')]
 
-ae_stops = [criterion['MaxIterations'](20),
+ae_stops = [criterion['MaxIterations'](10),
             criterion['AchieveTolerance'](0.95, key='hits')]
 
 ft_stops = [criterion['MaxIterations'](20),
@@ -65,7 +68,7 @@ opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops, merge_
 
 print "Entrenando stacked autoencoder ..."
 t1 = time.time()
-sae = StackedAutoencoder(net_params)
+sae = StackedAutoencoder(net_params, dropout=dropout_ae)
 hits_valid = sae.fit(train, valid, mini_batch=100, parallelism=4,
                      stops=ae_stops, optimizer_params=opt_params)
 

@@ -2,14 +2,14 @@ __author__ = 'leferrad'
 
 import time
 
-from learninspy import dnn as mod
-from ..dnn.autoencoder import StackedAutoencoder
-from ..dnn.optimization import OptimizerParameters
-from ..dnn.stops import criterion
-from ..utils.data import LabeledDataSet, StandardScaler
-from ..dnn.evaluation import ClassificationMetrics
-from ..context import sc
-from ..utils.feature import PCA
+from learninspy.dnn.model import DeepLearningParams
+from learninspy.dnn.autoencoder import StackedAutoencoder
+from learninspy.dnn.optimization import OptimizerParameters
+from learninspy.dnn.stops import criterion
+from learninspy.utils.data import LabeledDataSet, StandardScaler
+from learninspy.dnn.evaluation import ClassificationMetrics
+from learninspy.context import sc
+from learninspy.utils.feature import PCA
 
 
 def parsePoint(line):
@@ -30,11 +30,11 @@ train, valid, test = dataset.split_data([.7, .2, .1])  # Particiono conjuntos
 
 # -----
 # Aplico PCA
-pca = PCA(train)
-train = pca.transform()
-valid = pca.transform(data=valid)
-test = pca.transform(data=test)
-k = pca.k
+#pca = PCA(train)
+#train = pca.transform()
+#valid = pca.transform(data=valid)
+#test = pca.transform(data=test)
+#k = pca.k
 
 # -----
 # Standarize data
@@ -49,29 +49,31 @@ train = train.collect()
 valid = valid.collect()
 test = test.collect()
 
-net_params = mod.DeepLearningParams(units_layers=[k, 25, 10, 3], activation='ReLU',
-                                    dropout_ratios=[0.5, 0.5, 0.0], classification=True, seed=seed)
+units = [512, 100, 50, 3]
+dropout = [0.2, 0.2, 0.0]
+net_params = DeepLearningParams(units_layers=units, activation='ReLU',
+                                    dropout_ratios=dropout, classification=True, seed=seed)
 
-local_stops = [criterion['MaxIterations'](50),
-                    criterion['AchieveTolerance'](0.90, key='hits')]
+local_stops = [criterion['MaxIterations'](20),
+                    criterion['AchieveTolerance'](0.95, key='hits')]
 
-ae_stops = [criterion['Patience'](8, grow_offset=0.5),
+ae_stops = [criterion['Patience'](5, grow_offset=0.5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
 
-ft_stops = [criterion['MaxIterations'](20),
+ft_stops = [criterion['MaxIterations'](50),
                      criterion['AchieveTolerance'](0.95, key='hits')]
 
 opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops, merge_criter='log_avg')
 
 print "Entrenando stacked autoencoder ..."
 t1 = time.time()
-sae = StackedAutoencoder(net_params)
+sae = StackedAutoencoder(net_params, dropout=dropout)
 hits_valid = sae.fit(train, valid, mini_batch=100, parallelism=4,
                      stops=ae_stops, optimizer_params=opt_params)
 
 print "Ajuste fino ..."
 hits_valid = sae.finetune(train, valid, mini_batch=100, parallelism=4, criterions=ft_stops,
-                          optimizer_params=opt_params)
+                          optimizer_params=opt_params, keep_best=True)
 hits_test, predict = sae.evaluate(test, predictions=True)
 t1f = time.time() - t1
 
