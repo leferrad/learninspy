@@ -31,7 +31,6 @@ print "Cargando base de datos ..."
 # features = data.data
 # labels = data.target
 dataset = LabeledDataSet()
-os.dir
 dataset.load_file(os.curdir+'/datasets/iris.csv')
 print "Size de la data: "
 print dataset.shape
