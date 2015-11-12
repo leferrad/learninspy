@@ -5,11 +5,11 @@ import time
 import os
 
 # Librerias internas
-import learninspy.dnn.model as mod
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
-from learninspy.utils.data import StandardScaler, LabeledDataSet
-from learninspy.dnn.evaluation import ClassificationMetrics
+import dnn.model as mod
+from dnn.optimization import OptimizerParameters
+from dnn.stops import criterion
+from utils.data import StandardScaler, LabeledDataSet
+from dnn.evaluation import ClassificationMetrics
 
 
 net_params = mod.DeepLearningParams(units_layers=[4, 10, 5, 3], activation='Softplus',
