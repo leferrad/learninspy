@@ -1,11 +1,11 @@
-from learninspy.dnn import loss
+from dnn import loss
 
 __author__ = 'leferrad'
 
 import numpy as np
 
-import learninspy.dnn.activations as act
-import learninspy.dnn.loss as loss
+import dnn.activations as act
+import dnn.loss as loss
 
 
 class CheckGradient(object):

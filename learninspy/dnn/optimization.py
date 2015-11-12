@@ -1,11 +1,11 @@
-from learninspy.utils.data import subsample
+from utils.data import subsample
 
 __author__ = 'leferrad'
 
 
 import numpy as np
-from learninspy.dnn.neurons import LocalNeurons
-from learninspy.dnn.stops import criterion
+from dnn.neurons import LocalNeurons
+from dnn.stops import criterion
 import copy
 
 

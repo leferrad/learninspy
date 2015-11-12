@@ -4,7 +4,7 @@ __author__ = 'leferrad'
 
 import numpy as np
 
-from learninspy.utils.data import label_to_vector
+from utils.data import label_to_vector
 
 
 def mse(value, target):
