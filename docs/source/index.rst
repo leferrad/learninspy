@@ -6,14 +6,13 @@
 Bienvenido a la documentación de learninspy!
 ======================================
 
-Contents:
+Contenidos:
 
 .. toctree::
    :maxdepth: 2
 
 
-
-Indices and tables
+Índices y tablas
 ==================
 
 * :ref:`genindex`

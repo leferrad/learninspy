@@ -8,7 +8,7 @@ from learninspy.dnn.stops import criterion
 from learninspy.utils.data import split_data, label_data
 from learninspy.dnn.evaluation import ClassificationMetrics
 from learninspy.context import sc
-from utils.feature import PCA
+from learninspy.utils.feature import PCA
 
 
 def parsePoint(line):
