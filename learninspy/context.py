@@ -1,8 +1,5 @@
 __author__ = 'leferrad'
 
-import os
-import sys
-
 # Variables de entorno
 #os.environ['SPARK_HOME'] = "/usr/local/spark/"
 #os.environ['LEARNINSPY_HOME'] = os.path.realpath('')

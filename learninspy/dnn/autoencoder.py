@@ -4,9 +4,9 @@ __author__ = 'leferrad'
 import numpy as np
 
 # Librerias de Learninspy
-from evaluation import RegressionMetrics
+from learninspy.dnn.evaluation import RegressionMetrics
 from learninspy.utils.data import label_data
-from model import NeuralNetwork, DeepLearningParams, RegressionLayer, ClassificationLayer
+from learninspy.dnn.model import NeuralNetwork, DeepLearningParams, RegressionLayer, ClassificationLayer
 
 
 

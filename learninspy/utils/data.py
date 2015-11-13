@@ -11,8 +11,8 @@ import random
 
 # Librerias internas
 import learninspy.utils.fileio as fileio
-from ..context import sc
-from ..common.asserts import assert_features_label
+from learninspy.context import sc
+from learninspy.common.asserts import assert_features_label
 
 
 class StandardScaler(object):

@@ -4,8 +4,8 @@ __author__ = 'leferrad'
 import numpy as np
 
 # Dependencias internas
-from neurons import LocalNeurons
-from stops import criterion
+from learninspy.dnn.neurons import LocalNeurons
+from learninspy.dnn.stops import criterion
 from learninspy.utils.data import subsample
 
 # Librerias de Python
