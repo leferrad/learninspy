@@ -5,10 +5,11 @@ import numpy as np
 from scipy import sparse
 
 # Dependencias internas
-import activations as act, checks, loss, optimization as opt
+import activations as act, loss, optimization as opt
+from learninspy.utils import checks
 from stops import criterion
 from neurons import DistributedNeurons, LocalNeurons
-from evaluation import ClassificationMetrics, RegressionMetrics
+from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.context import sc
 
 # Librerias de Python

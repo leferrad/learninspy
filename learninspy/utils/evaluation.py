@@ -1,9 +1,37 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 __author__ = 'leferrad'
 
 # Dependencias externas
 import numpy as np
 
+
 class ClassificationMetrics(object):
+    """
+    Métricas para evaluar en problemas de clasificación
+
+    :param predicted_actual: list de (predicted, actual) pairs
+    :param n_classes: int cantidad de clases
+    :return:
+
+    >>> predict = [0, 1, 0, 2, 2, 1]
+    >>> labels = [0, 1, 1, 2, 1, 0]
+    >>> metrics = ClassificationMetrics(zip(predict, labels), 3)
+    >>> metrics.accuracy()
+    0.5
+    >>> metrics.f_measure()
+    0.5499999999999999
+    >>> metrics.precision()
+    0.5
+    >>> metrics.recall()
+    0.611111111111111
+    >>> metrics.confusion_matrix()
+    array([[1, 1, 0],
+           [1, 1, 1],
+           [0, 0, 1]])
+    """
+
     # Ver http://machine-learning.tumblr.com/post/1209400132/mathematical-definitions-for-precisionrecall-for
     # Ver http://rali.iro.umontreal.ca/rali/sites/default/files/publis/SokolovaLapalme-JIPM09.pdf
     def __init__(self, predicted_actual, n_classes):
@@ -19,6 +47,12 @@ class ClassificationMetrics(object):
         self.n_elem = len(predicted_actual)
 
     def accuracy(self, label=None):
+        """
+        Calcula la exactitud de la clasificación, dada por la cantidad de aciertos sobre el total.
+
+        :param label: int entre {0,C} para indicar sobre qué clase evaluar. Si es *None* se evalúa sobre todas.
+        :return: double
+        """
         if label is None:
             acc = sum(map(lambda (pre, act): pre == act, self.predicted_actual)) / float(self.n_elem)
         else:
@@ -60,6 +94,11 @@ class ClassificationMetrics(object):
         return f_score
 
     def confusion_matrix(self):
+        """
+        Matriz de confusión resultante, donde las columnas corresponden a *predicted*
+        y están ordenadas en forma ascendente por casa clase de *actual*.
+
+        """
         conf_mat = []  # Matriz de confusion final
         for r in xrange(self.n_classes):
             pre_act = filter(lambda (p, a): a == r, self.predicted_actual)
