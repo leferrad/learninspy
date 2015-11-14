@@ -5,18 +5,29 @@ import pyspark.rdd
 from pyspark.mllib.regression import LabeledPoint
 import numpy as np
 
-# Decoradores para validacion:
-def assert_typearray(func):
+"""
+ Decoradores para validar argumentos de funciones
+"""
+
+def assert_sametype(func):
+    """
+    Decorador de funcion para asegurar el mismo tipo de variable.
+
+    """
     def func_assert(*args):
         # arg[0] es self y arg[1] es array
         if not isinstance(args[1], type(args[0])):
-            raise Exception('Solo se puede operar con arreglos del mismo tipo!')
+            raise Exception('Arreglos de distinto tipo!')
         else:
             return func(*args)
     return func_assert
 
 
 def assert_samedimension(func):
+    """
+    Decorador de funcion para asegurar iguales dimensiones en arreglos
+
+    """
     def func_assert(*args):
         # arg[0] es self y arg[1] es array
         if args[0].shape() != args[1].shape():
@@ -27,6 +38,11 @@ def assert_samedimension(func):
 
 
 def assert_matchdimension(func):
+    """
+    Decorador de funcion para asegurar dimensiones compatibles para producto matricial
+
+    """
+
     def func_assert(*args):
         # arg[0] es self y arg[1] es array
         if args[0].cols != args[1].rows:
@@ -37,6 +53,10 @@ def assert_matchdimension(func):
 
 
 def assert_features_label(func):
+    """
+    Decorador de funcion para asegurar estructura Features-Label en un Dataset
+
+    """
     def func_assert(*args):
         # args es list o np.array o RDD o None
         if len(args) == 1:  # data es None, no hay nada que chequear

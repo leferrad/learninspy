@@ -45,13 +45,13 @@ class DistributedNeurons(object):
         return DistributedNeurons(self.matRDD.map(lambda x: x ** power), self.shape)
 
     # TRANSFORMACIONES:
-    @assert_typearray
+    @assert_sametype
     @assert_samedimension
     def mul_elemwise(self, rdd):
         rdd = rdd.matrix()
         return DistributedNeurons(self.matRDD.zip(rdd).map(lambda (x, y): x * y), self.shape)
 
-    @assert_typearray
+    @assert_sametype
     @assert_samedimension
     def sum_array(self, rdd):
         rdd = rdd.matrix()
@@ -60,7 +60,7 @@ class DistributedNeurons(object):
     def activation(self, fun):
         return DistributedNeurons(self.matRDD.map(lambda x: fun(x)), self.shape)
 
-    @assert_typearray
+    @assert_sametype
     @assert_samedimension
     def mse_d(self, y):
         y = y.matrix()
@@ -96,7 +96,7 @@ class DistributedNeurons(object):
         shape = self.rows, array.shape[1]
         return DistributedNeurons(self.collect().dot(array), shape)
 
-    @assert_typearray
+    @assert_sametype
     @assert_matchdimension
     def mul_arrayrdd(self, rdd):
         # Supongo que la matriz que multiplica a rdd esta transpuesta
@@ -109,7 +109,7 @@ class DistributedNeurons(object):
             mul = mul.reshape(-1)  # lo redimensiono para que sea 1D
         return DistributedNeurons(mul, shape)
 
-    @assert_typearray
+    @assert_sametype
     @assert_matchdimension
     def mul_arrayrdd2(self, rdd): # No anda bien pq devuelve un vector fila (en el reduce)
         # Supongo que la matriz que multiplica a rdd esta transpuesta
@@ -130,7 +130,7 @@ class DistributedNeurons(object):
         shape = res.shape
         return DistributedNeurons(res, shape)
 
-    @assert_typearray
+    @assert_sametype
     @assert_samedimension
     def dot(self, rdd):
         rdd = rdd.matrix()
@@ -154,7 +154,7 @@ class DistributedNeurons(object):
         y = DistributedNeurons(y, y.shape)
         return self.mse_d(y)
 
-    @assert_typearray
+    @assert_sametype
     @assert_samedimension
     def mse(self, y):
         y = y.matrix()

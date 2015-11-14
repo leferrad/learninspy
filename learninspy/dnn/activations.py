@@ -7,28 +7,64 @@ import numpy as np
 # TODO cambiar nombre de ReLU a rectifier ? ya que me refiero a la funcion, no a la unidad
 
 def tanh(x):
+    r"""
+    Tangente Hiperbolica
+
+    :math:`f(x)=\frac{e^x - e^{-x}}{e^x + e^{-x}}`
+
+    """
     return np.tanh(x)
 
 
 def tanh_d(x):
+    r"""
+    Derivada de Tangente Hiperbolica
+
+    :math:`f(x)=1-tan(x)^2`
+
+    """
     return 1.0 - np.tanh(x) ** 2
 
 
 def sigmoid(x):
+    r"""
+    Sigmoidea
+
+    :math:`f(x)=\frac{1}{1 + e^{-x}}`
+
+    """
     return 1.0 / (1.0 + np.exp(-x))
 
 
 def sigmoid_d(x):
+    r"""
+    Derivada de Sigmoidea
+
+    :math:`f(x)=\frac{e^x - e^{-x}}{e^x + e^{-x}}`
+
+    """
     return sigmoid(x) * (1.0 - sigmoid(x))
 
 
 def relu(x):
+    r"""
+    Rectifier Linear Unit (ReLU)
+
+    :math:`f(x)=max(0,x)`
+
+    """
     if isinstance(x, np.ndarray) or type(x) == list:
         x = x[0]
     return max(0.0, x)
 
 
 def relu_d(x):
+    r"""
+    Derivada de ReLU
+
+    :math:`f(x) = \begin{cases}1 & x > 0 \\ 0 & x \leq 0\end{cases}`
+
+    """
     if x > 0.0:
         ret = 1.0
     else:
@@ -37,6 +73,12 @@ def relu_d(x):
 
 
 def lrelu(x):
+    r"""
+    Leaky ReLU
+
+    :math:`f(x) = \begin{cases}x & x > 0 \\ 0.01x & x \leq 0\end{cases}`
+
+    """
     if x > 0.0:
         ret = x
     else:
@@ -44,6 +86,12 @@ def lrelu(x):
     return ret
 
 def lrelu_d(x):
+    r"""
+    Derivada de Leaky ReLU
+
+    :math:`f(x) = \begin{cases}1 & x > 0 \\ 0.01 & x \leq 0\end{cases}`
+
+    """
     if x > 0.0:
         ret = 1
     else:
@@ -52,18 +100,42 @@ def lrelu_d(x):
 
 
 def softplus(x):
+    r"""
+    Softplus
+
+    :math:`f(x)=\log{(1+e^x)}`
+
+    """
     return np.log(1.0 + np.exp(x))
 
 
 def softplus_d(x):
+    r"""
+    Derivada de Softplus
+
+    :math:`f(x)=sigmoid(x)=\frac{1}{1 + e^{-x}}`
+
+    """
     return sigmoid(x)
 
 
 def identity(x):
+    r"""
+    Identidad
+
+    :math:`f(x)=x`
+
+    """
     return x
 
 
 def identity_d(x):
+    r"""
+    Derivada de Identidad
+
+    :math:`f(x)=1`
+
+    """
     return 1
 
 

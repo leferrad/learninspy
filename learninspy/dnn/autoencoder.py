@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 __author__ = 'leferrad'
 
 # Dependencias externas
@@ -11,6 +14,16 @@ from model import NeuralNetwork, DeepLearningParams, RegressionLayer, Classifica
 
 
 class AutoEncoder(NeuralNetwork):
+    """
+    Tipo de red neuronal, compuesto de una capa de entrada, una oculta, y una de salida.
+    Las unidades en la capa de entrada y la de salida son iguales, y en la capa oculta
+    se entrena una representación de la entrada en distinta dimensión.
+    A las conexiones entre la capa de entrada y la oculta se le denominan encoder,
+    y a las de la oculta a la salida se les llama decoder.
+
+    >>> ae_params = DeepLearningParams(units_layers=[5,3,5], activation='Tanh', dropout_ratios=None, classification=False)
+    >>> ae = AutoEncoder(ae_params)
+    """
     def __init__(self, params=None, list_layers=None, dropout_in=0.0, sparsity_beta=0, sparsity_param=0.05):
         # Aseguro algunos parametros
         params.classification = False
@@ -50,6 +63,14 @@ class AutoEncoder(NeuralNetwork):
         return cost, (nabla_w, nabla_b)
 
     def evaluate(self, data, predictions=False):
+        """
+        Evalúa AutoEncoder sobre un conjunto de datos.
+        Se utiliza :math:`r^2` como métrica en la evaluación.
+
+        :param data: list
+        :param predictions: si es True, retorna las predicciones (salida del AutoEncoder)
+        :return: resultado de :math:`r^2`, y predicciones si se solicita en *predictions*
+        """
         actual = map(lambda lp: lp.features, data)  # Tiene que aprender a reconstruir la entrada
         predicted = map(lambda lp: self.predict(lp.features).matrix.T, data)  # TODO notar que tuve q transponer
         metric = RegressionMetrics(zip(predicted, actual))
@@ -61,9 +82,12 @@ class AutoEncoder(NeuralNetwork):
         return ret
 
     def kl_divergence(self, x):
-        pass
+        raise NotImplementedError("Implementar para SparseAutoencoder!")
 
     def encode(self, x):
+        """
+        Codifica la entrada x sobre la
+        """
         if isinstance(x, list):
             x = map(lambda lp: self.encode(lp.features).matrix, x)
         else:
@@ -74,12 +98,13 @@ class AutoEncoder(NeuralNetwork):
         return self.list_layers[0]
 
     def assert_regression(self):
-        # Aseguro que el autoencoder tenga capas de regresion
-        for l in xrange(self.num_layers):
-            if type(self.list_layers[l]) is ClassificationLayer:
-                layer = RegressionLayer()
-                layer.__dict__ = self.list_layers[l].__dict__.copy()
-                self.list_layers[l] = layer
+        """
+        Se asegura que la capa de salida sea de regresión
+        """
+        if type(self.list_layers[-1]) is ClassificationLayer:
+            layer = RegressionLayer()
+            layer.__dict__ = self.list_layers[-1].__dict__.copy()
+            self.list_layers[-1] = layer
 
 
 class StackedAutoencoder(NeuralNetwork):
@@ -108,6 +133,17 @@ class StackedAutoencoder(NeuralNetwork):
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
+        """
+
+        :param train:
+        :param valid:
+        :param stops:
+        :param mini_batch:
+        :param parallelism:
+        :param optimizer_params:
+        :param keep_best:
+        :return:
+        """
         # Inicializo Autoencoders
         train_ae = train
         valid_ae = valid
