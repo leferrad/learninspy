@@ -10,6 +10,7 @@ from learninspy.utils import checks
 from stops import criterion
 from neurons import DistributedNeurons, LocalNeurons
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
+from learninspy.utils.data import LabeledDataSet
 from learninspy.context import sc
 
 # Librerias de Python
@@ -379,6 +380,11 @@ class NeuralNetwork(object):
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
+        # Si son LabeledDataSet, los colecto en forma de lista
+        if type(train) is LabeledDataSet:
+            train = train.collect()
+        if type(valid) is LabeledDataSet:
+            valid = valid.collect()
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
         train_bc = sc.broadcast(train)
         valid_bc = sc.broadcast(valid)  # Por ahora no es necesario el bc, pero puede q luego lo use en batchs p/ train
