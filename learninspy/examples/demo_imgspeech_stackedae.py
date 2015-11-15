@@ -7,9 +7,8 @@ from learninspy.dnn.autoencoder import StackedAutoencoder
 from learninspy.dnn.optimization import OptimizerParameters
 from learninspy.dnn.stops import criterion
 from learninspy.utils.data import LabeledDataSet, StandardScaler
-from learninspy.dnn.evaluation import ClassificationMetrics
+from learninspy.utils.evaluation import ClassificationMetrics
 from learninspy.context import sc
-from learninspy.utils.feature import PCA
 
 
 def parsePoint(line):

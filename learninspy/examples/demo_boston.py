@@ -8,7 +8,7 @@ from learninspy import dnn as mod
 from learninspy.dnn.optimization import OptimizerParameters
 from learninspy.dnn.stops import criterion
 from learninspy.utils.data import split_data, label_data
-from learninspy.dnn.evaluation import RegressionMetrics
+from learninspy.utils.evaluation import RegressionMetrics
 
 
 net_params = mod.DeepLearningParams(units_layers=[13, 8, 1], activation='Identity',

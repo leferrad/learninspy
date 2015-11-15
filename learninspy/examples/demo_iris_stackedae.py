@@ -9,7 +9,7 @@ import learninspy.dnn.model as mod
 from learninspy.dnn.optimization import OptimizerParameters
 from learninspy.dnn.stops import criterion
 from learninspy.utils.data import StandardScaler, LabeledDataSet
-from learninspy.dnn.evaluation import ClassificationMetrics
+from learninspy.utils.evaluation import ClassificationMetrics
 from learninspy.dnn.autoencoder import StackedAutoencoder
 
 units_layers = [4, 5, 10, 3]
