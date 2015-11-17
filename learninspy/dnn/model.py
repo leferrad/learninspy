@@ -16,6 +16,7 @@ from learninspy.context import sc
 # Librerias de Python
 import copy
 import cPickle as pickle
+import os
 
 
 class NeuralLayer(object):
@@ -141,9 +142,9 @@ class RegressionLayer(NeuralLayer):
     def dropoutput(self, x, p, grad=False):
         raise Exception("Don't use dropout for output layer")
 
-# TODO: Ver la factibilidad de cambiarlo por un dict
-class DeepLearningParams:
 
+# TODO: Ver la factibilidad de cambiarlo por un dict
+class NetworkParameters:
     def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
                  classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
         num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
@@ -171,11 +172,25 @@ class DeepLearningParams:
         self.strength_l2 = strength_l2
         self.rng = np.random.RandomState(seed)
 
+    def __str__(self):
+        config = ""
+        for l in xrange(len(self.units_layers)):
+            config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                      +self.activation[l]+" activation and "\
+                      +str(self.dropout_ratios[l])+" ratio of DropOut."+os.linesep
+        config += "The loss is "+self.loss+" for a problem of "
+        if self.classification is True:
+            config += "classification."+os.linesep
+        else:
+            config += "regression."+os.linesep
+        config += "Strength in L1 norm is "+str(self.strength_l1) + \
+                  " and in L2 norm is "+str(self.strength_l2)+"."+os.linesep
+        return config
+
+
 
 class NeuralNetwork(object):
-    def __init__(self, params=None, list_layers=None):
-        if params is None:
-            params = DeepLearningParams([3, 3, 3])  # Creo cualquier cosa por defecto, para que no explote TODO: cambiar!
+    def __init__(self, params, list_layers=None):
         self.params = params
         self.list_layers = list_layers  # En caso de que la red reciba capas ya inicializadas
         self.loss = loss.fun_loss[self.params.loss]

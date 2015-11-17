@@ -9,7 +9,7 @@ import numpy as np
 # Librerias de Learninspy
 from learninspy.utils.evaluation import RegressionMetrics
 from learninspy.utils.data import label_data
-from model import NeuralNetwork, DeepLearningParams, RegressionLayer, ClassificationLayer
+from model import NeuralNetwork, NetworkParameters, RegressionLayer, ClassificationLayer
 
 
 
@@ -21,7 +21,7 @@ class AutoEncoder(NeuralNetwork):
     A las conexiones entre la capa de entrada y la oculta se le denominan encoder,
     y a las de la oculta a la salida se les llama decoder.
 
-    >>> ae_params = DeepLearningParams(units_layers=[5,3,5], activation='Tanh', dropout_ratios=None, classification=False)
+    >>> ae_params = NetworkParameters(units_layers=[5,3,5], activation='Tanh', dropout_ratios=None, classification=False)
     >>> ae = AutoEncoder(ae_params)
     """
     def __init__(self, params=None, list_layers=None, dropout_in=0.0, sparsity_beta=0, sparsity_param=0.05):
@@ -123,7 +123,7 @@ class StackedAutoencoder(NeuralNetwork):
     def _init_ae(self):
         for l in xrange(self.num_layers):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
-            params = DeepLearningParams(self.params.units_layers[l:l+2], activation=self.params.activation,
+            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation,
                                         layer_distributed=self.params.layer_distributed, dropout_ratios=None,
                                         classification=False, strength_l1=self.params.strength_l1,
                                         strength_l2=self.params.strength_l2)

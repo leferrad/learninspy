@@ -5,7 +5,6 @@ import signal
 import sys
 import time
 
-# TODO: no se si aca, pero estaria bueno hacer un metodo que cuando ve que se sobreentrena la red, le agregue capacidad
 
 class MaxIterations(object):
 
@@ -14,6 +13,9 @@ class MaxIterations(object):
 
     def __call__(self, results):
         return results['iterations'] >= self.max_iter
+
+    def __str__(self):
+        return "Stop at a maximum of "+str(self.max_iter)+" iterations."
 
 
 class AchieveTolerance(object):
@@ -25,6 +27,10 @@ class AchieveTolerance(object):
     def __call__(self, results):
         return results[self.key] >= self.tolerance
 
+    def __str__(self):
+        return "Stop when a tolerance of "+str(self.tolerance)+" is achieved in "+self.key+"."
+
+
 class ModuloNIterations(object):
 
     def __init__(self, n):
@@ -32,6 +38,9 @@ class ModuloNIterations(object):
 
     def __call__(self, results):
         return results['iterations'] % self.n == 0
+
+    def __str__(self):
+        return "Stop when an iteration is modulo of "+str(self.n)+"."
 
 
 class TimeElapsed(object):
@@ -43,6 +52,9 @@ class TimeElapsed(object):
     def __call__(self, results):
         return time.time() - self.start > self.sec
 
+    def __str__(self):
+        return "Stop when "+str(self.sec)+" seconds have elapsed."
+
 
 class NotBetterThanAfter(object):
 
@@ -53,6 +65,10 @@ class NotBetterThanAfter(object):
 
     def __call__(self, info):
         return info['iterations'] > self.after and info[self.key] >= self.minimal
+
+    def __str__(self):
+        return "Stop when "+self.key+" does not improve a minimal of " + \
+               str(self.minimal)+" after "+str(self.after)+" iterations."
 
 
 class IsNaN(object):

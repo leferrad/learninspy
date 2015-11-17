@@ -10,6 +10,7 @@ from learninspy.utils.data import subsample
 
 # Librerias de Python
 import copy
+import os
 
 
 class OptimizerParameters:
@@ -28,6 +29,15 @@ class OptimizerParameters:
         self.stops = stops
         self.merge = {'criter': merge_criter, 'goal': merge_goal}
 
+    def __str__(self):
+        config = ""
+        config += "The algorithm used is "+self.algorithm+" with the next parameters:"+os.linesep
+        for k, v in self.options.items():
+            config += k+": "+str(v)+os.linesep
+        config += "The stop criteria used for optimization is: "+os.linesep
+        for crit in self.stops:
+            config += str(crit)+os.linesep
+        return config
 
 
 class Optimizer(object):
