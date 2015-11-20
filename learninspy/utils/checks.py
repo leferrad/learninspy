@@ -4,8 +4,8 @@ __author__ = 'leferrad'
 import numpy as np
 
 # Dependencias internas
-import learninspy.dnn.activations as act
-import learninspy.dnn.loss as loss
+import learninspy.core.activations as act
+import learninspy.core.loss as loss
 
 
 class CheckGradient(object):

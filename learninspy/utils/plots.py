@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
 # Librerias internas
-from learninspy.dnn.activations import fun_activation, fun_activation_d
+from learninspy.core.activations import fun_activation, fun_activation_d
 
 
 def plot_matrix(matrix, ax=None, values=True, show=True):
