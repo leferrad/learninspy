@@ -154,6 +154,7 @@ class NetworkParameters:
                 dropout_ratios = [0.2] + [0.5] * (num_layers-2) + [0.0]
             else:
                 dropout_ratios = [0.0] * num_layers  # Nunca recomendado hacer dropout en regresion
+            dropout_ratios[-1] = 0.0  # TODO es para asegurarme que no haya DropOut en la salida, pero verificar mejor
         if layer_distributed is None:
             layer_distributed = [False] * num_layers   # Por defecto, las capas no estan distribuidas
         if type(activation) is not list:  # Si es un string, lo replico por la cant de capas
@@ -175,9 +176,13 @@ class NetworkParameters:
     def __str__(self):
         config = ""
         for l in xrange(len(self.units_layers)):
-            config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
-                      +self.activation[l]+" activation and "\
-                      +str(self.dropout_ratios[l])+" ratio of DropOut."+os.linesep
+            if l == (len(self.units_layers)-1) and self.classification is True:  # Para especificar softmax de clasific
+                config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                          + "Softmax activation."+os.linesep
+            else:
+                config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                          + self.activation[l]+" activation and "\
+                          + str(self.dropout_ratios[l])+" ratio of DropOut."+os.linesep
         config += "The loss is "+self.loss+" for a problem of "
         if self.classification is True:
             config += "classification."+os.linesep
@@ -337,10 +342,12 @@ class NeuralNetwork(object):
     def evaluate(self, data, predictions=False):
         """
 
-        :param data: list of LabeledPoint
+        :param data:
         :param predictions: bool, for returning predictions too
         :return:
         """
+        if type(data) is LabeledDataSet:
+            data = data.collect()
         actual = map(lambda lp: lp.label, data)
         predicted = map(lambda lp: self.predict(lp.features).matrix, data)
         if self.params.classification is True:

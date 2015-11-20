@@ -90,17 +90,10 @@ class Optimizer(object):
         return stop
 
 
-
-
-
 class Adadelta(Optimizer):
-    """Adadelta optimizer.
-    https://github.com/BRML/climin/blob/master/climin/adadelta.py
-    .. [zeiler2013adadelta] Zeiler, Matthew D.
-       "ADADELTA: An adaptive learning rate method."
-       arXiv preprint arXiv:1212.5701 (2012).
     """
 
+    """
     def __init__(self, model, data, parameters=None):
         """
 
@@ -111,7 +104,6 @@ class Adadelta(Optimizer):
         """
         super(Adadelta, self).__init__(model, data, parameters)
         self._init_acummulators()
-
 
     def _init_acummulators(self):
         """

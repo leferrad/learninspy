@@ -84,31 +84,9 @@ class IsNaN(object):
 
 
 class Patience(object):
-    """Stop criterion inspired by Bengio's patience method.
-    The idea is to increase the number of iterations until stopping by
-    a multiplicative and/or additive constant once a new best candidate is
-    found.
-    Attributes
-    ----------
-    func_or_key : function, hashable
-        Either a function or a hashable object. In the first case, the function
-        will be called to get the latest loss. In the second case, the loss
-        will be obtained from the in the corresponding field of the ``info``
-        dictionary.
-    initial : int
-        Initial patience. Lower bound on the number of iterations.
-    grow_factor : float
-        Everytime we find a sufficiently better candidate (determined by
-        ``threshold``) we increase the patience multiplicatively by
-        ``grow_factor``.
-    grow_offset : float
-        Everytime we find a sufficiently better candidate (determined by
-        ``threshold``) we increase the patience additively by ``grow_offset``.
-    threshold : float, optional, default: 1e-4
-        A loss of a is assumed to be a better candidate than b, if a is larger
-        than b by a margin of ``threshold``.
     """
 
+    """
     def __init__(self, initial, key='hits', grow_factor=1., grow_offset=0.,
                  threshold=1e-4):
         if grow_factor == 1 and grow_offset == 0:
