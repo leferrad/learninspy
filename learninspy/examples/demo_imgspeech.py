@@ -2,58 +2,68 @@ __author__ = 'leferrad'
 
 import time
 
-from learninspy import dnn as mod
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
-from learninspy.utils.data import split_data, label_data
-from learninspy.dnn.evaluation import ClassificationMetrics
-from learninspy.context import sc
-from utils.feature import PCA
+from learninspy.core.model import NetworkParameters, NeuralNetwork
+from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.stops import criterion
+from learninspy.utils.data import StandardScaler, LabeledDataSet
+from learninspy.utils.evaluation import ClassificationMetrics
+from learninspy.utils.feature import PCA
 
+print "Cargando base de datos de entrenamiento..."
+# Uso clase hecha para manejo de DataSet (almacena en RDD)
+train = LabeledDataSet()
+train.load_file("/media/leeandro04/Data/Downloads/ImaginedSpeechDATA/Speech Imagery Task_mat/prj_mat/S1_train.dat")
+rows = train.data.count()
+cols = len(train.features.take(1)[0].toArray())
+print "Size: ", rows, " x ", cols
 
-def parsePoint(line):
-    values = [float(x) for x in line.split(';')]
-    return values[-1], values[0:-1]
-# -----
-seed = 123
-print "Cargando base de datos ..."
-data = (sc.textFile("/home/leeandro04/Documentos/Datos/EEG/ImaginedSpeech-Brainliner/alldatalabel_cat3_Norm.dat")
-        .map(parsePoint))
-features = data.map(lambda (l,f): f).collect()
-labels = data.map(lambda (l,f): l).collect()
-print "Size de la data: ", len(features), " x ", len(features[0])
+train, valid = train.split_data([.8, .2])  # Particiono conjuntos
 
-train, valid, test = split_data(label_data(features, labels), [.7, .2, .1], seed=seed)
-# -----
+print "Cargando base de datos de testeo..."
+test = LabeledDataSet()
+test.load_file("/media/leeandro04/Data/Downloads/ImaginedSpeechDATA/Speech Imagery Task_mat/prj_mat/S1_test.dat")
+rows = test.data.count()
+cols = len(test.features.take(1)[0].toArray())
+print "Size: ", rows, " x ", cols
+"""
 # Aplico PCA
-k = 80
 pca = PCA(train)
-train = pca.transform(k=k)
-valid = pca.transform(k=k, data=valid)
-test = pca.transform(k=k, data=test)
+train = pca.transform()
+valid = pca.transform(data=valid)
+test = pca.transform(data=test)
+k = pca.k
+print "Componentes principales tomadas: ", k
+"""
+# Standarize data
+std = StandardScaler()
+std.fit(train)
+train = std.transform(train)
+valid = std.transform(valid)
+test = std.transform(test)
 
-# -----
-net_params = mod.DeepLearningParams(units_layers=[k, 100, 50, 3], activation='Softplus',
-                                        dropout_ratios=[0.5, 0.5, 0.0], classification=True, seed=seed)
-# TODO: que sea un dict, donde se agrupan en 'any' y en 'all' los criterios
-local_criterions = [criterion['MaxIterations'](10),
-                    criterion['AchieveTolerance'](0.99, key='hits')]
+# Seleccion de parametros para la construccion de red neuronal
+net_params = NetworkParameters(units_layers=[512, 400, 200, 100, 3], activation='Softplus',
+                                dropout_ratios=[0.2, 0.2, 0.2, 0.0], classification=True)
+neural_net = NeuralNetwork(net_params)
 
-global_criterions = [criterion['Patience'](100, key='hits', grow_factor=1., grow_offset=5.,
-                                           threshold=0.02),
-                     criterion['AchieveTolerance'](0.99, key='hits')]
+# Seleccion de parametros de optimizacion
+local_stops = [criterion['MaxIterations'](10),
+               criterion['AchieveTolerance'](0.90, key='hits')]
 
-opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_criterions)
+global_stops = [criterion['MaxIterations'](100),
+                criterion['AchieveTolerance'](0.95, key='hits')]
 
-neural_net = mod.NeuralNetwork(net_params)
-# -----
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops, merge_criter='log_avg')
+
 print "Entrenando red neuronal ..."
 t1 = time.time()
-hits_valid = neural_net.fit(train, valid, mini_batch=100, parallelism=4, stops=global_criterions,
+hits_valid = neural_net.fit(train, valid, mini_batch=30, parallelism=4, stops=global_stops,
                             optimizer_params=opt_params, keep_best=True)
-hits_test, predict = neural_net.evaluate(test, predictions=True)
 t1f = time.time() - t1
 
+# Resultados
+test = test.collect()
+hits_test, predict = neural_net.evaluate(test, predictions=True)
 print 'Tiempo: ', t1f, 'Tasa de acierto final: ', hits_test
 
 print "Metricas: "

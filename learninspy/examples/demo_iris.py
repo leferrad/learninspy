@@ -5,14 +5,14 @@ import time
 import os
 
 # Librerias internas
-from learninspy.dnn import model as mod
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
+from learninspy.core import model as mod
+from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.stops import criterion
 from learninspy.utils.data import StandardScaler, LabeledDataSet
-from learninspy.dnn.evaluation import ClassificationMetrics
+from learninspy.utils.evaluation import ClassificationMetrics
 
 
-net_params = mod.DeepLearningParams(units_layers=[4, 10, 5, 3], activation='Softplus',
+net_params = mod.NetworkParameters(units_layers=[4, 10, 5, 3], activation='Softplus',
                                     dropout_ratios=[0.5, 0.5, 0.0], classification=True)
 
 local_stops = [criterion['MaxIterations'](50),

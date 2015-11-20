@@ -1,7 +1,7 @@
-dnn
-===
+learninspy
+==========
 
 .. toctree::
    :maxdepth: 4
 
-   dnn
+   learninspy

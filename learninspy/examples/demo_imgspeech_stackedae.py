@@ -2,14 +2,13 @@ __author__ = 'leferrad'
 
 import time
 
-from learninspy.dnn.model import DeepLearningParams
-from learninspy.dnn.autoencoder import StackedAutoencoder
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
+from learninspy.core.model import NetworkParameters
+from learninspy.core.autoencoder import StackedAutoencoder
+from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.stops import criterion
 from learninspy.utils.data import LabeledDataSet, StandardScaler
-from learninspy.dnn.evaluation import ClassificationMetrics
+from learninspy.utils.evaluation import ClassificationMetrics
 from learninspy.context import sc
-from learninspy.utils.feature import PCA
 
 
 def parsePoint(line):
@@ -51,7 +50,7 @@ test = test.collect()
 
 units = [512, 100, 50, 3]
 dropout = [0.2, 0.2, 0.0]
-net_params = DeepLearningParams(units_layers=units, activation='ReLU',
+net_params = NetworkParameters(units_layers=units, activation='ReLU',
                                     dropout_ratios=dropout, classification=True, seed=seed)
 
 local_stops = [criterion['MaxIterations'](20),
