@@ -1,0 +1,917 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>learninspy.dnn package &mdash; documentación de Learninspy - 1.0.0</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="documentación de Learninspy - 1.0.0" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navegación</h3>
+      <ul>
+        <li><a href="index.html">documentación de Learninspy - 1.0.0</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="learninspy-dnn-package">
+<h1>learninspy.dnn package<a class="headerlink" href="#learninspy-dnn-package" title="Enlazar permanentemente con este título">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Enlazar permanentemente con este título">¶</a></h2>
+</div>
+<div class="section" id="module-learninspy.dnn.activations">
+<span id="learninspy-dnn-activations-module"></span><h2>learninspy.dnn.activations module<a class="headerlink" href="#module-learninspy.dnn.activations" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="function">
+<dt id="learninspy.dnn.activations.identity">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">identity</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.identity" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Identidad</p>
+<p><img class="math" src="_images/math/7139b967cb2b3a44e3425cc00ce13fe1e12c605d.png" alt="f(x)=x"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.identity_d">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">identity_d</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.identity_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Derivada de Identidad</p>
+<p><img class="math" src="_images/math/1878988aecf7efce011aab2c6a7b943f60bb67ea.png" alt="f(x)=1"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.lrelu">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">lrelu</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.lrelu" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Leaky ReLU</p>
+<p><img class="math" src="_images/math/67e458a82a3ee7c16839d0e593eeea9146dd6a1e.png" alt="f(x) = \begin{cases}x &amp; x &gt; 0 \\ 0.01x &amp; x \leq 0\end{cases}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.lrelu_d">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">lrelu_d</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.lrelu_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Derivada de Leaky ReLU</p>
+<p><img class="math" src="_images/math/2b08aba8fdacd533476ad8139e853c6cb5fbcf28.png" alt="f(x) = \begin{cases}1 &amp; x &gt; 0 \\ 0.01 &amp; x \leq 0\end{cases}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.relu">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">relu</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.relu" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Rectifier Linear Unit (ReLU)</p>
+<p><img class="math" src="_images/math/4b7aa4ce436c8a6d65b0504899474700f4bfb0e7.png" alt="f(x)=max(0,x)"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.relu_d">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">relu_d</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.relu_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Derivada de ReLU</p>
+<p><img class="math" src="_images/math/ecad0c36059992464ad98d2c4b9d64fcbacf2a88.png" alt="f(x) = \begin{cases}1 &amp; x &gt; 0 \\ 0 &amp; x \leq 0\end{cases}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.sigmoid">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">sigmoid</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.sigmoid" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Sigmoidea</p>
+<p><img class="math" src="_images/math/b87a868baf7fe4822a86b9ffbddd8befa00e30e3.png" alt="f(x)=\frac{1}{1 + e^{-x}}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.sigmoid_d">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">sigmoid_d</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.sigmoid_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Derivada de Sigmoidea</p>
+<p><img class="math" src="_images/math/8c50bd9acdf7ef34d98bd4b14c43b917c7f6720b.png" alt="f(x)=\frac{e^x - e^{-x}}{e^x + e^{-x}}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.softplus">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">softplus</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.softplus" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Softplus</p>
+<p><img class="math" src="_images/math/b0fcd3627b694e6af4488af3f1455e1fa908c772.png" alt="f(x)=\log{(1+e^x)}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.softplus_d">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">softplus_d</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.softplus_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Derivada de Softplus</p>
+<p><img class="math" src="_images/math/4ca9dd530c3e6d4ec3f0f7b8fd7f80128fca2b09.png" alt="f(x)=sigmoid(x)=\frac{1}{1 + e^{-x}}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.tanh">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">tanh</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.tanh" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Tangente Hiperbolica</p>
+<p><img class="math" src="_images/math/8c50bd9acdf7ef34d98bd4b14c43b917c7f6720b.png" alt="f(x)=\frac{e^x - e^{-x}}{e^x + e^{-x}}"/></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.activations.tanh_d">
+<tt class="descclassname">learninspy.dnn.activations.</tt><tt class="descname">tanh_d</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.activations.tanh_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Derivada de Tangente Hiperbolica</p>
+<p><img class="math" src="_images/math/b821fbfeac07ab3a76d2d967753d2365e07dd24a.png" alt="f(x)=1-tan(x)^2"/></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-learninspy.dnn.autoencoder">
+<span id="learninspy-dnn-autoencoder-module"></span><h2>learninspy.dnn.autoencoder module<a class="headerlink" href="#module-learninspy.dnn.autoencoder" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="class">
+<dt id="learninspy.dnn.autoencoder.AutoEncoder">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.autoencoder.</tt><tt class="descname">AutoEncoder</tt><big>(</big><em>params=None</em>, <em>list_layers=None</em>, <em>dropout_in=0.0</em>, <em>sparsity_beta=0</em>, <em>sparsity_param=0.05</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.AutoEncoder" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference internal" href="#learninspy.dnn.model.NeuralNetwork" title="learninspy.dnn.model.NeuralNetwork"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.dnn.model.NeuralNetwork</span></tt></a></p>
+<p>Tipo de red neuronal, compuesto de una capa de entrada, una oculta, y una de salida.
+Las unidades en la capa de entrada y la de salida son iguales, y en la capa oculta
+se entrena una representación de la entrada en distinta dimensión.
+A las conexiones entre la capa de entrada y la oculta se le denominan encoder,
+y a las de la oculta a la salida se les llama decoder.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ae_params</span> <span class="o">=</span> <span class="n">NetworkParameters</span><span class="p">(</span><span class="n">units_layers</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="n">activation</span><span class="o">=</span><span class="s">&#39;Tanh&#39;</span><span class="p">,</span> <span class="n">dropout_ratios</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">classification</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ae</span> <span class="o">=</span> <span class="n">AutoEncoder</span><span class="p">(</span><span class="n">ae_params</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.AutoEncoder.assert_regression">
+<tt class="descname">assert_regression</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.AutoEncoder.assert_regression" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Se asegura que la capa de salida sea de regresión</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.AutoEncoder.encode">
+<tt class="descname">encode</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.AutoEncoder.encode" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Codifica la entrada x sobre la</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.AutoEncoder.encoder_layer">
+<tt class="descname">encoder_layer</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.AutoEncoder.encoder_layer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.AutoEncoder.evaluate">
+<tt class="descname">evaluate</tt><big>(</big><em>data</em>, <em>predictions=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.AutoEncoder.evaluate" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Evalúa AutoEncoder sobre un conjunto de datos.
+Se utiliza <img class="math" src="_images/math/d954567732c83d1a3a8256c407193790859f4d1e.png" alt="r^2"/> como métrica en la evaluación.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; list</li>
+<li><strong>predictions</strong> &#8211; si es True, retorna las predicciones (salida del AutoEncoder)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last">resultado de <img class="math" src="_images/math/d954567732c83d1a3a8256c407193790859f4d1e.png" alt="r^2"/>, y predicciones si se solicita en <em>predictions</em></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.AutoEncoder.kl_divergence">
+<tt class="descname">kl_divergence</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.AutoEncoder.kl_divergence" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.autoencoder.StackedAutoencoder">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.autoencoder.</tt><tt class="descname">StackedAutoencoder</tt><big>(</big><em>params=None</em>, <em>list_layers=None</em>, <em>dropout=None</em>, <em>sparsity_beta=0</em>, <em>sparsity_param=0.05</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.StackedAutoencoder" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference internal" href="#learninspy.dnn.model.NeuralNetwork" title="learninspy.dnn.model.NeuralNetwork"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.dnn.model.NeuralNetwork</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.StackedAutoencoder.finetune">
+<tt class="descname">finetune</tt><big>(</big><em>train</em>, <em>valid</em>, <em>criterions=None</em>, <em>mini_batch=50</em>, <em>parallelism=4</em>, <em>optimizer_params=None</em>, <em>keep_best=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.StackedAutoencoder.finetune" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.StackedAutoencoder.fit">
+<tt class="descname">fit</tt><big>(</big><em>train</em>, <em>valid=None</em>, <em>stops=None</em>, <em>mini_batch=50</em>, <em>parallelism=4</em>, <em>optimizer_params=None</em>, <em>keep_best=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.StackedAutoencoder.fit" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>train</strong> &#8211; </li>
+<li><strong>valid</strong> &#8211; </li>
+<li><strong>stops</strong> &#8211; </li>
+<li><strong>mini_batch</strong> &#8211; </li>
+<li><strong>parallelism</strong> &#8211; </li>
+<li><strong>optimizer_params</strong> &#8211; </li>
+<li><strong>keep_best</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.autoencoder.StackedAutoencoder.predict">
+<tt class="descname">predict</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.autoencoder.StackedAutoencoder.predict" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-learninspy.dnn.loss">
+<span id="learninspy-dnn-loss-module"></span><h2>learninspy.dnn.loss module<a class="headerlink" href="#module-learninspy.dnn.loss" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="function">
+<dt id="learninspy.dnn.loss.cross_entropy">
+<tt class="descclassname">learninspy.dnn.loss.</tt><tt class="descname">cross_entropy</tt><big>(</big><em>y</em>, <em>t</em><big>)</big><a class="headerlink" href="#learninspy.dnn.loss.cross_entropy" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.loss.cross_entropy_d">
+<tt class="descclassname">learninspy.dnn.loss.</tt><tt class="descname">cross_entropy_d</tt><big>(</big><em>y</em>, <em>t</em><big>)</big><a class="headerlink" href="#learninspy.dnn.loss.cross_entropy_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.loss.mse">
+<tt class="descclassname">learninspy.dnn.loss.</tt><tt class="descname">mse</tt><big>(</big><em>value</em>, <em>target</em><big>)</big><a class="headerlink" href="#learninspy.dnn.loss.mse" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.loss.mse_d">
+<tt class="descclassname">learninspy.dnn.loss.</tt><tt class="descname">mse_d</tt><big>(</big><em>value</em>, <em>target</em><big>)</big><a class="headerlink" href="#learninspy.dnn.loss.mse_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-learninspy.dnn.model">
+<span id="learninspy-dnn-model-module"></span><h2>learninspy.dnn.model module<a class="headerlink" href="#module-learninspy.dnn.model" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="class">
+<dt id="learninspy.dnn.model.ClassificationLayer">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.model.</tt><tt class="descname">ClassificationLayer</tt><big>(</big><em>n_in=2</em>, <em>n_out=2</em>, <em>activation='ReLU'</em>, <em>distribute=False</em>, <em>w=None</em>, <em>b=None</em>, <em>sparsity=False</em>, <em>rng=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.ClassificationLayer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference internal" href="#learninspy.dnn.model.NeuralLayer" title="learninspy.dnn.model.NeuralLayer"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.dnn.model.NeuralLayer</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.model.ClassificationLayer.dropoutput">
+<tt class="descname">dropoutput</tt><big>(</big><em>x</em>, <em>p</em>, <em>grad=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.ClassificationLayer.dropoutput" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.ClassificationLayer.output">
+<tt class="descname">output</tt><big>(</big><em>x</em>, <em>grad=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.ClassificationLayer.output" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.model.NetworkParameters">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.model.</tt><tt class="descname">NetworkParameters</tt><big>(</big><em>units_layers</em>, <em>activation='ReLU'</em>, <em>layer_distributed=None</em>, <em>dropout_ratios=None</em>, <em>classification=True</em>, <em>strength_l1=1e-05</em>, <em>strength_l2=0.0001</em>, <em>seed=123</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NetworkParameters" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.model.NeuralLayer">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.model.</tt><tt class="descname">NeuralLayer</tt><big>(</big><em>n_in=2</em>, <em>n_out=2</em>, <em>activation='ReLU'</em>, <em>distribute=False</em>, <em>w=None</em>, <em>b=None</em>, <em>sparsity=False</em>, <em>rng=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.dropoutput">
+<tt class="descname">dropoutput</tt><big>(</big><em>x</em>, <em>p</em>, <em>grad=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.dropoutput" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.get_bias">
+<tt class="descname">get_bias</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.get_bias" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.get_weights">
+<tt class="descname">get_weights</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.get_weights" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.l1">
+<tt class="descname">l1</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.l1" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.l2">
+<tt class="descname">l2</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.l2" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.output">
+<tt class="descname">output</tt><big>(</big><em>x</em>, <em>grad=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.output" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.persist_layer">
+<tt class="descname">persist_layer</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.persist_layer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.unpersist_layer">
+<tt class="descname">unpersist_layer</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.unpersist_layer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralLayer.update">
+<tt class="descname">update</tt><big>(</big><em>step_w</em>, <em>step_b</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralLayer.update" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.model.NeuralNetwork">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.model.</tt><tt class="descname">NeuralNetwork</tt><big>(</big><em>params</em>, <em>list_layers=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.check_gradients">
+<tt class="descname">check_gradients</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.check_gradients" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.check_stop">
+<tt class="descname">check_stop</tt><big>(</big><em>epochs</em>, <em>criterions</em>, <em>check_all=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.check_stop" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.cost">
+<tt class="descname">cost</tt><big>(</big><em>features</em>, <em>label</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.cost" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.evaluate">
+<tt class="descname">evaluate</tt><big>(</big><em>data</em>, <em>predictions=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.evaluate" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; list of LabeledPoint</li>
+<li><strong>predictions</strong> &#8211; bool, for returning predictions too</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.fit">
+<tt class="descname">fit</tt><big>(</big><em>train</em>, <em>valid=None</em>, <em>stops=None</em>, <em>mini_batch=50</em>, <em>parallelism=4</em>, <em>optimizer_params=None</em>, <em>keep_best=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.fit" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.l1">
+<tt class="descname">l1</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.l1" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.l2">
+<tt class="descname">l2</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.l2" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.load">
+<tt class="descname">load</tt><big>(</big><em>name</em>, <em>path</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.load" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.persist_layers">
+<tt class="descname">persist_layers</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.persist_layers" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.predict">
+<tt class="descname">predict</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.predict" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.save">
+<tt class="descname">save</tt><big>(</big><em>name</em>, <em>path</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.save" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.train">
+<tt class="descname">train</tt><big>(</big><em>train_bc</em>, <em>mini_batch=50</em>, <em>parallelism=4</em>, <em>optimizer_params=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.train" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>train_bc</strong> &#8211; </li>
+<li><strong>mini_batch</strong> &#8211; </li>
+<li><strong>parallelism</strong> &#8211; </li>
+<li><strong>optimizer_params</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.unpersist_layers">
+<tt class="descname">unpersist_layers</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.unpersist_layers" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.model.NeuralNetwork.update">
+<tt class="descname">update</tt><big>(</big><em>stepw</em>, <em>stepb</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.NeuralNetwork.update" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.model.RegressionLayer">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.model.</tt><tt class="descname">RegressionLayer</tt><big>(</big><em>n_in=2</em>, <em>n_out=2</em>, <em>activation='ReLU'</em>, <em>distribute=False</em>, <em>w=None</em>, <em>b=None</em>, <em>sparsity=False</em>, <em>rng=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.RegressionLayer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference internal" href="#learninspy.dnn.model.NeuralLayer" title="learninspy.dnn.model.NeuralLayer"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.dnn.model.NeuralLayer</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.model.RegressionLayer.dropoutput">
+<tt class="descname">dropoutput</tt><big>(</big><em>x</em>, <em>p</em>, <em>grad=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.model.RegressionLayer.dropoutput" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-learninspy.dnn.neurons">
+<span id="learninspy-dnn-neurons-module"></span><h2>learninspy.dnn.neurons module<a class="headerlink" href="#module-learninspy.dnn.neurons" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="class">
+<dt id="learninspy.dnn.neurons.DistributedNeurons">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.neurons.</tt><tt class="descname">DistributedNeurons</tt><big>(</big><em>mat</em>, <em>shape</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.activation">
+<tt class="descname">activation</tt><big>(</big><em>fun</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.activation" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.collect">
+<tt class="descname">collect</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.collect" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.count">
+<tt class="descname">count</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.count" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.dot">
+<tt class="descname">dot</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.dot" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.dropout">
+<tt class="descname">dropout</tt><big>(</big><em>p</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.dropout" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.l1">
+<tt class="descname">l1</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.l1" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.l2">
+<tt class="descname">l2</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.l2" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.loss">
+<tt class="descname">loss</tt><big>(</big><em>fun</em>, <em>y</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.loss" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.loss_d">
+<tt class="descname">loss_d</tt><big>(</big><em>fun</em>, <em>y</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.loss_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.matrix">
+<tt class="descname">matrix</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.matrix" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.mse">
+<tt class="descname">mse</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.mse" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.mse_d">
+<tt class="descname">mse_d</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.mse_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.mul_array">
+<tt class="descname">mul_array</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.mul_array" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.mul_array2">
+<tt class="descname">mul_array2</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.mul_array2" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.mul_arrayrdd">
+<tt class="descname">mul_arrayrdd</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.mul_arrayrdd" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.mul_arrayrdd2">
+<tt class="descname">mul_arrayrdd2</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.mul_arrayrdd2" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.mul_elemwise">
+<tt class="descname">mul_elemwise</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.mul_elemwise" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.outer">
+<tt class="descname">outer</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.outer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.persist">
+<tt class="descname">persist</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.persist" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.shape">
+<tt class="descname">shape</tt><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.shape" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.softmax">
+<tt class="descname">softmax</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.softmax" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.sum">
+<tt class="descname">sum</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.sum" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.sum_array">
+<tt class="descname">sum_array</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.sum_array" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.unpersist">
+<tt class="descname">unpersist</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.unpersist" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.DistributedNeurons.zip">
+<tt class="descname">zip</tt><big>(</big><em>rdd</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.DistributedNeurons.zip" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.neurons.LocalNeurons">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.neurons.</tt><tt class="descname">LocalNeurons</tt><big>(</big><em>mat</em>, <em>shape</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.activation">
+<tt class="descname">activation</tt><big>(</big><em>fun</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.activation" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.collect">
+<tt class="descname">collect</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.collect" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.count">
+<tt class="descname">count</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.count" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.dot">
+<tt class="descname">dot</tt><big>(</big><em>vec</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.dot" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.dropout">
+<tt class="descname">dropout</tt><big>(</big><em>p</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.dropout" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.l1">
+<tt class="descname">l1</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.l1" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.l2">
+<tt class="descname">l2</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.l2" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.loss">
+<tt class="descname">loss</tt><big>(</big><em>fun</em>, <em>y</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.loss" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.loss_d">
+<tt class="descname">loss_d</tt><big>(</big><em>fun</em>, <em>y</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.loss_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.mse">
+<tt class="descname">mse</tt><big>(</big><em>y</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.mse" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.mse_d">
+<tt class="descname">mse_d</tt><big>(</big><em>y</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.mse_d" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.mul_array">
+<tt class="descname">mul_array</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.mul_array" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.mul_array2">
+<tt class="descname">mul_array2</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.mul_array2" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.mul_arrayrdd">
+<tt class="descname">mul_arrayrdd</tt><big>(</big><em>rdd</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.mul_arrayrdd" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.mul_elemwise">
+<tt class="descname">mul_elemwise</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.mul_elemwise" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.outer">
+<tt class="descname">outer</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.outer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.persist">
+<tt class="descname">persist</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.persist" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="learninspy.dnn.neurons.LocalNeurons.shape">
+<tt class="descname">shape</tt><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.shape" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.softmax">
+<tt class="descname">softmax</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.softmax" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.sum">
+<tt class="descname">sum</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.sum" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.sum_array">
+<tt class="descname">sum_array</tt><big>(</big><em>array</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.sum_array" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.transpose">
+<tt class="descname">transpose</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.transpose" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.unpersist">
+<tt class="descname">unpersist</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.unpersist" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.neurons.LocalNeurons.zip">
+<tt class="descname">zip</tt><big>(</big><em>rdd</em><big>)</big><a class="headerlink" href="#learninspy.dnn.neurons.LocalNeurons.zip" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-learninspy.dnn.optimization">
+<span id="learninspy-dnn-optimization-module"></span><h2>learninspy.dnn.optimization module<a class="headerlink" href="#module-learninspy.dnn.optimization" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="class">
+<dt id="learninspy.dnn.optimization.Adadelta">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.optimization.</tt><tt class="descname">Adadelta</tt><big>(</big><em>model</em>, <em>data</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.Adadelta" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference internal" href="#learninspy.dnn.optimization.Optimizer" title="learninspy.dnn.optimization.Optimizer"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.dnn.optimization.Optimizer</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.optimization.GD">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.optimization.</tt><tt class="descname">GD</tt><big>(</big><em>model</em>, <em>data</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.GD" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference internal" href="#learninspy.dnn.optimization.Optimizer" title="learninspy.dnn.optimization.Optimizer"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.dnn.optimization.Optimizer</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.optimization.Optimizer">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.optimization.</tt><tt class="descname">Optimizer</tt><big>(</big><em>model</em>, <em>data</em>, <em>parameters=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.Optimizer" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<dl class="method">
+<dt id="learninspy.dnn.optimization.Optimizer.check_stop">
+<tt class="descname">check_stop</tt><big>(</big><em>check_all=False</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.Optimizer.check_stop" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="learninspy.dnn.optimization.Optimizer.results">
+<tt class="descname">results</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.Optimizer.results" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.optimization.OptimizerParameters">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.optimization.</tt><tt class="descname">OptimizerParameters</tt><big>(</big><em>algorithm='Adadelta'</em>, <em>options=None</em>, <em>stops=None</em>, <em>merge_criter='w_avg'</em>, <em>merge_goal='hits'</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.OptimizerParameters" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.optimization.merge_models">
+<tt class="descclassname">learninspy.dnn.optimization.</tt><tt class="descname">merge_models</tt><big>(</big><em>results_rdd</em>, <em>criter='w_avg'</em>, <em>goal='hits'</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.merge_models" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Funcion para hacer merge de modelos, en base a un criterio de ponderacion sobre un valor objetivo
+:param results_rdd:
+:param criter:
+:param goal:
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.optimization.mix_models">
+<tt class="descclassname">learninspy.dnn.optimization.</tt><tt class="descname">mix_models</tt><big>(</big><em>left</em>, <em>right</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.mix_models" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Se devuelve el resultado de sumar las NeuralLayers
+de left y right
+:param left: list of NeuralLayer
+:param right: list of NeuralLayer
+:return: list of NeuralLayer</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.dnn.optimization.optimize">
+<tt class="descclassname">learninspy.dnn.optimization.</tt><tt class="descname">optimize</tt><big>(</big><em>model</em>, <em>data</em>, <em>mini_batch=50</em>, <em>params=None</em>, <em>seed=123</em><big>)</big><a class="headerlink" href="#learninspy.dnn.optimization.optimize" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="learninspy-dnn-stops-module">
+<h2>learninspy.dnn.stops module<a class="headerlink" href="#learninspy-dnn-stops-module" title="Enlazar permanentemente con este título">¶</a></h2>
+<p>Este módulo está basado en funcionalidades de &#8216;climin&#8217;, un package de Python para optimización en escenarios de machine learning.
+&gt; J.Bayer and C.Osendorfer and S. Diot-Girard and T. Rückstiess and Sebastian Urban. climin - A pythonic framework for gradient-based function optimization. TUM Tech Report. 2015.
+Para más detalles, ingresar al repositorio:
+<a class="reference external" href="https://github.com/BRML/climin">https://github.com/BRML/climin</a></p>
+<span class="target" id="module-learninspy.dnn.stops"></span><dl class="class">
+<dt id="learninspy.dnn.stops.AchieveTolerance">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">AchieveTolerance</tt><big>(</big><em>tolerance</em>, <em>key='hits'</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.AchieveTolerance" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.IsNaN">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">IsNaN</tt><big>(</big><em>keys=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.IsNaN" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.MaxIterations">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">MaxIterations</tt><big>(</big><em>max_iter</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.MaxIterations" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.ModuloNIterations">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">ModuloNIterations</tt><big>(</big><em>n</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.ModuloNIterations" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.NotBetterThanAfter">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">NotBetterThanAfter</tt><big>(</big><em>minimal</em>, <em>after</em>, <em>key='hits'</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.NotBetterThanAfter" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="learninspy.dnn.stops.OnSignal">
+<tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">OnSignal</tt><a class="headerlink" href="#learninspy.dnn.stops.OnSignal" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>alias de <a class="reference internal" href="#learninspy.dnn.stops.OnUnixSignal" title="learninspy.dnn.stops.OnUnixSignal"><tt class="xref py py-class docutils literal"><span class="pre">OnUnixSignal</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.OnUnixSignal">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">OnUnixSignal</tt><big>(</big><em>sig=2</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.OnUnixSignal" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<p>Stopping criterion that is sensitive to some signal.</p>
+<dl class="method">
+<dt id="learninspy.dnn.stops.OnUnixSignal.handler">
+<tt class="descname">handler</tt><big>(</big><em>signal</em>, <em>frame</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.OnUnixSignal.handler" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.OnWindowsSignal">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">OnWindowsSignal</tt><big>(</big><em>sig=None</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.OnWindowsSignal" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<p>Stopping criterion that is sensitive to signals Ctrl-C or Ctrl-Break
+on Windows.</p>
+<dl class="method">
+<dt id="learninspy.dnn.stops.OnWindowsSignal.handler">
+<tt class="descname">handler</tt><big>(</big><em>ctrl_type</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.OnWindowsSignal.handler" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.Patience">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">Patience</tt><big>(</big><em>initial</em>, <em>key='hits'</em>, <em>grow_factor=1.0</em>, <em>grow_offset=0.0</em>, <em>threshold=0.0001</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.Patience" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="learninspy.dnn.stops.TimeElapsed">
+<em class="property">class </em><tt class="descclassname">learninspy.dnn.stops.</tt><tt class="descname">TimeElapsed</tt><big>(</big><em>sec</em><big>)</big><a class="headerlink" href="#learninspy.dnn.stops.TimeElapsed" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-learninspy.dnn">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-learninspy.dnn" title="Enlazar permanentemente con este título">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/Learninspy-logo_grande2.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Tabla de Contenidos</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">learninspy.dnn package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-learninspy.dnn.activations">learninspy.dnn.activations module</a></li>
+<li><a class="reference internal" href="#module-learninspy.dnn.autoencoder">learninspy.dnn.autoencoder module</a></li>
+<li><a class="reference internal" href="#module-learninspy.dnn.loss">learninspy.dnn.loss module</a></li>
+<li><a class="reference internal" href="#module-learninspy.dnn.model">learninspy.dnn.model module</a></li>
+<li><a class="reference internal" href="#module-learninspy.dnn.neurons">learninspy.dnn.neurons module</a></li>
+<li><a class="reference internal" href="#module-learninspy.dnn.optimization">learninspy.dnn.optimization module</a></li>
+<li><a class="reference internal" href="#learninspy-dnn-stops-module">learninspy.dnn.stops module</a></li>
+<li><a class="reference internal" href="#module-learninspy.dnn">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>Esta página</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/learninspy.dnn.txt"
+           rel="nofollow">Mostrar el código</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Búsqueda rápida</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Ir a" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Introduzca los términos de búsqueda o un nombre de módulo, clase o función.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navegación</h3>
+      <ul>
+        <li><a href="index.html">documentación de Learninspy - 1.0.0</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, leferrad.
+      Creado con <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
