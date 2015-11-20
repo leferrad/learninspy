@@ -85,8 +85,8 @@ class LabeledDataSet(object):
             labels = self.data.map(lambda (l, f): l)
         return labels
 
-    def load_file(self, path):
-        self.data = fileio.load_file(path)
+    def load_file(self, path, pos_label=-1):
+        self.data = fileio.load_file(path, pos_label=pos_label)
         self.labeled_point()
 
     def save_file(self, path):  # TODO mejorar pq no anda
