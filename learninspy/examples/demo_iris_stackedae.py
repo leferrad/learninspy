@@ -5,17 +5,17 @@ import time
 import os
 
 # Librerias internas
-import learninspy.dnn.model as mod
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
+import learninspy.core.model as mod
+from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.stops import criterion
 from learninspy.utils.data import StandardScaler, LabeledDataSet
 from learninspy.utils.evaluation import ClassificationMetrics
-from learninspy.dnn.autoencoder import StackedAutoencoder
+from learninspy.core.autoencoder import StackedAutoencoder
 
 units_layers = [4, 5, 10, 3]
-net_params = mod.DeepLearningParams(units_layers=units_layers, activation='Softplus',
+net_params = mod.NetworkParameters(units_layers=units_layers, activation='Softplus',
                                     dropout_ratios=[0.5, 0.5, 0.0], classification=True)
-sae_params = mod.DeepLearningParams(units_layers=units_layers, activation='Tanh')
+sae_params = mod.NetworkParameters(units_layers=units_layers, activation='Tanh')
 
 local_stops = [criterion['MaxIterations'](30),
                     criterion['AchieveTolerance'](0.95, key='hits')]

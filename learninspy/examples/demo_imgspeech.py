@@ -2,9 +2,9 @@ __author__ = 'leferrad'
 
 import time
 
-from learninspy.dnn.model import DeepLearningParams, NeuralNetwork
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
+from learninspy.core.model import NetworkParameters, NeuralNetwork
+from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.stops import criterion
 from learninspy.utils.data import StandardScaler, LabeledDataSet
 from learninspy.utils.evaluation import ClassificationMetrics
 from learninspy.utils.feature import PCA
@@ -42,7 +42,7 @@ valid = std.transform(valid)
 test = std.transform(test)
 
 # Seleccion de parametros para la construccion de red neuronal
-net_params = DeepLearningParams(units_layers=[512, 400, 200, 100, 3], activation='Softplus',
+net_params = NetworkParameters(units_layers=[512, 400, 200, 100, 3], activation='Softplus',
                                 dropout_ratios=[0.2, 0.2, 0.2, 0.0], classification=True)
 neural_net = NeuralNetwork(net_params)
 

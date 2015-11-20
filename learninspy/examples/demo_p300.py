@@ -2,9 +2,9 @@ __author__ = 'leferrad'
 
 import time
 
-from learninspy.dnn.model import DeepLearningParams, NeuralNetwork
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
+from learninspy.core.model import NetworkParameters, NeuralNetwork
+from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.stops import criterion
 from learninspy.utils.data import StandardScaler, LabeledDataSet
 from learninspy.utils.evaluation import ClassificationMetrics
 from learninspy.utils.feature import PCA
@@ -35,23 +35,23 @@ valid = std.transform(valid)
 test = std.transform(test)
 
 # Seleccion de parametros para la construccion de red neuronal
-net_params = DeepLearningParams(units_layers=[205, 50, 10, 3], activation='Softplus',
-                                dropout_ratios=[0.2, 0.2,  0.0], classification=True)
+net_params = NetworkParameters(units_layers=[205, 100, 50, 20, 3], activation='Tanh',
+                                dropout_ratios=[0.2, 0.5, 0.5, 0.0], classification=True)
 neural_net = NeuralNetwork(net_params)
 
 # Seleccion de parametros de optimizacion
-local_stops = [criterion['MaxIterations'](30),
+local_stops = [criterion['MaxIterations'](10),
                criterion['AchieveTolerance'](0.90, key='hits')]
 
-global_stops = [criterion['MaxIterations'](20),
+global_stops = [criterion['MaxIterations'](50),
                 criterion['AchieveTolerance'](0.95, key='hits')]
 
 opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops, merge_criter='log_avg')
 
 print "Entrenando red neuronal ..."
 t1 = time.time()
-hits_valid = neural_net.fit(train, valid, mini_batch=50, parallelism=4, stops=global_stops,
-                            optimizer_params=opt_params)
+hits_valid = neural_net.fit(train, valid, mini_batch=200, parallelism=4, stops=global_stops,
+                            optimizer_params=opt_params, keep_best=True)
 t1f = time.time() - t1
 
 # Resultados

@@ -4,26 +4,26 @@ import time
 
 from sklearn import datasets
 
-from learninspy import dnn as mod
-from learninspy.dnn.optimization import OptimizerParameters
-from learninspy.dnn.stops import criterion
+from learninspy.core.model import NeuralNetwork, NetworkParameters
+from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.stops import criterion
 from learninspy.utils.data import split_data, label_data
 from learninspy.utils.evaluation import RegressionMetrics
 
 
-net_params = mod.DeepLearningParams(units_layers=[13, 8, 1], activation='Identity',
-                                    dropout_ratios=[0.0, 0.0, 0.0], classification=False)
+net_params = NetworkParameters(units_layers=[13, 8, 1], activation='Identity',
+                               dropout_ratios=[0.0, 0.0, 0.0], classification=False)
 
 local_stops = [criterion['MaxIterations'](50),
-                    criterion['AchieveTolerance'](0.99, key='hits')]
+               criterion['AchieveTolerance'](0.99, key='hits')]
 
 global_stops = [criterion['MaxIterations'](30),
-                     criterion['AchieveTolerance'](0.99, key='hits')]
+                criterion['AchieveTolerance'](0.99, key='hits')]
 
 opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
 
 
-neural_net = mod.NeuralNetwork(net_params)
+neural_net = NeuralNetwork(net_params)
 
 print "Cargando base de datos ..."
 data = datasets.load_boston()
