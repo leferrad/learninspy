@@ -27,11 +27,8 @@ opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
 neural_net = mod.NeuralNetwork(net_params)
 
 print "Cargando base de datos ..."
-# data = datasets.load_iris()
-# features = data.data
-# labels = data.target
 dataset = LabeledDataSet()
-dataset.load_file(os.curdir+'/datasets/iris.csv')
+dataset.load_file(os.path.dirname(os.path.realpath(__file__))+'/datasets/iris.csv')
 print "Size de la data: "
 print dataset.shape
 
