@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from setuptools import setup, find_packages
 
 setup(
@@ -9,8 +12,7 @@ setup(
     author_email="ljferrado@gmail.com",
     url="https://github.com/leferrad/learninspy",
 
-    packages=find_packages(exclude=['tests']),
-    include_package_data=True,
+    packages=find_packages(exclude=['examples', 'docs']),
     scripts=[],
 
     license="LICENSE",
