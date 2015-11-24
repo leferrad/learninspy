@@ -8,10 +8,7 @@ from scipy import sparse
 from learninspy.core import activations as act, loss, optimization as opt
 from learninspy.core.stops import criterion
 from learninspy.core.neurons import DistributedNeurons, LocalNeurons
-from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.utils import checks
-from stops import criterion
-from neurons import DistributedNeurons, LocalNeurons
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.utils.data import LabeledDataSet
 from learninspy.context import sc
@@ -422,7 +419,7 @@ class NeuralNetwork(object):
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
         epoch = 0
-        while self.check_stop(epoch, stops) is False:
+        while self.check_stop(epoch+1, stops) is False:
             self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
             self.hits_valid = self.evaluate(valid_bc.value)
             print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid

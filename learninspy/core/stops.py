@@ -64,23 +64,11 @@ class NotBetterThanAfter(object):
         self.key = key
 
     def __call__(self, info):
-        return info['iterations'] > self.after and info[self.key] >= self.minimal
+        return info['iterations'] > self.after and info[self.key] < self.minimal
 
     def __str__(self):
         return "Stop when "+self.key+" does not improve a minimal of " + \
                str(self.minimal)+" after "+str(self.after)+" iterations."
-
-
-class IsNaN(object):
-
-    def __init__(self, keys=None):
-        if keys is None:
-            keys = []
-        self.keys = keys
-
-    def __call__(self, results):
-        #return any([isnan(results.get(key, 0)) for key in self.keys])
-        pass
 
 
 class Patience(object):
@@ -88,7 +76,7 @@ class Patience(object):
 
     """
     def __init__(self, initial, key='hits', grow_factor=1., grow_offset=0.,
-                 threshold=1e-4):
+                 threshold=0.05):
         if grow_factor == 1 and grow_offset == 0:
             raise ValueError('need to specify either grow_factor != 1'
                              'or grow_offset != 0')
@@ -99,16 +87,24 @@ class Patience(object):
         self.threshold = threshold
 
         self.best_value = float('inf')
+        if self.key == 'hits':
+            self.best_value = -self.best_value  # Se busca maximizar key
 
     def __call__(self, results):
         i = results['iterations']
         value = results[self.key]
-        if value > self.best_value:
+        if self.key == 'hits':
+            # Se busca maximizar key
+            better_value = value > self.best_value
+
+        else:
+            # Se busca minimizar key (que es 'cost')
+            better_value = value < self.best_value
+        if better_value is True:
             if (value - self.best_value) > self.threshold and i > 0:
                 self.patience = max(i * self.grow_factor + self.grow_offset,
                                     self.patience)
             self.best_value = value
-
         return i >= self.patience
 
 
