@@ -13,9 +13,9 @@ from learninspy.core.stops import criterion
 # optimization_domain = {}  # TODO Soportar esta funcionalidad
 network_domain = {'n_layers': ((3, 5), 1),  # Teniendo en cuenta capa de entrada y salida
                   'activation': ['Tanh', 'ReLU', 'Softplus'],  # Tambien puede ponerse fun_activation.keys()
-                  'dropout_ratios': ((0.0, 0.9), 1),  # ((begin, end), precision)
-                  'l1': ((1e-6, 1e-2), 4), 'l2': ((1e-6, 1e-2), 4),  # ((begin, end), precision)
-                  'perc_neurons': ((0.2, 2.5), 2)
+                  'dropout_ratios': ((0.0, 0.7), 1),  # ((begin, end), precision)
+                  'l1': ((1e-6, 1e-3), 4), 'l2': ((1e-6, 1e-3), 4),  # ((begin, end), precision)
+                  'perc_neurons': ((0.2, 1.1), 2)
                   }
 
 
@@ -39,7 +39,7 @@ class RandomSearch(object):
             if self.n_layers == -1:  # Se elige en random la cant de capas
                 n_layers = self.rng.randint(low=dom_layers[0][0], high=dom_layers[0][1])
             else:
-                n_layers = len(self.net_params.units_layers)
+                n_layers = self.n_layers
             """
             Lo siguiente es asi: necesito generar una lista de porcentajes, cuyo intervalo se da por la tupla
             dom_neurons[0] y la precision del float por dom_neurons[1]. Dichos porcentajes se aplican desde la capa
@@ -51,7 +51,7 @@ class RandomSearch(object):
             [500, 250, 50, 50, 60, 3]
             """
             percents = map(lambda p: round(p, dom_neurons[1]),
-                           self.rng.uniform(low=dom_neurons[0][0], high=dom_neurons[0][1], size=n_layers))
+                           self.rng.uniform(low=dom_neurons[0][0], high=dom_neurons[0][1], size=n_layers-2))
             n_in = self.net_params.units_layers[0]
             n_out = self.net_params.units_layers[-1]
             units_layers = [n_in] # Primero va la capa de entrada
@@ -79,8 +79,10 @@ class RandomSearch(object):
             dom_dropout = self.domain['dropout_ratios']
             range_dropout = dom_dropout[0]
             precision = dom_dropout[1]
-            dropout_ratios = self.rng.uniform(low=range_dropout[0], high=range_dropout[1], size=n_layers)
+            dropout_ratios = self.rng.uniform(low=range_dropout[0], high=range_dropout[1], size=n_layers-1)
             dropout_ratios = map(lambda d: round(d, precision), dropout_ratios)
+            if self.net_params.classification is True:
+                dropout_ratios[-1] = 0.0  # Ya que no debe haber dropout para Softmax
         else:
             dropout_ratios = self.net_params.dropout_ratio
         return dropout_ratios
@@ -133,7 +135,7 @@ class RandomSearch(object):
 
         for it in xrange(self.n_iter):
             net_params_sample = self._take_sample(seed=self.seeds[it])
-            print "Iteracion ", str(it), " en busqueda"
+            print "Iteracion ", str(it+1), " en busqueda"
             print "Configuracion usada:"
             print str(net_params_sample)
             neural_net = NeuralNetwork(net_params_sample)
@@ -159,4 +161,4 @@ def _test_busqueda():
     rndsearch.fit(None, None, None)
     return
 
-_test_busqueda()
+#_test_busqueda()
