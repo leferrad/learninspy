@@ -9,7 +9,7 @@ from learninspy.utils.data import LabeledDataSet
 
 class PCA(object):
     # Ver explicacion en http://cs231n.github.io/neural-networks-2/
-    def __init__(self, x):
+    def __init__(self, x, threshold_k=0.95):
         self.x = x
         if type(x) is LabeledDataSet:
             x = x.features.collect()
@@ -18,6 +18,8 @@ class PCA(object):
         self.std = np.std(x, axis=0, ddof=1)
         self.whitening_offset = 1e-5
         self.k = None
+        # Umbral de varianza explicada, para sacar un k optimo
+        self.threshold_k = threshold_k
 
         # Se computa la matriz de covarianza
         cov = np.dot(x.T, x) / x.shape[0]
@@ -53,16 +55,16 @@ class PCA(object):
             xrot = LabeledDataSet(zip(label, xrot.tolist()))
         return xrot
 
-    def _optimal_k(self, threshold=0.98):
-        # Barrido de k hasta cubrir un threshold de varianza (e.g 95%)
+    def _optimal_k(self):
+        # Barrido de k hasta cubrir un threshold de varianza dado por self.threshold_k(e.g 95%)
         var_total = sum(self.s)
-        k_opt = 1
+        opt_k = 1
         for k in xrange(1, len(self.s)):
-            var_explained = sum(self.s[:k]) / var_total
-            if var_explained >= threshold:
-                k_opt = k
+            explained_var = sum(self.s[:k]) / var_total
+            if explained_var >= self.threshold_k:
+                opt_k = k
                 break
-        return k_opt
+        return opt_k
 
 
 
