@@ -11,11 +11,11 @@ from learninspy.core.stops import criterion
 
 
 # optimization_domain = {}  # TODO Soportar esta funcionalidad
-network_domain = {'n_layers': ((3, 5), 1),  # Teniendo en cuenta capa de entrada y salida
+network_domain = {'n_layers': ((3, 7), 1),  # Teniendo en cuenta capa de entrada y salida
                   'activation': ['Tanh', 'ReLU', 'Softplus'],  # Tambien puede ponerse fun_activation.keys()
                   'dropout_ratios': ((0.0, 0.7), 1),  # ((begin, end), precision)
-                  'l1': ((1e-6, 1e-3), 4), 'l2': ((1e-6, 1e-3), 4),  # ((begin, end), precision)
-                  'perc_neurons': ((0.2, 1.1), 2)
+                  'l1': ((1e-6, 1e-4), 6), 'l2': ((1e-6, 1e-3), 4),  # ((begin, end), precision)
+                  'perc_neurons': ((0.2, 1.2), 2)
                   }
 
 
@@ -58,7 +58,7 @@ class RandomSearch(object):
             for p in percents:
                 # Agrego unidades ocultas, siendo un porcentaje de la capa anterior
                 units_layers.append(int(p * units_layers[-1]))
-            units_layers.append(n_out) # Por ultimo la capa de salida
+            units_layers.append(n_out)  # Por ultimo la capa de salida
         return units_layers
 
     def _sample_activation(self, n_layers):
@@ -66,10 +66,12 @@ class RandomSearch(object):
         if type(act) is bool:  # Debe elegirse en modo random
             dom_activations = self.domain['activation']
             if act is True:  # Quiere decir que todas las activaciones deben ser iguales
-                sample_act = self.rng.choice(dom_activations)
-                activation = [sample_act] * n_layers
+                index = self.rng.randint(low=0, high=len(dom_activations))
+                sample_act = dom_activations[index]
+                activation = [sample_act] * (n_layers - 1)
             else:  # Las activaciones pueden ser distintas entre capas
-                activation = [self.rng.choice(dom_activations) for l in xrange(n_layers)]
+                index = self.rng.randint(low=0, high=len(dom_activations), size=n_layers-1)
+                activation = [dom_activations[i] for i in index]
         else:  # Ya vienen definidas las activaciones, las dejo como estan
             activation = self.net_params.activation
         return activation
@@ -84,7 +86,9 @@ class RandomSearch(object):
             if self.net_params.classification is True:
                 dropout_ratios[-1] = 0.0  # Ya que no debe haber dropout para Softmax
         else:
-            dropout_ratios = self.net_params.dropout_ratio
+            dropout_ratios = self.net_params.dropout_ratios
+            if len(dropout_ratios) != (n_layers - 1):  # Longitud distinta a la requerida
+                dropout_ratios = [0.2] + [0.5] * (n_layers-2) + [0.0]  # Dejo esta config por defecto (chau la otra)
         return dropout_ratios
 
     def _sample_l1_l2(self):
@@ -133,6 +137,8 @@ class RandomSearch(object):
         best_model = None
         best_hits = 0.0
 
+        print "Optimizacion utilizada: "
+        print str(optimizer_params)
         for it in xrange(self.n_iter):
             net_params_sample = self._take_sample(seed=self.seeds[it])
             print "Iteracion ", str(it+1), " en busqueda"
