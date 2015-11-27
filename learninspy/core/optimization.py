@@ -12,15 +12,16 @@ from learninspy.utils.data import subsample
 import copy
 import os
 
+# TODO en algun momento se va a tener que organizar como un package 'optimization'
 
 class OptimizerParameters:
     def __init__(self, algorithm='Adadelta', options=None, stops=None,
                  merge_criter='w_avg', merge_goal='hits'):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
-                options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
+                options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-6}
             elif algorithm == 'GD':
-                options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standart'}
+                options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standart'}  # TODO mejorar pq no funca
         self.options = options
         self.algorithm = algorithm
         if stops is None:
@@ -287,7 +288,7 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
     elif criter == 'log_avg':
         # Promedio con ponderacion logaritmica
         merge_fun = lambda res: [layer * (1.0 + np.log(res[goal])) for layer in res['model']]
-        weights = lambda res: (1.0 +np.log(res[goal]))
+        weights = lambda res: (1.0 + np.log(res[goal]))
     else:
         raise ValueError('No existe tal criterio para merge!')
     # Mezclo modelos con la funcion de merge definida
