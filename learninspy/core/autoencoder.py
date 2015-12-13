@@ -7,11 +7,12 @@ __author__ = 'leferrad'
 import numpy as np
 
 # Librerias de Learninspy
-
 from learninspy.utils.evaluation import RegressionMetrics
 from learninspy.utils.data import label_data
 from learninspy.core.model import NeuralNetwork, NetworkParameters, RegressionLayer, ClassificationLayer
 
+# Librerias de Python
+import copy
 
 
 class AutoEncoder(NeuralNetwork):
@@ -122,7 +123,7 @@ class StackedAutoencoder(NeuralNetwork):
         self._init_ae()  # Creo autoencoders que se guardan en list_layers
 
     def _init_ae(self):
-        for l in xrange(self.num_layers):
+        for l in xrange(self.num_layers - 1):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
             params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation,
                                         layer_distributed=self.params.layer_distributed, dropout_ratios=None,
@@ -150,7 +151,7 @@ class StackedAutoencoder(NeuralNetwork):
         valid_ae = valid
         labels_train = map(lambda lp: lp.label, train_ae)
         labels_valid = map(lambda lp: lp.label, valid_ae)
-        for ae in self.list_layers:
+        for ae in self.list_layers[:-1]:
             print "Entrenando Autoencoder ", ae.params.units_layers
             ae.assert_regression()
             ae.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
@@ -163,19 +164,24 @@ class StackedAutoencoder(NeuralNetwork):
 
     def finetune(self, train, valid, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
                  keep_best=False):
-        list_layers = map(lambda ae: ae.encoder_layer(), self.list_layers)  # Tomo solo la capa de encoder de cada ae
+        list_layers = copy.copy(self.list_layers)
+        list_layers[:-1] = map(lambda ae: ae.encoder_layer(), self.list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
         nn = NeuralNetwork(self.params, list_layers=list_layers)
         hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, stops=criterions,
                             optimizer_params=optimizer_params)
-        for l in xrange(len(self.list_layers)):
+        for l in xrange(len(self.list_layers) - 1):
             # Copio capa con ajuste fino al autoencoder
             self.list_layers[l].list_layers[0] = nn.list_layers[l]  # TODO mejorar esto, para que sea mas legible
+        self.list_layers[-1] = nn.list_layers[-1]
         return hits_valid
 
     def predict(self, x):
         if isinstance(x, list):
             x = map(lambda lp: self.predict(lp.features).matrix(), x)
         else:
-            for i in xrange(self.num_layers):
+            for i in xrange(self.num_layers-1):
                 x = self.list_layers[i].encode(x)
+            x = self.list_layers[-1].output(x, grad=False)
         return x
+
+    # TODO hacer un override del plotter para graficar los weights y bias
