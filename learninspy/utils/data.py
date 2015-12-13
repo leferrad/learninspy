@@ -68,7 +68,6 @@ class LabeledDataSet(object):
         if self.with_lp is False and self.data is not None:  # Por ahora que quede etiquetado con LabeledPoints
             self.labeled_point()
 
-    # TODO ver si conviene que sean properties
     @property
     def features(self):
         if self.with_lp is True:

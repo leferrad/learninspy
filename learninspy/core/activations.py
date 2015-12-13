@@ -138,6 +138,7 @@ def identity_d(x):
     """
     return 1
 
+
 def lecunn_sigmoid(x):
     r"""
     Sigmoid recomendada por LeCunn
@@ -145,6 +146,7 @@ def lecunn_sigmoid(x):
     http://yann.lecun.com/exdb/publis/pdf/lecun-89.pdf
     """
     return 1.7159 * np.tanh(x * 2.0/3.0)
+
 
 def lecunn_sigmoid_d(x):
     r"""

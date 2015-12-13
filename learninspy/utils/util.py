@@ -26,13 +26,6 @@ class LearninspyLogger(object):
         self.logger = logger
         self.logger.addHandler(ch)
 
-        # 'application' code
-        self.logger.debug('debug message')
-        self.logger.info('info message')
-        self.logger.warn('warn message')
-        self.logger.error('error message')
-        self.logger.critical('critical message')
-
     def info(self, msg):
         self.logger.info(msg)
 
