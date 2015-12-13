@@ -1,15 +1,19 @@
 __author__ = 'leferrad'
 
 # Dependencias externas
-#import mpld3
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import numpy as np
 
 # Librerias internas
 from learninspy.core.activations import fun_activation, fun_activation_d
+from learninspy.core.autoencoder import StackedAutoencoder
 
 
 def plot_matrix(matrix, ax=None, values=True, show=True):
+        if type(matrix) is list:
+            matrix = np.array(matrix)
 
         m, n = matrix.shape
         total_row = map(lambda row: sum(row), matrix)
@@ -23,7 +27,7 @@ def plot_matrix(matrix, ax=None, values=True, show=True):
         # Matriz de confusion final normalizada (para pintar las celdas)
         normalized = map(lambda (row, tot): [r / (tot * 1.0) for r in row], zip(matrix, total_row))
 
-        res = ax.imshow(normalized, cmap=plt.get_cmap('jet'), interpolation='nearest')  # Dibujo grilla con colores
+        res = ax.imshow(normalized, cmap=plt.get_cmap('jet'), interpolation='nearest', aspect='auto')  # Dibujo grilla con colores
 
         if values is True:
             # Agrego numeros en celdas
@@ -33,7 +37,6 @@ def plot_matrix(matrix, ax=None, values=True, show=True):
 
         #fig.colorbar(res, fraction=0.05)
         #plt.tight_layout()
-        #mpld3.plugins.clear(fig)
         if show is True:
             plt.show()
         return
@@ -45,33 +48,54 @@ def plot_confusion_matrix(matrix):
     ax.set_title('Confusion Matrix', color='b')
     plt.setp(ax, xticks=range(n), yticks=range(m), xlabel='Actual', ylabel='Predicted')
     plot_matrix(matrix, ax, values=True)
-    return
 
 
-def plot_neurons(network):
+def plot_autoencoders(network):
     n_layers = len(network.list_layers)
     # Configuro el ploteo
-    gs = gridspec.GridSpec(n_layers, 2)  # N capas, 2 graficos (W, b)
-    for l in xrange(len(network.list_layers)):
-        layer = network.list_layers[l]
+    gs = gridspec.GridSpec(n_layers, 1)  # N Autoencoders, 1 solo grafico (W)
+    for l in xrange(len(network.list_layers) - 1):
+        ae = network.list_layers[l]
 
-        # Preparo plot de W
+        # Preparo plot de representacion latente del AutoEncoder
         ax_w = plt.subplot(gs[l, 0])
-        ax_w.set_title('W'+str(l+1), color='r')
+        ax_w.set_title('AE'+str(l+1), color='r')
         plt.setp(ax_w, xlabel='j', ylabel='i')
         ax_w.get_xaxis().set_visible(False)
         ax_w.get_yaxis().set_visible(False)
 
-        # Preparo plot de b
-        ax_b = plt.subplot(gs[l, 1])
-        ax_b.set_title('b'+str(l+1), color='r')
-        plt.setp(ax_b, ylabel='i')
-        ax_b.get_xaxis().set_visible(False)
-        ax_b.get_yaxis().set_visible(False)
-
         # Ploteo
-        plot_matrix(layer.weights.matrix, ax_w, values=False)
-        plot_matrix(layer.bias.matrix.T, ax_b, values=False)
+        plot_matrix(ae.encoder_layer().weights.matrix, ax_w, values=False, show=False)
+    plt.show()
+
+
+def plot_neurons(network):
+    if type(network) is StackedAutoencoder:
+        plot_autoencoders(network)
+    else:
+        n_layers = len(network.list_layers)
+        # Configuro el ploteo
+        gs = gridspec.GridSpec(n_layers, 2)  # N capas, 2 graficos (W, b)
+        for l in xrange(len(network.list_layers)):
+            layer = network.list_layers[l]
+
+            # Preparo plot de W
+            ax_w = plt.subplot(gs[l, 0])
+            ax_w.set_title('W'+str(l+1), color='r')
+            plt.setp(ax_w, xlabel='j', ylabel='i')
+            ax_w.get_xaxis().set_visible(False)
+            ax_w.get_yaxis().set_visible(False)
+
+            # Preparo plot de b
+            ax_b = plt.subplot(gs[l, 1])
+            ax_b.set_title('b'+str(l+1), color='r')
+            plt.setp(ax_b, ylabel='i')
+            ax_b.get_xaxis().set_visible(False)
+            ax_b.get_yaxis().set_visible(False)
+
+            # Ploteo
+            plot_matrix(layer.weights.matrix, ax_w, values=False)
+            plot_matrix(layer.bias.matrix.T, ax_b, values=False)
 
     #plt.tight_layout()
 
@@ -98,4 +122,3 @@ def plot_activations(params):
         ax_d_act.plot(x_axis, d_act)
     plt.show()
     return
-
