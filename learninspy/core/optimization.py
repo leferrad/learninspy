@@ -21,7 +21,7 @@ class OptimizerParameters:
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-6}
             elif algorithm == 'GD':
-                options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standart'}  # TODO mejorar pq no funca
+                options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standard'}  # TODO mejorar pq no funca
         self.options = options
         self.algorithm = algorithm
         if stops is None:
