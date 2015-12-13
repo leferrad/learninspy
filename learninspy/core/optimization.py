@@ -14,7 +14,7 @@ import os
 
 # TODO en algun momento se va a tener que organizar como un package 'optimization'
 
-class OptimizerParameters:
+class OptimizerPar
     def __init__(self, algorithm='Adadelta', options=None, stops=None,
                  merge_criter='w_avg', merge_goal='hits'):
         if options is None:  # Agrego valores por defecto
@@ -155,7 +155,7 @@ class Adadelta(Optimizer):
                 # 5) Aplicar actualizaciones a todas las capas
                 self.cost = cost
                 self._update()
-            # --- Error de clasificacion---
+            # --- Evaluo modelo optimizado---
             data = copy.deepcopy(self.data)
             self.hits = self.model.evaluate(data)
             self.n_iter += 1
@@ -186,39 +186,38 @@ class GD(Optimizer):
             sr = self.parameters.options['step-rate']
             # --- Entrenamiento ---
             for lp in self.data:  # Por cada LabeledPoint del conj de datos
-                for l in xrange(self.num_layers):
-                    cost = 0.0
-                    if self.parameters.options['momentum_type'] == 'standard':
-                        # Computar el gradiente
-                        cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
+                if self.parameters.options['momentum_type'] == 'standard':
+                    # Computar el gradiente
+                    cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
+                    for l in xrange(self.num_layers):
                         self.step_w[l] = nabla_w[l] * sr + self.step_w[l] * m
                         self.step_b[l] = nabla_b[l] * sr + self.step_b[l] * m
-                    elif self.parameters.options['momentum_type'] == 'nesterov':
-                        # TODO: terminar, pq no anda hasta ahora
-                        big_jump_w = self.step_w[l] * m
-                        big_jump_b = self.step_b[l] * m
-                        #  Aplico primera correccion
-                        self.step_w[l] = big_jump_w
-                        self.step_b[l] = big_jump_b
-                        self._update()
-                        # Computar el gradiente
-                        cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
+                    self._update()
+                elif self.parameters.options['momentum_type'] == 'nesterov':
+                    big_jump_w = [st_w * m for st_w in self.step_w]
+                    big_jump_b = [st_b * m for st_b in self.step_b]
+                    #  Aplico primera correccion
+                    self.step_w = big_jump_w
+                    self.step_b = big_jump_b
+                    self._update()
 
-                        correction_w = nabla_w[l] * sr
-                        correction_b = nabla_b[l] * sr
-                        #  Aplico segunda correccion
-                        self.step_w[l] = correction_w
-                        self.step_b[l] = correction_b
-                        self._update()
+                    # Computar el gradiente
+                    cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
 
-                        #  Acumulo correcciones hechas
-                        self.step_w[l] = big_jump_w + correction_w
-                        self.step_b[l] = big_jump_b + correction_b
+                    correction_w = [n_w * sr for n_w in nabla_w]
+                    correction_b = [n_b * sr for n_b in nabla_b]
+                    #  Aplico segunda correccion
+                    self.step_w = correction_w
+                    self.step_b = correction_b
+                    self._update()
 
-                # Aplicar actualizaciones a todas las capas
+                    #  Acumulo correcciones ya aplicadas
+                    self.step_w = big_jump_w + correction_w
+                    self.step_b = big_jump_b + correction_b
+
                 self.cost = cost
                 self._update()
-            # --- Error de clasificacion---
+            # --- Evaluo modelo optimizado ---
             data = copy.deepcopy(self.data)
             self.hits = self.model.evaluate(data)
             self.n_iter += 1
