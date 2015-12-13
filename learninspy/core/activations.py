@@ -138,6 +138,20 @@ def identity_d(x):
     """
     return 1
 
+def lecunn_sigmoid(x):
+    r"""
+    Sigmoid recomendada por LeCunn
+
+    http://yann.lecun.com/exdb/publis/pdf/lecun-89.pdf
+    """
+    return 1.7159 * np.tanh(x * 2.0/3.0)
+
+def lecunn_sigmoid_d(x):
+    r"""
+    Derivada de Sigmoid recomendada por LeCunn
+
+    """
+    return 1.7159 * (2.0 / 3.0) * (1.0 - np.tanh(x * 2.0/3.0) ** 2)
 
 # TODO definirlas mejor
 # def sin(x):
@@ -149,9 +163,9 @@ def identity_d(x):
 
 
 fun_activation = {'Tanh': tanh, 'Sigmoid': sigmoid, 'ReLU': relu, 'Softplus': softplus,
-                                'Identity': identity, 'LeakyReLU': lrelu}
+                                'Identity': identity, 'LeakyReLU': lrelu, 'LeCunnSigm': lecunn_sigmoid}
 fun_activation_d = {'Tanh': tanh_d, 'Sigmoid': sigmoid_d, 'ReLU': relu_d, 'Softplus': softplus_d,
-                                    'Identity': identity_d, 'LeakyReLU': lrelu_d}
+                                    'Identity': identity_d, 'LeakyReLU': lrelu_d, 'LeCunnSigm': lecunn_sigmoid_d}
 
 
 
