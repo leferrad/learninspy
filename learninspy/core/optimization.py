@@ -14,7 +14,7 @@ import os
 
 # TODO en algun momento se va a tener que organizar como un package 'optimization'
 
-class OptimizerPar
+class OptimizerParameters:
     def __init__(self, algorithm='Adadelta', options=None, stops=None,
                  merge_criter='w_avg', merge_goal='hits'):
         if options is None:  # Agrego valores por defecto
