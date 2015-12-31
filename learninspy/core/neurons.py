@@ -7,7 +7,8 @@ import pyspark.rdd
 from learninspy.context import sc as sc
 from learninspy.common.asserts import *
 
-
+"""
+# Queda experimental ...
 class DistributedNeurons(object):
     # Vectores son guardados como vectores columna
     def __init__(self, mat, shape):
@@ -200,8 +201,9 @@ class DistributedNeurons(object):
     def matrix(self):
         return self.matRDD
 
+"""
+# ----------------------------
 
-#----------------------------
 
 class LocalNeurons(object):
     # Vectores son guardados como vectores columna
