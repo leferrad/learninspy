@@ -20,7 +20,7 @@ def tanh_d(x):
     r"""
     Derivada de Tangente Hiperbolica
 
-    :math:`f(x)=1-tan(x)^2`
+    :math:`f(x)=1-tan^2(x)`
 
     """
     return 1.0 - np.tanh(x) ** 2
@@ -144,6 +144,8 @@ def lecunn_sigmoid(x):
     Sigmoid recomendada por LeCunn
 
     http://yann.lecun.com/exdb/publis/pdf/lecun-89.pdf
+
+    :math:`f(x)=1.7159 tanh(\frac{2x}{3})`
     """
     return 1.7159 * np.tanh(x * 2.0/3.0)
 
@@ -151,6 +153,8 @@ def lecunn_sigmoid(x):
 def lecunn_sigmoid_d(x):
     r"""
     Derivada de Sigmoid recomendada por LeCunn
+
+    :math:`f(x)=1.14393 (1 - tanh^2(\frac{2x}{3}))`
 
     """
     return 1.7159 * (2.0 / 3.0) * (1.0 - np.tanh(x * 2.0/3.0) ** 2)

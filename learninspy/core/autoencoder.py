@@ -19,21 +19,30 @@ class AutoEncoder(NeuralNetwork):
     """
     Tipo de red neuronal, compuesto de una capa de entrada, una oculta, y una de salida.
     Las unidades en la capa de entrada y la de salida son iguales, y en la capa oculta
-    se entrena una representación de la entrada en distinta dimensión.
-    A las conexiones entre la capa de entrada y la oculta se le denominan encoder,
-    y a las de la oculta a la salida se les llama decoder.
+    se entrena una representación de la entrada en distinta dimensión, mediante aprendizaje
+    no supervisado y backpropagation..
+    A las conexiones entre la capa de entrada y la oculta se le denominan **encoder**,
+    y a las de la oculta a la salida se les llama **decoder**.
+
+    Para más información, ver http://ufldl.stanford.edu/wiki/index.php/Autoencoders_and_Sparsity
+
+    :param params: model.NeuralNetworkParameters, donde se especifica la configuración de la red.
+    :param list_layers: list de model.NeuralLayer, en caso de usar capas ya inicializadas.
+    :param dropout_in: radio de DropOut usado para el encoder (el decoder no debe sufrir DropOut).
 
     >>> ae_params = NetworkParameters(units_layers=[5,3,5], activation='Tanh', dropout_ratios=None, classification=False)
     >>> ae = AutoEncoder(ae_params)
     """
-    def __init__(self, params=None, list_layers=None, dropout_in=0.0, sparsity_beta=0, sparsity_param=0.05):
+    def __init__(self, params=None, list_layers=None, dropout_in=0.0):
+        # TODO: incluir cuando haya SparseAutoencoder
+        #self.sparsity_beta = 0
+        #self.sparsity_param = 0.05
+
         # Aseguro algunos parametros
         params.classification = False
         n_in = params.units_layers[0]
         params.units_layers.append(n_in) # Unidades en la salida en igual cantidad que la entrada
         params.dropout_ratios = [dropout_in, 0.0]  # Dropout en encoder, pero nulo en decoder
-        self.sparsity_beta = sparsity_beta
-        self.sparsity_param = sparsity_param
         self.num_layers = 2
         NeuralNetwork.__init__(self, params, list_layers)
 
@@ -69,9 +78,9 @@ class AutoEncoder(NeuralNetwork):
         Evalúa AutoEncoder sobre un conjunto de datos.
         Se utiliza :math:`r^2` como métrica en la evaluación.
 
-        :param data: list
+        :param data: list de LabeledPoint
         :param predictions: si es True, retorna las predicciones (salida del AutoEncoder)
-        :return: resultado de :math:`r^2`, y predicciones si se solicita en *predictions*
+        :return: resultado de evaluación, y predicciones si se solicita en *predictions*
         """
         actual = map(lambda lp: lp.features, data)  # Tiene que aprender a reconstruir la entrada
         predicted = map(lambda lp: self.predict(lp.features).matrix.T, data)  # TODO notar que tuve q transponer
@@ -83,12 +92,12 @@ class AutoEncoder(NeuralNetwork):
             ret = hits
         return ret
 
-    def kl_divergence(self, x):
+    def _kl_divergence(self, x):
         raise NotImplementedError("Implementar para SparseAutoencoder!")
 
     def encode(self, x):
         """
-        Codifica la entrada x sobre la
+        Codifica la entrada **x**, transformando los datos al pasarlos por el *encoder*.
         """
         if isinstance(x, list):
             x = map(lambda lp: self.encode(lp.features).matrix, x)
@@ -97,11 +106,15 @@ class AutoEncoder(NeuralNetwork):
         return x
 
     def encoder_layer(self):
+        """
+        Devuelve la capa de *encoder*.
+        """
         return self.list_layers[0]
 
     def assert_regression(self):
         """
-        Se asegura que la capa de salida sea de regresión
+        Se asegura que el *decoder* corresponda a una capa de regresión
+        (que sea del tipo *model.RegressionLayer*).
         """
         if type(self.list_layers[-1]) is ClassificationLayer:
             layer = RegressionLayer()
@@ -110,10 +123,23 @@ class AutoEncoder(NeuralNetwork):
 
 
 class StackedAutoencoder(NeuralNetwork):
+    """
+    Estructura de red neuronal profunda, donde los pesos de cada capa son inicializados con los datos de entrenamiento
+    mediante **autoencoders**.
 
-    def __init__(self, params=None, list_layers=None, dropout=None, sparsity_beta=0, sparsity_param=0.05):
-        self.sparsity_beta = sparsity_beta
-        self.sparsity_param = sparsity_param
+    Para más información, ver http://ufldl.stanford.edu/wiki/index.php/Stacked_Autoencoders
+
+    :param params: model.NeuralNetworkParameters, donde se especifica la configuración de la red.
+    :param list_layers: list de model.NeuralLayer, en caso de usar capas ya inicializadas.
+    :param dropout: radio de DropOut a utilizar en el *encoder* de cada :class:`.AutoEncoder`.
+    """
+
+    def __init__(self, params=None, list_layers=None, dropout=None):
+
+        # TODO: incluir cuando haya SparseAutoencoder
+        #self.sparsity_beta = 0
+        #self.sparsity_param = 0.05
+
         self.params = params
         self.num_layers = len(params.units_layers)
         if dropout is None:
@@ -129,13 +155,15 @@ class StackedAutoencoder(NeuralNetwork):
                                         layer_distributed=self.params.layer_distributed, dropout_ratios=None,
                                         classification=False, strength_l1=self.params.strength_l1,
                                         strength_l2=self.params.strength_l2)
-            self.list_layers[l] = AutoEncoder(params=params, sparsity_beta=self.sparsity_beta,
-                                              dropout_in=self.dropout[l],
-                                              sparsity_param=self.sparsity_param)
+            self.list_layers[l] = AutoEncoder(params=params, dropout_in=self.dropout[l])
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
         """
+        Fit de cada autoencoder usando conjuntos de entrenamiento y validación,
+        y su apilado para entrenar la red neuronal profunda con aprendizaje no supervisado.
+        Se especifica además cómo debe realizarse la optimización, mediante los parámetros explicados
+        en el método :func:`~learninspy.core.model.NeuralNetwork.fit` de :class:`.NeuralNetwork`.
 
         :param train:
         :param valid:

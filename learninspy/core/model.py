@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 __author__ = 'leferrad'
 
 # Dependencias externas
@@ -7,7 +10,7 @@ from scipy import sparse
 # Dependencias internas
 from learninspy.core import activations as act, loss, optimization as opt
 from learninspy.core.stops import criterion
-from learninspy.core.neurons import DistributedNeurons, LocalNeurons
+from learninspy.core.neurons import LocalNeurons
 from learninspy.utils import checks
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.utils.data import LabeledDataSet
@@ -54,9 +57,10 @@ class NeuralLayer(object):
         # TODO weights_T era p/ poder hacer operaciones distribuidas, pero se deja como experimental DistributedNeurons
         distribute = False
         if distribute is True:
-            self.weights = DistributedNeurons(w, self.shape_w)
+            distribute = False
+            #self.weights = DistributedNeurons(w, self.shape_w)
             #self.weights_T = DistributedNeurons(w.T, self.shape_w[::-1])
-            self.bias = DistributedNeurons(b, self.shape_b)
+            #self.bias = DistributedNeurons(b, self.shape_b)
         else:
             self.weights = LocalNeurons(w, self.shape_w)
             #self.weights_T = LocalNeurons(w.transpose(), self.shape_w[::-1])
@@ -105,14 +109,14 @@ class NeuralLayer(object):
     def get_bias(self):
         return self.bias
 
-    def persist_layer(self):
-        self.weights.persist()
-        self.bias.persist()
+    def _persist_layer(self):
+        self.weights._persist()
+        self.bias._persist()
         return
 
-    def unpersist_layer(self):
-        self.weights.unpersist()
-        self.bias.unpersist()
+    def _unpersist_layer(self):
+        self.weights._unpersist()
+        self.bias._unpersist()
         return
 
     def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos

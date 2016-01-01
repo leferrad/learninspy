@@ -1,4 +1,5 @@
-__author__ = 'leferrad'
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Dependencias externas
 import numpy as np

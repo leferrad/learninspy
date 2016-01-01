@@ -1,4 +1,5 @@
-__author__ = 'leeandro04'
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-7
 
 # Librerias de Python
 import signal
