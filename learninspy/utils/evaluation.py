@@ -13,7 +13,6 @@ class ClassificationMetrics(object):
 
     :param predicted_actual: list de (predicted, actual) pairs
     :param n_classes: int cantidad de clases
-    :return:
 
     >>> predict = [0, 1, 0, 2, 2, 1]
     >>> labels = [0, 1, 1, 2, 1, 0]
@@ -60,6 +59,26 @@ class ClassificationMetrics(object):
         return acc
 
     def precision(self, label=None, macro=True):
+        """
+        Calcula la precisión de la clasificación, dado por la cantidad de **verdaderos positivos**
+        (i.e. el número de items correctamente clasificados) dividido por el total de elementos clasificados
+        para una clase dada (i.e. la suma de los verdaderos positivos y **falsos positivos**, que son los
+        items incorrectamente clasificados de dicha clase). Ello se resume en la siguiente fórmula:
+
+        :math:`P_i=\\dfrac{TP_i}{TP_i+FP_i}`
+
+        :param label: int entre {0,n_classes - 1} para indicar sobre qué clase evaluar. Si es *None* se evalúa sobre todas.
+        :param macro: bool, que indica cómo calcular el **precision** sobre todas las clases (True para que sea *macro* y False para que sea *micro*).
+
+        Siendo C la cantidad de clases, las fórmulas son:
+
+        :math:`P_{micro}=\\dfrac{\sum_{i=0}^{C-1} TP_i}{\sum_i TP_i+FP_i}`
+
+        :math:`P_{macro}=\\dfrac{1}{C}\\sum_{i=0}^{C-1} \\frac{TP_i}{TP_i+FP_i}`
+
+        :return: double
+        """
+
         if label is None:
             if macro is True:
                 p = sum([self.precision(c) for c in xrange(self.n_classes)])
@@ -105,6 +124,7 @@ class ClassificationMetrics(object):
             for c in xrange(self.n_classes):
                 conf_mat.append(sum(map(lambda (p, a): p == c, pre_act)))
         return np.array(conf_mat).reshape((self.n_classes, self.n_classes))
+
 
 class RegressionMetrics(object):
     def __init__(self, predicted_actual):

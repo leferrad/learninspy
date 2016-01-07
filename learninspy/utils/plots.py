@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 __author__ = 'leferrad'
 
 # Dependencias externas
-import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
@@ -12,37 +14,51 @@ from learninspy.core.autoencoder import StackedAutoencoder
 
 
 def plot_matrix(matrix, ax=None, values=True, show=True):
-        if type(matrix) is list:
-            matrix = np.array(matrix)
+    """
+    Ploteo de un arreglo 2-D.
 
-        m, n = matrix.shape
-        total_row = map(lambda row: sum(row), matrix)
+    :param matrix: numpy.array o list, arreglo a graficar.
+    :param ax: matplotlib.axes.Axes donde se debe plotear. Si es *None*, se crea una instancia de ello.
+    :param values: bool, para indicar si se desea imprimir en cada celda el valor correspondiente.
+    :param show: bool, para indicar si se debe imprimir inmediatamente en pantalla mediante **matplotlib.pyplot.show()**.
+    """
 
-        if ax is None:
-            # Configuro el ploteo
-            fig, ax = plt.subplots()
-            ax.set_title('Matrix', color='b')
-            plt.setp(ax, xticks=range(n), yticks=range(m), xlabel='X', ylabel='Y')
+    if type(matrix) is list:
+        matrix = np.array(matrix)
 
-        # Matriz de confusion final normalizada (para pintar las celdas)
-        normalized = map(lambda (row, tot): [r / (tot * 1.0) for r in row], zip(matrix, total_row))
+    m, n = matrix.shape
+    total_row = map(lambda row: sum(row), matrix)
 
-        res = ax.imshow(normalized, cmap=plt.get_cmap('jet'), interpolation='nearest', aspect='auto')  # Dibujo grilla con colores
+    if ax is None:
+        # Configuro el ploteo
+        fig, ax = plt.subplots()
+        ax.set_title('Matrix', color='b')
+        plt.setp(ax, xticks=range(n), yticks=range(m), xlabel='X', ylabel='Y')
 
-        if values is True:
-            # Agrego numeros en celdas
-            for x in xrange(m):
-                for y in xrange(n):
-                    ax.annotate(str(matrix[x][y]), xy=(y, x), horizontalalignment='center', verticalalignment='center')
+    # Matriz de confusion final normalizada (para pintar las celdas)
+    normalized = map(lambda (row, tot): [r / (tot * 1.0) for r in row], zip(matrix, total_row))
 
-        #fig.colorbar(res, fraction=0.05)
-        #plt.tight_layout()
-        if show is True:
-            plt.show()
-        return
+    res = ax.imshow(normalized, cmap=plt.get_cmap('jet'), interpolation='nearest', aspect='auto')  # Dibujo grilla con colores
+
+    if values is True:
+        # Agrego numeros en celdas
+        for x in xrange(m):
+            for y in xrange(n):
+                ax.annotate(str(matrix[x][y]), xy=(y, x), horizontalalignment='center', verticalalignment='center')
+
+    #fig.colorbar(res, fraction=0.05)
+    #plt.tight_layout()
+    if show is True:
+        plt.show()
+    return
 
 
 def plot_confusion_matrix(matrix):
+    """
+    Ploteo de una matrix de confusión, realizada mediante :class:`.ClassificationMetrics`.
+
+    :param matrix: numpy.array
+    """
     m, n = matrix.shape
     fig, ax = plt.subplots()
     ax.set_title('Confusion Matrix', color='b')
@@ -51,6 +67,14 @@ def plot_confusion_matrix(matrix):
 
 
 def plot_autoencoders(network):
+    """
+    Ploteo de la representación latente un StackedAutoencoder dado.
+
+    .. note:: Experimental
+
+    :param network: red neuronal, del tipo :class:`.StackedAutoencoder`.
+    """
+
     n_layers = len(network.list_layers)
     # Configuro el ploteo
     gs = gridspec.GridSpec(n_layers, 1)  # N Autoencoders, 1 solo grafico (W)
@@ -70,6 +94,12 @@ def plot_autoencoders(network):
 
 
 def plot_neurons(network):
+    """
+    Ploteo de la representación latente de una Red Neuronal.
+    .. note:: Experimental
+
+    :param network: red neuronal del tipo :class:`.NeuralNetwork`.
+    """
     if type(network) is StackedAutoencoder:
         plot_autoencoders(network)
     else:
@@ -99,7 +129,15 @@ def plot_neurons(network):
 
     #plt.tight_layout()
 
+
 def plot_activations(params):
+    """
+    Ploteo de las activaciones establecidas para una red neuronal. Se representan como señales 1-D, en un dominio dado.
+
+    .. note:: Experimental
+
+    :param params: parámetros del tipo :class:`.NetworkParameters`.
+    """
     # Si la activacion es la misma para todas las capas, la ploteo una sola vez
     if all(act == params.activation[0] for act in params.activation):
         n_act = 1

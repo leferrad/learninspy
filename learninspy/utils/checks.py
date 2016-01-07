@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 __author__ = 'leferrad'
 
 # Dependencias externas
@@ -9,6 +12,12 @@ import learninspy.core.loss as loss
 
 
 class CheckGradient(object):
+    """
+    Clase para chequear la correcta implementación del gradiente de una función, mediante diferenciación numérica.
+    Basado en http://ufldl.stanford.edu/wiki/index.php/Gradient_checking_and_advanced_optimization
+
+    :param functions: list de strings, correspondientes a las keys de un dict de funciones.
+    """
     def __init__(self, functions):
         n_fun = len(functions)
         self.fun = [None] * n_fun
@@ -20,7 +29,6 @@ class CheckGradient(object):
             bad_grads = None  # Retorno que ningun gradiente esta mal implementado
         return bad_grads
 
-    # Ver http://ufldl.stanford.edu/wiki/index.php/Gradient_checking_and_advanced_optimization
     def compute_numericalgradient(self, J, theta):
         epsilon = 1e-4
         numgrad = map(lambda o: (J(o + epsilon) - J(o - epsilon)) / (2.0 * epsilon), theta)  # Diferencias centradas
@@ -40,6 +48,19 @@ class CheckGradient(object):
 
 
 class CheckGradientActivation(CheckGradient):
+    """
+    Clase para chequear la correcta implementación del gradiente de una función de activación perteneciente a
+    :mod:`~learninspy.core.activations`.
+
+    >>> check = CheckGradientActivation(['Tanh', 'ReLU'])
+    >>> bad_gradients = check()
+    >>> if bad_gradients is None:
+    >>>     print 'Gradientes de activaciones OK!'
+    >>> else:
+    >>>     indexes = np.array(range(2))
+    >>>     index_badgrad = indexes[bad_gradients]
+    >>>     raise Exception('El gradiente de las posiciones ' + str(index_badgrad) + ' se encuentra mal implementado!')
+    """
     def __init__(self, functions):
         CheckGradient.__init__(self, functions)
         for i in xrange(len(functions)):
@@ -48,6 +69,9 @@ class CheckGradientActivation(CheckGradient):
 
 
 class CheckGradientLoss(CheckGradient):
+    """
+    .. note:: Experimental, sin terminar.
+    """
     def __init__(self, function):
         CheckGradient.__init__(self, function)
         self.fun = loss.fun_loss[function]
@@ -59,7 +83,6 @@ class CheckGradientLoss(CheckGradient):
             bad_grad = None  # Retorno que ningun gradiente esta mal implementado
         return bad_grad
 
-    # Ver http://ufldl.stanford.edu/wiki/index.php/Gradient_checking_and_advanced_optimization
     def compute_numericalgradient(self, J, theta, target):
         epsilon = 1e-4
         n = len(theta)
@@ -75,8 +98,8 @@ class CheckGradientLoss(CheckGradient):
     def check_numericalgradient(self):
         theta = np.array([0.5, 0.0001, 0.2, 1.0, 0.1])  # Ejemplo para probar gradientes
         if self.fun == loss.fun_loss['CrossEntropy']:  # Si el error es la entropia cruzada modifico el ejemplo
-            theta = act.softmax(theta)  # Porque la derivada es con respecto a la salida del softmax
-        target = np.array([0.0, 0.0, 0.0, 1.0, 0.0]) # Ejemplo de target
+            theta = np.exp(theta) / (sum(np.exp(theta)))  # Porque la derivada es con respecto a la salida del softmax
+        target = np.array([0.0, 0.0, 0.0, 1.0, 0.0])  # Ejemplo de target
         analytic_grad = self.fun_d(theta, target)
         numerical_grad = self.compute_numericalgradient(self.fun, theta, target)
         diff = np.linalg.norm(numerical_grad - analytic_grad) / np.linalg.norm(numerical_grad + analytic_grad)
