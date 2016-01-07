@@ -8,12 +8,16 @@ import numpy as np
 from learninspy.core.neurons import LocalNeurons
 from learninspy.core.stops import criterion
 from learninspy.utils.data import subsample
+from learninspy.utils.fileio import get_logger
 
 # Librerias de Python
 import copy
 import os
 
+logger = get_logger(name=__name__)
+
 # TODO en algun momento se va a tener que organizar como un package 'optimization'
+
 
 class OptimizerParameters:
     def __init__(self, algorithm='Adadelta', options=None, stops=None,
@@ -245,9 +249,11 @@ def optimize(model, data, mini_batch=50, params=None, seed=123):
     # que se hace una accion desde la funcion 'train' (solucionado con .cache() para que no se vuelva a lanzar la task)
     for result in minimizer:
         final = result
-        print 'Cant de iteraciones: ' + str(result['iterations']) +\
-              '. Hits en batch: ' + str(result['hits']) + \
-              '. Costo: ' + str(result['cost'])
+        #print 'Cant de iteraciones: ' + str(result['iterations']) +\
+        #      '. Hits en batch: ' + str(result['hits']) + \
+        #      '. Costo: ' + str(result['cost'])
+        logger.info("Cant de iteraciones: %i. Hits en batch: %12.11f. Costo: %12.11f",
+                    result['iterations'], result['hits'], result['cost'])
     final['seed'] = seed
     return final
 

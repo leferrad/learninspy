@@ -15,12 +15,14 @@ from learninspy.utils import checks
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.utils.data import LabeledDataSet
 from learninspy.context import sc
+from learninspy.utils.fileio import get_logger
 
 # Librerias de Python
 import copy
 import cPickle as pickle
 import os
 
+logger = get_logger(name=__name__)
 
 class NeuralLayer(object):
 
@@ -110,11 +112,13 @@ class NeuralLayer(object):
         return self.bias
 
     def _persist_layer(self):
+        logger.warning("Persisting RDDs from a NeuralLayer object")
         self.weights._persist()
         self.bias._persist()
         return
 
     def _unpersist_layer(self):
+        logger.warning("Unpersisting RDDs from a NeuralLayer object")
         self.weights._unpersist()
         self.bias._unpersist()
         return
@@ -197,7 +201,6 @@ class NetworkParameters:
         return config
 
 
-
 class NeuralNetwork(object):
     def __init__(self, params, list_layers=None):
         self.params = params
@@ -230,6 +233,7 @@ class NeuralNetwork(object):
         return
 
     def __init_weights(self):  # Metodo privado
+        logger.debug("Initializing weights and bias of Neural Layers ...")
         num_layers = len(self.params.units_layers)
         for i in xrange(1, num_layers - 1):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
@@ -387,9 +391,11 @@ class NeuralNetwork(object):
         models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
         # Minimizo el costo de las redes en paralelo
         # NOTA: cache() es importante porque se traza varias veces el grafo de acciones sobre el RDD results
+        logger.debug("Training %i models in parallel.", parallelism)
         results = models_rdd.map(lambda (model, seed):
                                  minimizer(model, train_bc.value, mini_batch, optimizer_params, seed)).cache()
         # Junto modelos entrenados en paralelo, en base a un criterio de ponderacion sobre un valor objetivo
+        logger.debug("Merging models ...")
         if self.params.classification is True:
             list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
         else:
@@ -412,6 +418,7 @@ class NeuralNetwork(object):
         if type(valid) is LabeledDataSet:
             valid = valid.collect()
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
+        logger.debug("Broadcasting datasets ...")
         train_bc = sc.broadcast(train)
         valid_bc = sc.broadcast(valid)  # Por ahora no es necesario el bc, pero puede q luego lo use en batchs p/ train
         # TODO: ver si hay mas opciones que quedarse con el mejor
@@ -420,13 +427,16 @@ class NeuralNetwork(object):
             best_valid = 0.0
             best_train = 0.0
         if stops is None:
+            logger.debug("Stops setted by default")
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
         epoch = 0
         while self.check_stop(epoch+1, stops) is False:
             self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
             self.hits_valid = self.evaluate(valid_bc.value)
-            print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid
+            #print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid
+            logger.info("Epoca %i. Hits en train: %12.11f. Hits en valid: %12.11f",
+                        epoch+1, self.hits_train, self.hits_valid)
             if keep_best is True:
                 if self.hits_valid >= best_valid:
                     best_valid = self.hits_valid
