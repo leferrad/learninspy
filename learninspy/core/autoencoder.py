@@ -13,9 +13,10 @@ from learninspy.core.model import NeuralNetwork, NetworkParameters, RegressionLa
 from learninspy.utils.fileio import get_logger
 
 # Librerias de Python
-from copy import copy, deepcopy
+import copy
 
 logger = get_logger(name=__name__)
+logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
 
 
 class AutoEncoder(NeuralNetwork):
@@ -197,7 +198,7 @@ class StackedAutoencoder(NeuralNetwork):
 
     def finetune(self, train, valid, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
                  keep_best=False):
-        list_layers = copy(self.list_layers)
+        list_layers = copy.copy(self.list_layers)
         list_layers[:-1] = map(lambda ae: ae.encoder_layer(), self.list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
         nn = NeuralNetwork(self.params, list_layers=list_layers)
         hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, stops=criterions,
@@ -218,17 +219,3 @@ class StackedAutoencoder(NeuralNetwork):
         return x
 
     # TODO hacer un override del plotter para graficar los weights y bias
-
-    def __copy__(self):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        result.__dict__.update(self.__dict__)
-        return result
-
-    def __deepcopy__(self, memo):
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
-        return result

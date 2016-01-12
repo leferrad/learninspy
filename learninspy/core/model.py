@@ -24,6 +24,8 @@ import os
 import time
 
 logger = get_logger(name=__name__)
+logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
+
 
 class NeuralLayer(object):
 
@@ -517,5 +519,5 @@ class NeuralNetwork(object):
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
+            setattr(result, k, copy.deepcopy(v, memo))
         return result
