@@ -10,9 +10,12 @@ import numpy as np
 from learninspy.utils.evaluation import RegressionMetrics
 from learninspy.utils.data import label_data
 from learninspy.core.model import NeuralNetwork, NetworkParameters, RegressionLayer, ClassificationLayer
+from learninspy.utils.fileio import get_logger
 
 # Librerias de Python
-import copy
+from copy import copy, deepcopy
+
+logger = get_logger(name=__name__)
 
 
 class AutoEncoder(NeuralNetwork):
@@ -134,7 +137,7 @@ class StackedAutoencoder(NeuralNetwork):
     :param dropout: radio de DropOut a utilizar en el *encoder* de cada :class:`.AutoEncoder`.
     """
 
-    def __init__(self, params=None, list_layers=None, dropout=None):
+    def __init__(self, params, list_layers=None, dropout=None):
 
         # TODO: incluir cuando haya SparseAutoencoder
         #self.sparsity_beta = 0
@@ -180,7 +183,9 @@ class StackedAutoencoder(NeuralNetwork):
         labels_train = map(lambda lp: lp.label, train_ae)
         labels_valid = map(lambda lp: lp.label, valid_ae)
         for ae in self.list_layers[:-1]:
-            print "Entrenando Autoencoder ", ae.params.units_layers
+            #print "Entrenando Autoencoder ", ae.params.units_layers
+            logger.info("Entrenando AutoEncoder -> In: %i, Hidden: %i",
+                        ae.params.units_layers[0], ae.params.units_layers[1])
             ae.assert_regression()
             ae.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
                    optimizer_params=optimizer_params, keep_best=keep_best)
@@ -192,7 +197,7 @@ class StackedAutoencoder(NeuralNetwork):
 
     def finetune(self, train, valid, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
                  keep_best=False):
-        list_layers = copy.copy(self.list_layers)
+        list_layers = copy(self.list_layers)
         list_layers[:-1] = map(lambda ae: ae.encoder_layer(), self.list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
         nn = NeuralNetwork(self.params, list_layers=list_layers)
         hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, stops=criterions,
@@ -213,3 +218,17 @@ class StackedAutoencoder(NeuralNetwork):
         return x
 
     # TODO hacer un override del plotter para graficar los weights y bias
+
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result

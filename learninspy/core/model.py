@@ -21,6 +21,7 @@ from learninspy.utils.fileio import get_logger
 import copy
 import cPickle as pickle
 import os
+import time
 
 logger = get_logger(name=__name__)
 
@@ -112,13 +113,11 @@ class NeuralLayer(object):
         return self.bias
 
     def _persist_layer(self):
-        logger.warning("Persisting RDDs from a NeuralLayer object")
         self.weights._persist()
         self.bias._persist()
         return
 
     def _unpersist_layer(self):
-        logger.warning("Unpersisting RDDs from a NeuralLayer object")
         self.weights._unpersist()
         self.bias._unpersist()
         return
@@ -383,6 +382,11 @@ class NeuralNetwork(object):
         :param optimizer_params:
         :return:
         """
+        if parallelism == -1:
+            # Se debe entrenar un modelo por cada batch (aunque se pueden solapar)
+            total = len(train_bc.value)
+            parallelism = total / mini_batch
+
         # Funcion para minimizar funcion de costo sobre cada modelo del RDD
         minimizer = opt.optimize
         # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
@@ -432,11 +436,13 @@ class NeuralNetwork(object):
                      criterion['AchieveTolerance'](0.95, key='hits')]
         epoch = 0
         while self.check_stop(epoch+1, stops) is False:
+            ini = time.time()  # tic
             self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
             self.hits_valid = self.evaluate(valid_bc.value)
             #print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid
-            logger.info("Epoca %i. Hits en train: %12.11f. Hits en valid: %12.11f",
-                        epoch+1, self.hits_train, self.hits_valid)
+            fin = time.time() - ini  # toc
+            logger.info("Epoca %i realizada en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
+                        epoch+1, fin, self.hits_train, self.hits_valid)
             if keep_best is True:
                 if self.hits_valid >= best_valid:
                     best_valid = self.hits_valid
@@ -478,10 +484,12 @@ class NeuralNetwork(object):
         #     raise Exception('El gradiente de las funcion de error se encuentra mal implementado!')
 
     def persist_layers(self):
+        logger.warning("Persisting RDDs from NeuralLayer objects")
         for i in xrange(len(self.list_layers)):
             self.list_layers[i].persist_layer()
 
     def unpersist_layers(self):
+        logger.warning("Unpersisting RDDs from NeuralLayer objects")
         for i in xrange(len(self.list_layers)):
             self.list_layers[i].unpersist_layer()
 
@@ -498,4 +506,16 @@ class NeuralNetwork(object):
         self.__dict__.update(model.__dict__)
         return
 
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
