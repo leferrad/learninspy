@@ -16,11 +16,13 @@ if 'sc' not in locals() or sc is None:
     extraJavaOptions = '-XX:+UseG1GC'
     conf = (SparkConf().setAppName(appName)
             .set("Xmx", "3g")
-     #       .setMaster(master)
+    #       .setMaster(master)
             .set('spark.ui.showConsoleProgress', False)  # Para que no muestre el progreso de los Stages (comentar sino)
             .set('spark.driver.extraJavaOptions', extraJavaOptions)
             .set('spark.executor.extraJavaOptions', extraJavaOptions)
-            .set("spark.storage.memoryFraction", "0.5")
+            .set('spark.executor.extraJavaOptions', '-XX:+UseCompressedOops')
+    #       .set("spark.storage.memoryFraction", "0.5")
+            .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")  # Tambien habria que incrementar spark.kryoserializer.buffer
             .set("spark.logConf", "false"))
     sc = SparkContext(conf=conf)
 
