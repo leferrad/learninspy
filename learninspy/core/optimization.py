@@ -26,7 +26,7 @@ class OptimizerParameters:
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-6}
             elif algorithm == 'GD':
-                options = {'step-rate': 1, 'momentum': 0.3, 'momentum_type': 'standard'}  # TODO mejorar pq no funca
+                options = {'step-rate': 0.1, 'momentum': 0.0, 'momentum_type': 'standard'}  # TODO mejorar pq no funca
         self.options = options
         self.algorithm = algorithm
         if stops is None:
@@ -199,6 +199,7 @@ class GD(Optimizer):
                         self.step_b[l] = nabla_b[l] * sr + self.step_b[l] * m
                     self._update()
                 elif self.parameters.options['momentum_type'] == 'nesterov':
+                    raise NotImplementedError("NO ANDA BIEN!!")  # Come mucha memoria, y no se pq todavia
                     big_jump_w = [st_w * m for st_w in self.step_w]
                     big_jump_b = [st_b * m for st_b in self.step_b]
                     #  Aplico primera correccion
@@ -221,7 +222,6 @@ class GD(Optimizer):
                     self.step_b = big_jump_b + correction_b
 
                 self.cost = cost
-                self._update()
             # --- Evaluo modelo optimizado ---
             data = copy.deepcopy(self.data)
             self.hits = self.model.evaluate(data)
@@ -233,7 +233,7 @@ Minimizer = {'Adadelta': Adadelta, 'GD': GD}
 # Funciones usadas en model
 
 
-def optimize(model, data, mini_batch=50, params=None, seed=123):
+def optimize(model, data, params=None, mini_batch=50, seed=123):
     final = {
         'model': model.list_layers,
         'hits': 0.0,
@@ -249,9 +249,6 @@ def optimize(model, data, mini_batch=50, params=None, seed=123):
     # que se hace una accion desde la funcion 'train' (solucionado con .cache() para que no se vuelva a lanzar la task)
     for result in minimizer:
         final = result
-        #print 'Cant de iteraciones: ' + str(result['iterations']) +\
-        #      '. Hits en batch: ' + str(result['hits']) + \
-        #      '. Costo: ' + str(result['cost'])
         logger.info("Cant de iteraciones: %i. Hits en batch: %12.11f. Costo: %12.11f",
                     result['iterations'], result['hits'], result['cost'])
     final['seed'] = seed
