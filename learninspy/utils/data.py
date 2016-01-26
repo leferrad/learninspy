@@ -245,7 +245,7 @@ def subsample(data, size, balanced=True, seed=123):
     random.seed(seed)
     if balanced is True:  #Problema de clasificacion
         n_classes = int(max(map(lambda lp: lp.label, data))) + 1
-        size = size / n_classes  # es un int, y puede resultar menor al ingresado (se trunca)
+        size /= n_classes  # es un int, y puede resultar menor al ingresado (se trunca)
         sample = []
         for c in xrange(n_classes):
             batch_class = filter(lambda lp: lp.label == c, data)  # Filtro entradas que pertenezcan a la clase c

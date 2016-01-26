@@ -399,7 +399,7 @@ class NeuralNetwork(object):
         # NOTA: cache() es importante porque se traza varias veces el grafo de acciones sobre el RDD results
         logger.debug("Training %i models in parallel.", parallelism)
         results = models_rdd.map(lambda (model, seed):
-                                 minimizer(model, train_bc.value, mini_batch, optimizer_params, seed)).cache()
+                                 minimizer(model, train_bc.value, optimizer_params, mini_batch, seed)).cache()
         # Junto modelos entrenados en paralelo, en base a un criterio de ponderacion sobre un valor objetivo
         logger.debug("Merging models ...")
         if self.params.classification is True:

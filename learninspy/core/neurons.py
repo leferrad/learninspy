@@ -7,8 +7,7 @@ __author__ = 'leferrad'
 import pyspark.rdd
 
 # Dependencias internas
-from learninspy.context import sc as sc
-from learninspy.common.asserts import *
+from learninspy.utils.asserts import *
 
 """
 # Queda experimental ...

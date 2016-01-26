@@ -20,7 +20,7 @@ if 'sc' not in locals() or sc is None:
             .set('spark.ui.showConsoleProgress', False)  # Para que no muestre el progreso de los Stages (comentar sino)
             .set('spark.driver.extraJavaOptions', extraJavaOptions)
             .set('spark.executor.extraJavaOptions', extraJavaOptions)
-            .set('spark.executor.extraJavaOptions', '-XX:+UseCompressedOops')
+            .set('spark.executor.extraJavaOptions', '-XX:+UseCompressedOops')  # Cuando se tiene menos de 32GB de RAM, punteros de 4 bytes en vez de 8 bytes
     #       .set("spark.storage.memoryFraction", "0.5")
             .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")  # Tambien habria que incrementar spark.kryoserializer.buffer
             .set("spark.logConf", "false"))

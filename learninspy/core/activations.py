@@ -10,7 +10,7 @@ def tanh(x):
     r"""
     Tangente Hiperbolica
 
-    :math:`f(x)=\frac{e^x - e^{-x}}{e^x + e^{-x}}`
+    :math:`f(x)=\dfrac{e^x - e^{-x}}{e^x + e^{-x}}`
 
     """
     return np.tanh(x)
@@ -20,7 +20,7 @@ def tanh_d(x):
     r"""
     Derivada de Tangente Hiperbolica
 
-    :math:`f(x)=1-tan^2(x)`
+    :math:`f(x)=1-tanh^2(x)`
 
     """
     return 1.0 - np.tanh(x) ** 2
@@ -30,7 +30,7 @@ def sigmoid(x):
     r"""
     Sigmoidea
 
-    :math:`f(x)=\frac{1}{1 + e^{-x}}`
+    :math:`f(x)=\dfrac{1}{1 + e^{-x}}`
 
     """
     return 1.0 / (1.0 + np.exp(-x))
@@ -40,7 +40,7 @@ def sigmoid_d(x):
     r"""
     Derivada de Sigmoidea
 
-    :math:`f(x)=\frac{e^x - e^{-x}}{e^x + e^{-x}}`
+    :math:`f(x)=\dfrac{e^x - e^{-x}}{e^x + e^{-x}}`
 
     """
     return sigmoid(x) * (1.0 - sigmoid(x))
@@ -113,7 +113,7 @@ def softplus_d(x):
     r"""
     Derivada de Softplus
 
-    :math:`f(x)=sigmoid(x)=\frac{1}{1 + e^{-x}}`
+    :math:`f(x)=sigmoid(x)=\dfrac{1}{1 + e^{-x}}`
 
     """
     return sigmoid(x)
@@ -145,7 +145,7 @@ def lecunn_sigmoid(x):
 
     http://yann.lecun.com/exdb/publis/pdf/lecun-89.pdf
 
-    :math:`f(x)=1.7159 tanh(\frac{2x}{3})`
+    :math:`f(x)=1.7159 tanh(\dfrac{2x}{3})`
     """
     return 1.7159 * np.tanh(x * 2.0/3.0)
 
@@ -154,7 +154,7 @@ def lecunn_sigmoid_d(x):
     r"""
     Derivada de Sigmoid recomendada por LeCunn
 
-    :math:`f(x)=1.14393 (1 - tanh^2(\frac{2x}{3}))`
+    :math:`f(x)=1.14393 (1 - tanh^2(\dfrac{2x}{3}))`
 
     """
     return 1.7159 * (2.0 / 3.0) * (1.0 - np.tanh(x * 2.0/3.0) ** 2)
