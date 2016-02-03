@@ -452,7 +452,7 @@ class NeuralNetwork(object):
                     best_model = self.list_layers
             epoch += 1
         if keep_best is True:
-            self.list_layers = copy.copy(best_model)
+            self.list_layers = copy.deepcopy(best_model)
             self.hits_train = best_train
             self.hits_valid = best_valid
         return self.hits_valid
