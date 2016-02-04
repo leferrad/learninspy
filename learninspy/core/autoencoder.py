@@ -152,14 +152,20 @@ class StackedAutoencoder(NeuralNetwork):
         NeuralNetwork.__init__(self, params, list_layers=None)
         self._init_ae()  # Creo autoencoders que se guardan en list_layers
 
-    def _init_ae(self):
+    def _init_ae(self):  # TODO: cambiar nombre (no "ae")
         for l in xrange(self.num_layers - 1):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
-            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation,
+            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation, # TODO: ojo si activation es una lista
                                         layer_distributed=self.params.layer_distributed, dropout_ratios=None,
                                         classification=False, strength_l1=self.params.strength_l1,
                                         strength_l2=self.params.strength_l2)
             self.list_layers[l] = AutoEncoder(params=params, dropout_in=self.dropout[l])
+        # Configuro y creo la capa de salida (clasificación o regresión)
+        params = NetworkParameters(self.params.units_layers[-2:], activation=self.params.activation,
+                                        layer_distributed=self.params.layer_distributed, dropout_ratios=[0.0], # en salida no debe haber DropOut
+                                        classification=self.params.classification, strength_l1=self.params.strength_l1,
+                                        strength_l2=self.params.strength_l2)
+        self.list_layers[-1] = NeuralNetwork(params=params)
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
@@ -178,35 +184,48 @@ class StackedAutoencoder(NeuralNetwork):
         :param keep_best:
         :return:
         """
-        # Inicializo Autoencoders
+        # Entreno Autoencoders
         train_ae = train
         valid_ae = valid
         labels_train = map(lambda lp: lp.label, train_ae)
         labels_valid = map(lambda lp: lp.label, valid_ae)
-        for ae in self.list_layers[:-1]:
-            #print "Entrenando Autoencoder ", ae.params.units_layers
+        for l in xrange(len(self.list_layers[:-1])):
+            # Extraigo AutoEncoder
+            ae = self.list_layers[l]
             logger.info("Entrenando AutoEncoder -> In: %i, Hidden: %i",
                         ae.params.units_layers[0], ae.params.units_layers[1])
-            ae.assert_regression()
+            ae.assert_regression()  # Aseguro que sea de regresion (no puede ser de clasificacion)
             ae.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
                    optimizer_params=optimizer_params, keep_best=keep_best)
             # Siguen siendo importantes los labels para el sample balanceado por clases
             train_ae = label_data(ae.encode(train_ae), labels_train)
             valid_ae = label_data(ae.encode(valid_ae), labels_valid)
+            # Devuelvo AE a la lista
+            self.list_layers[l] = copy.deepcopy(ae)
+
+        # Se entrena tambien la capa de salida
+        out_layer = self.list_layers[-1]
+        logger.info("Entrenando Capa de salida -> In: %i, Out: %i",
+                    out_layer.params.units_layers[0], out_layer.params.units_layers[1])
+        out_layer.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
+                      optimizer_params=optimizer_params, keep_best=keep_best)
+        self.list_layers[-1] = copy.deepcopy(out_layer)
+
         self.hits_valid = self.evaluate(valid)
         return self.hits_valid
 
     def finetune(self, train, valid, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
                  keep_best=False):
-        list_layers = copy.copy(self.list_layers)
-        list_layers[:-1] = map(lambda ae: ae.encoder_layer(), self.list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
+        list_layers = copy.deepcopy(self.list_layers)
+        list_layers[:-1] = map(lambda ae: ae.encoder_layer(), list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
+        list_layers[-1] = list_layers[-1].list_layers[0]  # Agarro la primer capa de la red que se genero para la salida
         nn = NeuralNetwork(self.params, list_layers=list_layers)
         hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, stops=criterions,
                             optimizer_params=optimizer_params)
         for l in xrange(len(self.list_layers) - 1):
             # Copio capa con ajuste fino al autoencoder
             self.list_layers[l].list_layers[0] = nn.list_layers[l]  # TODO mejorar esto, para que sea mas legible
-        self.list_layers[-1] = nn.list_layers[-1]
+        self.list_layers[-1].list_layers[0] = nn.list_layers[-1]
         return hits_valid
 
     def predict(self, x):
@@ -215,7 +234,7 @@ class StackedAutoencoder(NeuralNetwork):
         else:
             for i in xrange(self.num_layers-1):
                 x = self.list_layers[i].encode(x)
-            x = self.list_layers[-1].output(x, grad=False)
+            x = self.list_layers[-1].predict(x)
         return x
 
     # TODO hacer un override del plotter para graficar los weights y bias
