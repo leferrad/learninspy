@@ -28,13 +28,34 @@ logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
 
 
 class NeuralLayer(object):
+    """
+    Clase básica para modelar una capa de neuronas que compone una red neuronal.
+    Contiene sus "neuronas" representadas por pesos sinápticos **w** y **b**,
+    además de una función de activación asociada para dichos pesos.
+    Por defecto, los pesos sinápticos se inicializan con una distribución uniforme
+    en el rango :math:`\pm \sqrt{\\frac{6}{n_{in}+n_{out}}}`. (ver http://cs231n.github.io/neural-networks-2/)
 
-    def __init__(self, n_in=2, n_out=2, activation='ReLU', distribute=False, w=None, b=None, sparsity=False, rng=None):
+
+    :param n_in: int, dimensión de la entrada.
+    :param n_out: int, dimensión de la salida.
+    :param activation: string, key de la función de activación asignada a la capa.
+    :param distribute: si es True, indica que se utilicen arreglos distribuidos para **w** y **b**.
+    :param w: LocalNeurons, matriz de pesos sinápticos.
+    :param b: LocalNeurons, vector de pesos bias.
+    :param sparsity: si es True, los arreglos se almacenan en formato **scipy.sparse.csr_matrix**.
+    :param rng: si es *None*, se crea un generador de números aleatorios mediante una instancia **numpy.random.RandomState**.
+
+    .. note:: el parámetro *distribute* no tiene efecto, ya que el uso de arreglos distribuidos se deja para un próximo release.
+
+    """
+
+    def __init__(self, n_in=2, n_out=2, activation='ReLU', distributed=False, w=None, b=None, sparsity=False, rng=None):
         self.n_out = n_out
         self.n_in = n_in
         self.activation = act.fun_activation[activation]
         self.activation_d = act.fun_activation_d[activation]
-        self.sparsity = False  # TODO completar esta funcionalidad
+        sparsity = False  # TODO completar esta funcionalidad
+        distributed = False
 
         if rng is None:
             rng = np.random.RandomState(1234)
@@ -42,14 +63,26 @@ class NeuralLayer(object):
         self.shape_w = n_out, n_in
         self.shape_b = n_out, 1
 
+        #  Recomendaciones de http://cs231n.github.io/neural-networks-2/ y http://deeplearning.net/tutorial/mlp.html#mlp
         if w is None:
-            w = np.asarray(
-                self.rng.uniform(
-                    low=-np.sqrt(6.0 / (n_in + n_out)),
-                    high=+np.sqrt(6.0 / (n_in + n_out)),
-                    size=self.shape_w),
-                dtype=np.dtype(float)
-            )
+            if activation is "Tanh":
+                w = np.asarray(
+                    self.rng.uniform(
+                        low=-np.sqrt(6.0 / (n_in + n_out)),
+                        high=+np.sqrt(6.0 / (n_in + n_out)),
+                        size=self.shape_w),
+                    dtype=np.dtype(float)
+                )
+            elif activation is "Sigmoid":
+                w = np.asarray(
+                    self.rng.uniform(
+                        low=-np.sqrt(6.0 / (n_in + n_out))*4.0,
+                        high=+np.sqrt(6.0 / (n_in + n_out))*4.0,
+                        size=self.shape_w),
+                    dtype=np.dtype(float)
+                )
+            else:
+                w = np.random.randn(*self.shape_w) * np.sqrt(2.0/n_in)
             if sparsity is True:
                 w = sparse.csr_matrix(w)  # Convierto matriz densa a "rala"
 
@@ -60,9 +93,8 @@ class NeuralLayer(object):
                 b = sparse.csr_matrix(b)
 
         # TODO weights_T era p/ poder hacer operaciones distribuidas, pero se deja como experimental DistributedNeurons
-        distribute = False
-        if distribute is True:
-            distribute = False
+        if distributed is True:
+            logger.error("DistributedNeurons will be implemented soon ...")
             #self.weights = DistributedNeurons(w, self.shape_w)
             #self.weights_T = DistributedNeurons(w.T, self.shape_w[::-1])
             #self.bias = DistributedNeurons(b, self.shape_b)
@@ -82,12 +114,28 @@ class NeuralLayer(object):
         return self
 
     def l1(self):
+        """
+        Norma **L1** sobre la matriz **w** de pesos sinápticos.
+        :return: float, resultado de aplicar norma.
+        """
         return self.weights.l1()
 
     def l2(self):
+        """
+        Norma **L2** sobre la matriz **w** de pesos sinápticos.
+        :return: float, resultado de aplicar norma.
+        """
         return self.weights.l2()
 
     def output(self, x, grad=False):
+        """
+        Salida de la capa neuronal. Se toma una entrada :math:`x \in \Re^{n_{in}}`
+
+
+        :param x: **numpy.array**,
+        :param grad: Si es *True*, se retorna además el gradiente de la salida.
+        :return:
+        """
         wx = self.weights.mul_array(x)
         z = wx.sum_array(self.bias)
         a = z.activation(self.activation)
@@ -98,6 +146,18 @@ class NeuralLayer(object):
 
     # Basado en http://cs231n.github.io/neural-networks-2/
     def dropoutput(self, x, p, grad=False):
+        """
+
+
+        http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf
+
+        :param x:
+        :param p:
+        :param grad:
+        :return:
+
+        .. note:: En las predicciones de la red no se debe efectuar el DropOut.
+        """
         out = self.output(x, grad)
         if grad:
             a, d_a = out
@@ -106,7 +166,6 @@ class NeuralLayer(object):
         else:
             out, mask = out.dropout(p)
         return out, mask  # Devuelvo ademas la mascara utilizada, para el backprop
-    # NOTA: durante la etapa de testeo no se debe usar dropout
 
     def get_weights(self):
         return self.weights
