@@ -71,7 +71,8 @@ class NotBetterThanAfter(object):
         return "Stop when "+self.key+" does not improve a minimal of " + \
                str(self.minimal)+" after "+str(self.after)+" iterations."
 
-# TODO: Hace un NoImprovementAfter que cada N iteraciones tome un máximo y un mínimo y compruebe que se mejoró en X porciento
+# TODO: Hacer un NoImprovementAfter que cada N iteraciones tome un máximo y un mínimo y compruebe que se mejoró en X porciento
+# TODO: Hacer un ContinueFromBest que luego de N iteraciones siga la optimizacion con el best model logrado.
 
 
 class Patience(object):

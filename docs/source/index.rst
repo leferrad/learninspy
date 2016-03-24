@@ -1,22 +1,40 @@
-.. learninspy documentation master file, created by
-   sphinx-quickstart on Fri Nov 13 18:27:50 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Bienvenido a la documentación de Learninspy!
+============================================
 
-Welcome to learninspy's documentation!
-======================================
-
-Contents:
+Contenidos:
 
 .. toctree::
    :maxdepth: 2
 
+   learninspy
+   learninspy.core
+   learninspy.utils
 
 
-Indices and tables
-==================
+Clases principales:
+-------------------
 
-* :ref:`genindex`
-* :ref:`modindex`
+    :class:`learninspy.core.model.NeuralNetwork`
+
+    Clase para crear una red neuronal profunda.
+
+    :class:`learninspy.core.model.NetworkParameters`
+
+    Clase para configurar una red neuronal profunda.
+
+    :class:`learninspy.core.optimization.OptimizerParameters`
+
+    Clase para configurar la optimización de una red neuronal.
+
+    :class:`learninspy.utils.data.LabeledDataSet`
+
+    Clase para crear una base de datos etiquetada, para problemas de clasificación o regresión.
+
+
+
+
+Búsqueda de contenidos
+======================
+
 * :ref:`search`
 

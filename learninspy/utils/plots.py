@@ -147,6 +147,7 @@ def plot_activations(params):
     # Configuro el ploteo
     gs = gridspec.GridSpec(n_act, 2) # N activaciones, 2 graficos (act, d_act)
 
+    # TODO poner de titulo la key params.activation
     x_axis = [i / 10.0 for i in range(-50, 50)]  # Rango de -5 a 5 con 0.1 de step
     for n in xrange(n_act):
         # Grafico de act y d_act para activacion n

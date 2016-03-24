@@ -306,9 +306,13 @@ class LocalNeurons(object):
 
     def dropout(self, p):
         """
-        Aplica DropOut (PONER LINK AL DOC) sobre el arreglo 1-D alojado, anulando sus elementos con una probabilidad dada por *p*.
+        Aplica DropOut [srivastava2014dropout]_ sobre el vector alojado, anulando sus elementos con una probabilidad *p*.
 
         :param p: float, tal que :math:`0<p<1`
+
+        .. [srivastava2014dropout] Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov, R. (2014):
+            "Dropout: A simple way to prevent neural networks from overfitting".
+            The Journal of Machine Learning Research, 15(1), 1929-1958.
         """
 
         # Aplicable para vectores unicamente

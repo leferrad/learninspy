@@ -4,8 +4,6 @@ __author__ = 'leferrad'
 import numpy as np
 
 
-# TODO cambiar nombre de ReLU a rectifier ? ya que me refiero a la funcion, no a la unidad
-
 def tanh(x):
     r"""
     Tangente Hiperbolica
@@ -141,7 +139,7 @@ def identity_d(x):
 
 def lecunn_sigmoid(x):
     r"""
-    Sigmoid recomendada por LeCunn
+    Sigmoidea recomendada por LeCunn
 
     http://yann.lecun.com/exdb/publis/pdf/lecun-89.pdf
 
@@ -152,7 +150,7 @@ def lecunn_sigmoid(x):
 
 def lecunn_sigmoid_d(x):
     r"""
-    Derivada de Sigmoid recomendada por LeCunn
+    Derivada de Sigmoidea recomendada por LeCunn
 
     :math:`f(x)=1.14393 (1 - tanh^2(\dfrac{2x}{3}))`
 
@@ -172,8 +170,4 @@ fun_activation = {'Tanh': tanh, 'Sigmoid': sigmoid, 'ReLU': relu, 'Softplus': so
                                 'Identity': identity, 'LeakyReLU': lrelu, 'LeCunnSigm': lecunn_sigmoid}
 fun_activation_d = {'Tanh': tanh_d, 'Sigmoid': sigmoid_d, 'ReLU': relu_d, 'Softplus': softplus_d,
                                     'Identity': identity_d, 'LeakyReLU': lrelu_d, 'LeCunnSigm': lecunn_sigmoid_d}
-
-
-
-
 

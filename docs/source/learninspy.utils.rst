@@ -1,18 +1,18 @@
 learninspy.utils package
 ========================
 
-Submodules
+Submódulos
 ----------
 
-learninspy.utils.checks module
-----------------------------
+learninspy.utils.checks
+------------------------------
 
 .. automodule:: learninspy.utils.checks
     :members:
     :undoc-members:
     :show-inheritance:
 
-learninspy.utils.data module
+learninspy.utils.data
 ----------------------------
 
 .. automodule:: learninspy.utils.data
@@ -20,15 +20,15 @@ learninspy.utils.data module
     :undoc-members:
     :show-inheritance:
 
-learninspy.utils.evaluation module
-----------------------------
+learninspy.utils.evaluation
+----------------------------------
 
 .. automodule:: learninspy.utils.evaluation
     :members:
     :undoc-members:
     :show-inheritance:
 
-learninspy.utils.feature module
+learninspy.utils.feature
 -------------------------------
 
 .. automodule:: learninspy.utils.feature
@@ -36,7 +36,7 @@ learninspy.utils.feature module
     :undoc-members:
     :show-inheritance:
 
-learninspy.utils.fileio module
+learninspy.utils.fileio
 ------------------------------
 
 .. automodule:: learninspy.utils.fileio
@@ -44,7 +44,7 @@ learninspy.utils.fileio module
     :undoc-members:
     :show-inheritance:
 
-learninspy.utils.plots module
+learninspy.utils.plots
 -----------------------------
 
 .. automodule:: learninspy.utils.plots
@@ -52,7 +52,7 @@ learninspy.utils.plots module
     :undoc-members:
     :show-inheritance:
 
-learninspy.utils.util module
+learninspy.utils.util
 ----------------------------
 
 .. automodule:: learninspy.utils.util
@@ -61,8 +61,8 @@ learninspy.utils.util module
     :show-inheritance:
 
 
-Module contents
----------------
+Contenidos del módulo
+---------------------
 
 .. automodule:: learninspy.utils
     :members:

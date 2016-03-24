@@ -32,16 +32,21 @@ class NeuralLayer(object):
     Clase básica para modelar una capa de neuronas que compone una red neuronal.
     Contiene sus "neuronas" representadas por pesos sinápticos **w** y **b**,
     además de una función de activación asociada para dichos pesos.
-    Por defecto, los pesos sinápticos se inicializan con una distribución uniforme
-    en el rango :math:`\pm \sqrt{\\frac{6}{n_{in}+n_{out}}}`. (ver http://cs231n.github.io/neural-networks-2/)
 
+    Una correcta inicialización de los pesos sinápticos está muy ligada a la función de activación elegida.
+    Por defecto, los pesos sinápticos se inicializan con una distribución uniforme
+    con media :math:`0` y varianza :math:`\\frac{2.0}{\sqrt{n_{in}}}`,
+    lo cual da buenos resultados especialmente usando ReLUs.
+    Para la función *Tanh* se muestrea sobre una distribución uniforme
+    en el rango :math:`\pm \sqrt{\\frac{6}{n_{in}+n_{out}}}`, y para la *Sigmoid* en el rango
+    :math:`\pm 4.0 \sqrt{\\frac{6}{n_{in}+n_{out}}}`.
 
     :param n_in: int, dimensión de la entrada.
     :param n_out: int, dimensión de la salida.
     :param activation: string, key de la función de activación asignada a la capa.
     :param distribute: si es True, indica que se utilicen arreglos distribuidos para **w** y **b**.
-    :param w: LocalNeurons, matriz de pesos sinápticos.
-    :param b: LocalNeurons, vector de pesos bias.
+    :param w: :class:`.LocalNeurons`, matriz de pesos sinápticos.
+    :param b: :class:`.LocalNeurons`, vector de pesos bias.
     :param sparsity: si es True, los arreglos se almacenan en formato **scipy.sparse.csr_matrix**.
     :param rng: si es *None*, se crea un generador de números aleatorios mediante una instancia **numpy.random.RandomState**.
 
@@ -129,12 +134,13 @@ class NeuralLayer(object):
 
     def output(self, x, grad=False):
         """
-        Salida de la capa neuronal. Se toma una entrada :math:`x \in \Re^{n_{in}}`
+        Salida de la capa neuronal. Se toma una entrada :math:`x \in \Re^{n_{in}}`, se pondera con los
+        pesos sinápticos **W** y el bias **b**, y luego se aplica la función de activación **f** para retornar el
+        resultado :math:`a = f(Wx + b)`.
 
-
-        :param x: **numpy.array**,
+        :param x: **numpy.array**, vector de entrada
         :param grad: Si es *True*, se retorna además el gradiente de la salida.
-        :return:
+        :return: **numpy.array**, o tupla de ellos si *grad* es True.
         """
         wx = self.weights.mul_array(x)
         z = wx.sum_array(self.bias)
@@ -147,16 +153,17 @@ class NeuralLayer(object):
     # Basado en http://cs231n.github.io/neural-networks-2/
     def dropoutput(self, x, p, grad=False):
         """
+        Salida de la capa neuronal, luego de aplicar la regularización de los pesos sinápticos por Dropout.
 
 
         http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf
 
-        :param x:
-        :param p:
-        :param grad:
-        :return:
+        :param x: **numpy.array**, vector de entrada
+        :param p: float, tal que :math:`0<p<1`
+        :param grad: Si es *True*, se retorna además el gradiente de la salida.
+        :return: **numpy.array**, o tupla de ellos si *grad* es True.
 
-        .. note:: En las predicciones de la red no se debe efectuar el DropOut.
+        .. note:: En las predicciones de la red no se debe efectuar Dropout.
         """
         out = self.output(x, grad)
         if grad:
@@ -168,9 +175,19 @@ class NeuralLayer(object):
         return out, mask  # Devuelvo ademas la mascara utilizada, para el backprop
 
     def get_weights(self):
+        """
+        Se devuelve la matriz de pesos sinápticos **w**.
+
+        :return: **numpy.array**.
+        """
         return self.weights
 
     def get_bias(self):
+        """
+        Se devuelve el vector de bias **b**.
+
+        :return: **numpy.array**.
+        """
         return self.bias
 
     def _persist_layer(self):
@@ -184,6 +201,13 @@ class NeuralLayer(object):
         return
 
     def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos
+        """
+        Se actualizan los arreglos **w** y **b** sumando respectivamente los incrementos
+        recibidos por parámetros.
+
+        :param step_w: :class:`.LocalNeurons`
+        :param step_b: :class:`.LocalNeurons`
+        """
         self.weights += step_w
 #        self.weights_T += step_w.transpose()
         self.bias += step_b
@@ -191,6 +215,13 @@ class NeuralLayer(object):
 
 
 class ClassificationLayer(NeuralLayer):
+    """
+    Clase correspondiente a la capa de salida en una red neuronal con tareas de clasificación.
+    Se distingue de una :class:`.RegressionLayer` en que para realizar la clasificación se define
+    que la activación se de por la función *softmax*.
+
+    """
+
     def output(self, x, grad=False):
         wx = self.weights.mul_array(x)
         z = wx.sum_array(self.bias)
@@ -201,18 +232,52 @@ class ClassificationLayer(NeuralLayer):
         return a
 
     def dropoutput(self, x, p, grad=False):
+        """
+        .. warning:: No se debe aplicar Dropout en la capa de salida de una red neuronal,
+            por lo cual este método arroja un error de excepción.
+        """
         raise Exception("Don't use dropout for output layer")
 
 
 class RegressionLayer(NeuralLayer):
+    """
+    Clase correspondiente a la capa de salida en una red neuronal con tareas de regresión,
+    utilizando la función de activación como salida de la red.
+
+    .. note:: No es recomendado utilizar Dropout en las capas de una red neuronal con tareas de regresión.
+    """
     #  Importante leer 'Word of caution' en http://cs231n.github.io/neural-networks-2/
     #  El output es el mismo que una NeuralLayer
     def dropoutput(self, x, p, grad=False):
+        """
+
+        .. warning:: No se debe aplicar Dropout en la capa de salida de una red neuronal,
+            por lo cual este método arroja un error de excepción.
+        """
         raise Exception("Don't use dropout for output layer")
 
 
 # TODO: Ver la factibilidad de cambiarlo por un dict
 class NetworkParameters:
+    """
+    Clase utilizada para especificar todos los parámetros necesarios para configurar una red neuronal
+
+    :param units_layers: list of ints, donde cada valor indica la cantidad de unidades
+        que posee la respectiva capa. La cantidad de valores de la lista indica el total
+        de capas que va a tener la red (entrada + ocultas + salida).
+    :param activation: string or list of strings, indicando la key de la/s activación/es a utilizar en
+        las capas de la red neuronal.
+    :param layer_distributed: list of bools, indicando por cada capa si sus neuronas van a representarse
+        o no por arreglos distribuidos (**no tiene efecto en este release**).
+    :param dropout_ratios: list of floats, indicando el valor de *p* para aplicar Dropout en cada
+        respectiva capa.
+    :param classification: bool, es *True* si la tarea de la red es de clasificación y *False*
+        si es de regresión.
+    :param strength_l1: float, ratio de Norma **L1** a aplicar en todas las capas.
+    :param strength_l2: float, ratio de Norma **L2** a aplicar en todas las capas.
+    :param seed: int, semilla que alimenta al generador de números aleatorios **numpy.random.RandomState**
+        utilizado por la red.
+    """
     def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
                  classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
         num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
@@ -262,6 +327,15 @@ class NetworkParameters:
 
 
 class NeuralNetwork(object):
+    """
+    Clase para modelar una red neuronal. La misma soporta funcionalidades para configuración y diseño,
+    y para la optimización y testeo sobre un conjunto de datos cargado. Además ofrece funciones para
+    cargar y guardar un modelo entrenado.
+
+    :param params: :class:`.NetworkParameters`, parámetros que configuran la red.
+    :param list_layers: list of :class:`.NruralLayer`, en caso de que se utilicen capas de neuronas
+        ya creadas.
+    """
     def __init__(self, params, list_layers=None):
         self.params = params
         self.list_layers = list_layers  # En caso de que la red reciba capas ya inicializadas
@@ -315,6 +389,10 @@ class NeuralNetwork(object):
                                                     self.params.layer_distributed[num_layers - 1]))
 
     def l1(self):
+        """
+        Norma **L1** sobre todas las capas (explicar que es una suma y luego se multiplica por strength).
+        :return: float, resultado de aplicar norma.
+        """
         cost = 0.0
         gradient = []
         for layer in self.list_layers:

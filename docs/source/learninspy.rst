@@ -6,14 +6,13 @@ Subpackages
 
 .. toctree::
 
-    learninspy.common
-    learninspy.dnn
+    learninspy.core
     learninspy.utils
 
-Submodules
+Submódulos
 ----------
 
-learninspy.context module
+learninspy.context
 -------------------------
 
 .. automodule:: learninspy.context
@@ -21,11 +20,5 @@ learninspy.context module
     :undoc-members:
     :show-inheritance:
 
+En este módulo se configuran cuestiones relacionadas a Spark para mejorar el rendimiento de las aplicaciones en Learninspy.
 
-Module contents
----------------
-
-.. automodule:: learninspy
-    :members:
-    :undoc-members:
-    :show-inheritance:

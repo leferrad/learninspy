@@ -45,7 +45,9 @@ class AutoEncoder(NeuralNetwork):
         # Aseguro algunos parametros
         params.classification = False
         n_in = params.units_layers[0]
-        params.units_layers.append(n_in) # Unidades en la salida en igual cantidad que la entrada
+        # params.activation[0] = 'Identity'
+
+        params.units_layers.append(n_in)  # Unidades en la salida en igual cantidad que la entrada
         params.dropout_ratios = [dropout_in, 0.0]  # Dropout en encoder, pero nulo en decoder
         self.num_layers = 2
         NeuralNetwork.__init__(self, params, list_layers)
@@ -155,7 +157,7 @@ class StackedAutoencoder(NeuralNetwork):
     def _init_ae(self):  # TODO: cambiar nombre (no "ae")
         for l in xrange(self.num_layers - 1):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
-            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation, # TODO: ojo si activation es una lista
+            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation[l], # TODO: ojo si activation es una lista
                                         layer_distributed=self.params.layer_distributed, dropout_ratios=None,
                                         classification=False, strength_l1=self.params.strength_l1,
                                         strength_l2=self.params.strength_l2)

@@ -269,6 +269,7 @@ def mix_models(left, right):
         left[l].update(w, b)  # Update suma el w y el b
     return left
 
+fun_criter = {'avg': lambda x: 1.0, 'w_avg': lambda x: x, 'log_avg': lambda x: 1.0 + np.log(x)}
 
 def merge_models(results_rdd, criter='w_avg', goal='hits'):
     """
@@ -280,7 +281,7 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
     """
     assert goal == 'hits' or goal == 'cost', "Solo se puede ponderar por hits o cost!"
     if criter == 'avg':
-        # Promedio sin ponderacion
+        # Promedio sin ponderacion (todos los pesos son 1/n)
         merge_fun = lambda res: [layer for layer in res['model']]
         weights = lambda res: 1
     elif criter == 'w_avg':

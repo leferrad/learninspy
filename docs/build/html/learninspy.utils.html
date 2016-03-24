@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>learninspy.utils package &mdash; documentación de Learninspy - 1.0.0</title>
+    <title>learninspy.utils package &mdash; documentación de Learninspy - 0.1.0</title>
     
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.0',
+        VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,13 +23,17 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="documentación de Learninspy - 1.0.0" href="index.html" /> 
+    <link rel="top" title="documentación de Learninspy - 0.1.0" href="index.html" />
+    <link rel="prev" title="learninspy.core package" href="learninspy.core.html" /> 
   </head>
   <body>
     <div class="related">
       <h3>Navegación</h3>
       <ul>
-        <li><a href="index.html">documentación de Learninspy - 1.0.0</a> &raquo;</li> 
+        <li class="right" style="margin-right: 10px">
+          <a href="learninspy.core.html" title="learninspy.core package"
+             accesskey="P">anterior</a></li>
+        <li><a href="index.html">documentación de Learninspy - 0.1.0</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -40,15 +44,25 @@
             
   <div class="section" id="learninspy-utils-package">
 <h1>learninspy.utils package<a class="headerlink" href="#learninspy-utils-package" title="Enlazar permanentemente con este título">¶</a></h1>
-<div class="section" id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Enlazar permanentemente con este título">¶</a></h2>
+<div class="section" id="submodulos">
+<h2>Submódulos<a class="headerlink" href="#submodulos" title="Enlazar permanentemente con este título">¶</a></h2>
 </div>
-<div class="section" id="learninspy-utils-checks-module">
-<h2>learninspy.utils.checks module<a class="headerlink" href="#learninspy-utils-checks-module" title="Enlazar permanentemente con este título">¶</a></h2>
-<span class="target" id="module-learninspy.utils.checks"></span><dl class="class">
+<div class="section" id="module-learninspy.utils.checks">
+<span id="learninspy-utils-checks"></span><h2>learninspy.utils.checks<a class="headerlink" href="#module-learninspy.utils.checks" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="class">
 <dt id="learninspy.utils.checks.CheckGradient">
 <em class="property">class </em><tt class="descclassname">learninspy.utils.checks.</tt><tt class="descname">CheckGradient</tt><big>(</big><em>functions</em><big>)</big><a class="headerlink" href="#learninspy.utils.checks.CheckGradient" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<p>Clase para chequear la correcta implementación del gradiente de una función, mediante diferenciación numérica.
+Basado en <a class="reference external" href="http://ufldl.stanford.edu/wiki/index.php/Gradient_checking_and_advanced_optimization">http://ufldl.stanford.edu/wiki/index.php/Gradient_checking_and_advanced_optimization</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>functions</strong> &#8211; list de strings, correspondientes a las keys de un dict de funciones.</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="learninspy.utils.checks.CheckGradient.check_numericalgradient">
 <tt class="descname">check_numericalgradient</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.utils.checks.CheckGradient.check_numericalgradient" title="Enlazar permanentemente con esta definición">¶</a></dt>
@@ -65,12 +79,28 @@
 <dt id="learninspy.utils.checks.CheckGradientActivation">
 <em class="property">class </em><tt class="descclassname">learninspy.utils.checks.</tt><tt class="descname">CheckGradientActivation</tt><big>(</big><em>functions</em><big>)</big><a class="headerlink" href="#learninspy.utils.checks.CheckGradientActivation" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Clases base: <a class="reference internal" href="#learninspy.utils.checks.CheckGradient" title="learninspy.utils.checks.CheckGradient"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.utils.checks.CheckGradient</span></tt></a></p>
+<p>Clase para chequear la correcta implementación del gradiente de una función de activación perteneciente a
+<a class="reference internal" href="learninspy.core.html#module-learninspy.core.activations" title="learninspy.core.activations"><tt class="xref py py-mod docutils literal"><span class="pre">activations</span></tt></a>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">check</span> <span class="o">=</span> <span class="n">CheckGradientActivation</span><span class="p">([</span><span class="s">&#39;Tanh&#39;</span><span class="p">,</span> <span class="s">&#39;ReLU&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bad_gradients</span> <span class="o">=</span> <span class="n">check</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">if</span> <span class="n">bad_gradients</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">print</span> <span class="s">&#39;Gradientes de activaciones OK!&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">else</span><span class="p">:</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">index_badgrad</span> <span class="o">=</span> <span class="n">indexes</span><span class="p">[</span><span class="n">bad_gradients</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;El gradiente de las posiciones &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">index_badgrad</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39; se encuentra mal implementado!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="class">
 <dt id="learninspy.utils.checks.CheckGradientLoss">
 <em class="property">class </em><tt class="descclassname">learninspy.utils.checks.</tt><tt class="descname">CheckGradientLoss</tt><big>(</big><em>function</em><big>)</big><a class="headerlink" href="#learninspy.utils.checks.CheckGradientLoss" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Clases base: <a class="reference internal" href="#learninspy.utils.checks.CheckGradient" title="learninspy.utils.checks.CheckGradient"><tt class="xref py py-class docutils literal"><span class="pre">learninspy.utils.checks.CheckGradient</span></tt></a></p>
+<div class="admonition note">
+<p class="first admonition-title">Nota</p>
+<p class="last">Experimental, sin terminar.</p>
+</div>
 <dl class="method">
 <dt id="learninspy.utils.checks.CheckGradientLoss.check_numericalgradient">
 <tt class="descname">check_numericalgradient</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.utils.checks.CheckGradientLoss.check_numericalgradient" title="Enlazar permanentemente con esta definición">¶</a></dt>
@@ -85,50 +115,123 @@
 
 </div>
 <div class="section" id="module-learninspy.utils.data">
-<span id="learninspy-utils-data-module"></span><h2>learninspy.utils.data module<a class="headerlink" href="#module-learninspy.utils.data" title="Enlazar permanentemente con este título">¶</a></h2>
+<span id="learninspy-utils-data"></span><h2>learninspy.utils.data<a class="headerlink" href="#module-learninspy.utils.data" title="Enlazar permanentemente con este título">¶</a></h2>
 <dl class="class">
 <dt id="learninspy.utils.data.LabeledDataSet">
 <em class="property">class </em><tt class="descclassname">learninspy.utils.data.</tt><tt class="descname">LabeledDataSet</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
+<p>Clase útil para manejar un conjunto etiquetado de datos. Dicho conjunto se almacena
+como un <a class="reference external" href="https://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.RDD">pyspark.rdd.RDD</a>
+donde cada entrada posee una lista de <strong>features</strong> y su correspondiente <strong>label</strong>.
+Se proveen funcionalidades para manejo de archivos, así como para partir el conjunto de datos
+(e.g. train, valid y test).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>data</strong> &#8211; list o numpy.array o pyspark.rdd.RDD, o bien <em>None</em> si se desea iniciar un conjunto vacío.</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="learninspy.utils.data.LabeledDataSet.collect">
 <tt class="descname">collect</tt><big>(</big><em>unpersist=True</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.collect" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Devuelve el conjunto de datos como lista, mediante la aplicación del método <em>collect()</em> sobre un
+<a class="reference external" href="https://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.RDD">pyspark.rdd.RDD</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>unpersist</strong> &#8211; bool, indicando si además se quiere llamar al método <em>unpersist()</em> del <strong>pyspark.rdd.RDD</strong> alojado.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="learninspy.utils.data.LabeledDataSet.features">
 <tt class="descname">features</tt><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.features" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="learninspy.utils.data.LabeledDataSet.labeled_point">
-<tt class="descname">labeled_point</tt><big>(</big><big>)</big><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.labeled_point" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Devuelve sólo las características del conjunto de datos, en el correspondiente orden almacenado.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Devuelve:</th><td class="field-body">pyspark.rdd.RDD</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="learninspy.utils.data.LabeledDataSet.labels">
 <tt class="descname">labels</tt><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.labels" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Devuelve sólo las etiquetas del conjunto de datos, en el correspondiente orden almacenado.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Devuelve:</th><td class="field-body">pyspark.rdd.RDD</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="learninspy.utils.data.LabeledDataSet.load_file">
-<tt class="descname">load_file</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.load_file" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<tt class="descname">load_file</tt><big>(</big><em>path</em>, <em>pos_label=-1</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.load_file" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Carga de conjunto de datos desde archivo. El formato aceptado es de archivos de texto, como CSV, donde
+los valores se separan por un caracter delimitador
+(configurable en <a class="reference internal" href="#learninspy.utils.fileio.parse_point" title="learninspy.utils.fileio.parse_point"><tt class="xref py py-func docutils literal"><span class="pre">parse_point()</span></tt></a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; string, indicando la ruta de donde cargar los datos.</li>
+<li><strong>pos_label</strong> &#8211; int, posición o n° de elemento de cada línea del archivo, que corresponde al <strong>label</strong> (por defecto es -1, que corresponde a la última posición).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="learninspy.utils.data.LabeledDataSet.save_file">
 <tt class="descname">save_file</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.save_file" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Guardar conjunto de datos en archivo de texto.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>path</strong> &#8211; string, indicando la ruta en donde se guardan los datos.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="learninspy.utils.data.LabeledDataSet.shape">
 <tt class="descname">shape</tt><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.shape" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Devuelve el tamaño del conjunto de datos alojado.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Devuelve:</th><td class="field-body">tuple, de cantidad de filas y columnas.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="learninspy.utils.data.LabeledDataSet.split_data">
 <tt class="descname">split_data</tt><big>(</big><em>fractions</em>, <em>seed=123</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.LabeledDataSet.split_data" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Particionamiento del conjunto de datos, en base a las proporciones dadas por <em>fractions</em>.
+Se hace mediante el uso de la función <a class="reference internal" href="#learninspy.utils.data.split_data" title="learninspy.utils.data.split_data"><tt class="xref py py-func docutils literal"><span class="pre">split_data()</span></tt></a>.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -136,53 +239,155 @@
 <dt id="learninspy.utils.data.StandardScaler">
 <em class="property">class </em><tt class="descclassname">learninspy.utils.data.</tt><tt class="descname">StandardScaler</tt><big>(</big><em>mean=True</em>, <em>std=True</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.StandardScaler" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
-<p>Clase para estandarizar un conjunto de datos (soporta RDDs usando MLlib)</p>
+<p>Estandariza un conjunto de datos, mediante la sustracción de la media y el escalado para tener varianza unitaria.
+Soporta RDDs usando la clase
+<a class="reference external" href="https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#pyspark.mllib.feature.StandardScaler">StandardScaler</a>
+de <strong>pyspark.mllib</strong>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mean</strong> &#8211; bool, para indicar que se desea centrar conjunto de datos restándole la media.</li>
+<li><strong>std</strong> &#8211; bool, para indicar que se desea normalizar conjunto de datos diviendo por el desvío estándar.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.3</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">3.8</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.9</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.3</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.8</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.5</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">standarizer</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">standarizer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">standarizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+<span class="go">array([[-0.70710678,  0.70710678, -0.70710678],[ 0.70710678, -0.70710678,  0.70710678]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">standarizer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+<span class="go">array([[-0.46327686,  0.09223132, -1.07926824],[ 0.21944693,  0.64561923, -1.82359117]])</span>
+</pre></div>
+</div>
 <dl class="method">
 <dt id="learninspy.utils.data.StandardScaler.fit">
 <tt class="descname">fit</tt><big>(</big><em>dataset</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.StandardScaler.fit" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Computa la media y desvio estándar de un conjunto de datos, las cuales se usarán para estandarizar datos.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>dataset</strong> &#8211; pyspark.rdd.RDD o numpy.array o <a class="reference internal" href="#learninspy.utils.data.LabeledDataSet" title="learninspy.utils.data.LabeledDataSet"><tt class="xref py py-class docutils literal"><span class="pre">LabeledDataSet</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="learninspy.utils.data.StandardScaler.transform">
 <tt class="descname">transform</tt><big>(</big><em>dataset</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.StandardScaler.transform" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Aplica estandarización sobre <strong>dataset</strong>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>dataset</strong> &#8211; pyspark.rdd.RDD o numpy.array o <a class="reference internal" href="#learninspy.utils.data.LabeledDataSet" title="learninspy.utils.data.LabeledDataSet"><tt class="xref py py-class docutils literal"><span class="pre">LabeledDataSet</span></tt></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.data.label_data">
 <tt class="descclassname">learninspy.utils.data.</tt><tt class="descname">label_data</tt><big>(</big><em>data</em>, <em>label</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.label_data" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Función para etiquetar cada elemento de <strong>data</strong> con su correspondiente de <strong>label</strong>,
+formando una list de elementos
+<a class="reference external" href="https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#pyspark.mllib.regression.LabeledPoint">pyspark.mllib.regression.LabeledPoint</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; list o numpy.array, correspondiente a <strong>features</strong></li>
+<li><strong>label</strong> &#8211; list o numpy.array, correspondiente a <strong>labels</strong></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.data.label_to_vector">
 <tt class="descclassname">learninspy.utils.data.</tt><tt class="descname">label_to_vector</tt><big>(</big><em>label</em>, <em>n_classes</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.label_to_vector" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Función para mapear una etiqueta numérica a un vector de dimensión igual a <strong>n_classes</strong>,
+con todos sus elementos iguales a 0 excepto el de la posición <strong>label</strong>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>label</strong> &#8211; int, pertenenciente al rango [0, <em>n_classes</em> - 1].</li>
+<li><strong>n_classes</strong> &#8211; int, correspondiente a la cantidad de clases posibles para <em>label</em>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last">numpy.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.data.split_data">
 <tt class="descclassname">learninspy.utils.data.</tt><tt class="descname">split_data</tt><big>(</big><em>data</em>, <em>fractions</em>, <em>seed=123</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.split_data" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd><p>Split data en sets en base a fractions
-:param data: list or np.array
-:param fractions: list [f_train, f_valid, f_test]
-:param seed: int
-:return: sets (e.g. train, valid, test)</p>
+<dd><p>Split data en sets en base a fractions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; list o np.array</li>
+<li><strong>fractions</strong> &#8211; list [f_train, f_valid, f_test]</li>
+<li><strong>seed</strong> &#8211; int, semilla para el random</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last">list de conjuntos (e.g. train, valid, test)</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.data.subsample">
 <tt class="descclassname">learninspy.utils.data.</tt><tt class="descname">subsample</tt><big>(</big><em>data</em>, <em>size</em>, <em>balanced=True</em>, <em>seed=123</em><big>)</big><a class="headerlink" href="#learninspy.utils.data.subsample" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd><p>Muestreo de data, con resultado balanceado por clases si se lo pide
-:param data: list of LabeledPoint
-:param size: int
-:param seed: int
-:return:</p>
+<dd><p>Muestreo de data, con resultado balanceado por clases si se lo pide.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> &#8211; list of LabeledPoint</li>
+<li><strong>size</strong> &#8211; int, tamaño del muestreo.</li>
+<li><strong>seed</strong> &#8211; int, semilla del random.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
-<div class="section" id="learninspy-utils-evaluation-module">
-<h2>learninspy.utils.evaluation module<a class="headerlink" href="#learninspy-utils-evaluation-module" title="Enlazar permanentemente con este título">¶</a></h2>
-<span class="target" id="module-learninspy.utils.evaluation"></span><dl class="class">
+<div class="section" id="module-learninspy.utils.evaluation">
+<span id="learninspy-utils-evaluation"></span><h2>learninspy.utils.evaluation<a class="headerlink" href="#module-learninspy.utils.evaluation" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="class">
 <dt id="learninspy.utils.evaluation.ClassificationMetrics">
 <em class="property">class </em><tt class="descclassname">learninspy.utils.evaluation.</tt><tt class="descname">ClassificationMetrics</tt><big>(</big><em>predicted_actual</em>, <em>n_classes</em><big>)</big><a class="headerlink" href="#learninspy.utils.evaluation.ClassificationMetrics" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
@@ -191,13 +396,10 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first last simple">
 <li><strong>predicted_actual</strong> &#8211; list de (predicted, actual) pairs</li>
 <li><strong>n_classes</strong> &#8211; int cantidad de clases</li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last"></p>
 </td>
 </tr>
 </tbody>
@@ -250,7 +452,35 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
 <dl class="method">
 <dt id="learninspy.utils.evaluation.ClassificationMetrics.precision">
 <tt class="descname">precision</tt><big>(</big><em>label=None</em>, <em>macro=True</em><big>)</big><a class="headerlink" href="#learninspy.utils.evaluation.ClassificationMetrics.precision" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Calcula la precisión de la clasificación, dado por la cantidad de <strong>verdaderos positivos</strong>
+(i.e. el número de items correctamente clasificados) dividido por el total de elementos clasificados
+para una clase dada (i.e. la suma de los verdaderos positivos y <strong>falsos positivos</strong>, que son los
+items incorrectamente clasificados de dicha clase). Ello se resume en la siguiente fórmula:</p>
+<p><img class="math" src="_images/math/7b5027e489fa2c335e58cd39a8a6cd6033acbfc0.png" alt="P_i=\dfrac{TP_i}{TP_i+FP_i}"/></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first last simple">
+<li><strong>label</strong> &#8211; int entre {0,n_classes - 1} para indicar sobre qué clase evaluar. Si es <em>None</em> se evalúa sobre todas.</li>
+<li><strong>macro</strong> &#8211; bool, que indica cómo calcular el <strong>precision</strong> sobre todas las clases (True para que sea <em>macro</em> y False para que sea <em>micro</em>).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Siendo C la cantidad de clases, las fórmulas son:</p>
+<p><img class="math" src="_images/math/57450abe95f74506614b860fb9b89fc6dd842691.png" alt="P_{micro}=\dfrac{\sum_{i=0}^{C-1} TP_i}{\sum_i TP_i+FP_i}"/></p>
+<p><img class="math" src="_images/math/cc471630e33593112f5d77b8064614327a4a9e97.png" alt="P_{macro}=\dfrac{1}{C}\sum_{i=0}^{C-1} \frac{TP_i}{TP_i+FP_i}"/></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Devuelve:</th><td class="field-body">double</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="learninspy.utils.evaluation.ClassificationMetrics.recall">
@@ -292,10 +522,10 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
 
 </div>
 <div class="section" id="module-learninspy.utils.feature">
-<span id="learninspy-utils-feature-module"></span><h2>learninspy.utils.feature module<a class="headerlink" href="#module-learninspy.utils.feature" title="Enlazar permanentemente con este título">¶</a></h2>
+<span id="learninspy-utils-feature"></span><h2>learninspy.utils.feature<a class="headerlink" href="#module-learninspy.utils.feature" title="Enlazar permanentemente con este título">¶</a></h2>
 <dl class="class">
 <dt id="learninspy.utils.feature.PCA">
-<em class="property">class </em><tt class="descclassname">learninspy.utils.feature.</tt><tt class="descname">PCA</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#learninspy.utils.feature.PCA" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">learninspy.utils.feature.</tt><tt class="descname">PCA</tt><big>(</big><em>x</em>, <em>threshold_k=0.95</em><big>)</big><a class="headerlink" href="#learninspy.utils.feature.PCA" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd><p>Clases base: <a class="reference external" href="http://docs.python.org/library/functions.html#object" title="(en Python versión 2.7)"><tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></a></p>
 <dl class="method">
 <dt id="learninspy.utils.feature.PCA.transform">
@@ -306,7 +536,12 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
 
 </div>
 <div class="section" id="module-learninspy.utils.fileio">
-<span id="learninspy-utils-fileio-module"></span><h2>learninspy.utils.fileio module<a class="headerlink" href="#module-learninspy.utils.fileio" title="Enlazar permanentemente con este título">¶</a></h2>
+<span id="learninspy-utils-fileio"></span><h2>learninspy.utils.fileio<a class="headerlink" href="#module-learninspy.utils.fileio" title="Enlazar permanentemente con este título">¶</a></h2>
+<dl class="function">
+<dt id="learninspy.utils.fileio.get_logger">
+<tt class="descclassname">learninspy.utils.fileio.</tt><tt class="descname">get_logger</tt><big>(</big><em>name='Learninspy'</em>, <em>level=20</em><big>)</big><a class="headerlink" href="#learninspy.utils.fileio.get_logger" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="function">
 <dt id="learninspy.utils.fileio.is_mat_file">
 <tt class="descclassname">learninspy.utils.fileio.</tt><tt class="descname">is_mat_file</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#learninspy.utils.fileio.is_mat_file" title="Enlazar permanentemente con esta definición">¶</a></dt>
@@ -318,14 +553,35 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="learninspy.utils.fileio.label_point">
+<tt class="descclassname">learninspy.utils.fileio.</tt><tt class="descname">label_point</tt><big>(</big><em>row</em>, <em>pos_label=-1</em><big>)</big><a class="headerlink" href="#learninspy.utils.fileio.label_point" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="learninspy.utils.fileio.load_file">
-<tt class="descclassname">learninspy.utils.fileio.</tt><tt class="descname">load_file</tt><big>(</big><em>path</em>, <em>varname=None</em><big>)</big><a class="headerlink" href="#learninspy.utils.fileio.load_file" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<tt class="descclassname">learninspy.utils.fileio.</tt><tt class="descname">load_file</tt><big>(</big><em>path</em>, <em>pos_label=-1</em>, <em>varname=None</em><big>)</big><a class="headerlink" href="#learninspy.utils.fileio.load_file" title="Enlazar permanentemente con esta definición">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.fileio.parse_point">
-<tt class="descclassname">learninspy.utils.fileio.</tt><tt class="descname">parse_point</tt><big>(</big><em>line</em><big>)</big><a class="headerlink" href="#learninspy.utils.fileio.parse_point" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<tt class="descclassname">learninspy.utils.fileio.</tt><tt class="descname">parse_point</tt><big>(</big><em>line, delimiter='[ ,|;&quot;]+'</em><big>)</big><a class="headerlink" href="#learninspy.utils.fileio.parse_point" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Convierte un string en list, separando elementos mediante la aparición un caracter delimitador entre ellos.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first simple">
+<li><strong>line</strong> &#8211; string, contenedor de los caracteres que se desea separar.</li>
+<li><strong>delimiter</strong> &#8211; string, contenedor de los posibles caracteres delimitadores.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Devuelve:</th><td class="field-body"><p class="first last">list con elementos deseados.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.fileio.save_file">
@@ -334,30 +590,95 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
 
 </div>
 <div class="section" id="module-learninspy.utils.plots">
-<span id="learninspy-utils-plots-module"></span><h2>learninspy.utils.plots module<a class="headerlink" href="#module-learninspy.utils.plots" title="Enlazar permanentemente con este título">¶</a></h2>
+<span id="learninspy-utils-plots"></span><h2>learninspy.utils.plots<a class="headerlink" href="#module-learninspy.utils.plots" title="Enlazar permanentemente con este título">¶</a></h2>
 <dl class="function">
 <dt id="learninspy.utils.plots.plot_activations">
 <tt class="descclassname">learninspy.utils.plots.</tt><tt class="descname">plot_activations</tt><big>(</big><em>params</em><big>)</big><a class="headerlink" href="#learninspy.utils.plots.plot_activations" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Ploteo de las activaciones establecidas para una red neuronal. Se representan como señales 1-D, en un dominio dado.</p>
+<div class="admonition note">
+<p class="first admonition-title">Nota</p>
+<p class="last">Experimental</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>params</strong> &#8211; parámetros del tipo <a class="reference internal" href="learninspy.core.html#learninspy.core.model.NetworkParameters" title="learninspy.core.model.NetworkParameters"><tt class="xref py py-class docutils literal"><span class="pre">NetworkParameters</span></tt></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="learninspy.utils.plots.plot_autoencoders">
+<tt class="descclassname">learninspy.utils.plots.</tt><tt class="descname">plot_autoencoders</tt><big>(</big><em>network</em><big>)</big><a class="headerlink" href="#learninspy.utils.plots.plot_autoencoders" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Ploteo de la representación latente un StackedAutoencoder dado.</p>
+<div class="admonition note">
+<p class="first admonition-title">Nota</p>
+<p class="last">Experimental</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>network</strong> &#8211; red neuronal, del tipo <a class="reference internal" href="learninspy.core.html#learninspy.core.autoencoder.StackedAutoencoder" title="learninspy.core.autoencoder.StackedAutoencoder"><tt class="xref py py-class docutils literal"><span class="pre">StackedAutoencoder</span></tt></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.plots.plot_confusion_matrix">
 <tt class="descclassname">learninspy.utils.plots.</tt><tt class="descname">plot_confusion_matrix</tt><big>(</big><em>matrix</em><big>)</big><a class="headerlink" href="#learninspy.utils.plots.plot_confusion_matrix" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Ploteo de una matrix de confusión, realizada mediante <a class="reference internal" href="#learninspy.utils.evaluation.ClassificationMetrics" title="learninspy.utils.evaluation.ClassificationMetrics"><tt class="xref py py-class docutils literal"><span class="pre">ClassificationMetrics</span></tt></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>matrix</strong> &#8211; numpy.array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.plots.plot_matrix">
 <tt class="descclassname">learninspy.utils.plots.</tt><tt class="descname">plot_matrix</tt><big>(</big><em>matrix</em>, <em>ax=None</em>, <em>values=True</em>, <em>show=True</em><big>)</big><a class="headerlink" href="#learninspy.utils.plots.plot_matrix" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Ploteo de un arreglo 2-D.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><ul class="first last simple">
+<li><strong>matrix</strong> &#8211; numpy.array o list, arreglo a graficar.</li>
+<li><strong>ax</strong> &#8211; matplotlib.axes.Axes donde se debe plotear. Si es <em>None</em>, se crea una instancia de ello.</li>
+<li><strong>values</strong> &#8211; bool, para indicar si se desea imprimir en cada celda el valor correspondiente.</li>
+<li><strong>show</strong> &#8211; bool, para indicar si se debe imprimir inmediatamente en pantalla mediante <strong>matplotlib.pyplot.show()</strong>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="learninspy.utils.plots.plot_neurons">
 <tt class="descclassname">learninspy.utils.plots.</tt><tt class="descname">plot_neurons</tt><big>(</big><em>network</em><big>)</big><a class="headerlink" href="#learninspy.utils.plots.plot_neurons" title="Enlazar permanentemente con esta definición">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Ploteo de la representación latente de una Red Neuronal.
+.. note:: Experimental</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parámetros:</th><td class="field-body"><strong>network</strong> &#8211; red neuronal del tipo <a class="reference internal" href="learninspy.core.html#learninspy.core.model.NeuralNetwork" title="learninspy.core.model.NeuralNetwork"><tt class="xref py py-class docutils literal"><span class="pre">NeuralNetwork</span></tt></a>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </div>
 <div class="section" id="module-learninspy.utils.util">
-<span id="learninspy-utils-util-module"></span><h2>learninspy.utils.util module<a class="headerlink" href="#module-learninspy.utils.util" title="Enlazar permanentemente con este título">¶</a></h2>
+<span id="learninspy-utils-util"></span><h2>learninspy.utils.util<a class="headerlink" href="#module-learninspy.utils.util" title="Enlazar permanentemente con este título">¶</a></h2>
 <dl class="class">
 <dt id="learninspy.utils.util.LearninspyLogger">
 <em class="property">class </em><tt class="descclassname">learninspy.utils.util.</tt><tt class="descname">LearninspyLogger</tt><big>(</big><em>level='INFO'</em><big>)</big><a class="headerlink" href="#learninspy.utils.util.LearninspyLogger" title="Enlazar permanentemente con esta definición">¶</a></dt>
@@ -371,7 +692,7 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
 
 </div>
 <div class="section" id="module-learninspy.utils">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-learninspy.utils" title="Enlazar permanentemente con este título">¶</a></h2>
+<span id="contenidos-del-modulo"></span><h2>Contenidos del módulo<a class="headerlink" href="#module-learninspy.utils" title="Enlazar permanentemente con este título">¶</a></h2>
 </div>
 </div>
 
@@ -387,19 +708,22 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
   <h3><a href="index.html">Tabla de Contenidos</a></h3>
   <ul>
 <li><a class="reference internal" href="#">learninspy.utils package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#learninspy-utils-checks-module">learninspy.utils.checks module</a></li>
-<li><a class="reference internal" href="#module-learninspy.utils.data">learninspy.utils.data module</a></li>
-<li><a class="reference internal" href="#learninspy-utils-evaluation-module">learninspy.utils.evaluation module</a></li>
-<li><a class="reference internal" href="#module-learninspy.utils.feature">learninspy.utils.feature module</a></li>
-<li><a class="reference internal" href="#module-learninspy.utils.fileio">learninspy.utils.fileio module</a></li>
-<li><a class="reference internal" href="#module-learninspy.utils.plots">learninspy.utils.plots module</a></li>
-<li><a class="reference internal" href="#module-learninspy.utils.util">learninspy.utils.util module</a></li>
-<li><a class="reference internal" href="#module-learninspy.utils">Module contents</a></li>
+<li><a class="reference internal" href="#submodulos">Submódulos</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils.checks">learninspy.utils.checks</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils.data">learninspy.utils.data</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils.evaluation">learninspy.utils.evaluation</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils.feature">learninspy.utils.feature</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils.fileio">learninspy.utils.fileio</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils.plots">learninspy.utils.plots</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils.util">learninspy.utils.util</a></li>
+<li><a class="reference internal" href="#module-learninspy.utils">Contenidos del módulo</a></li>
 </ul>
 </li>
 </ul>
 
+  <h4>Tema anterior</h4>
+  <p class="topless"><a href="learninspy.core.html"
+                        title="capítulo anterior">learninspy.core package</a></p>
   <h3>Esta página</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/learninspy.utils.txt"
@@ -425,7 +749,10 @@ y están ordenadas en forma ascendente por casa clase de <em>actual</em>.</p>
     <div class="related">
       <h3>Navegación</h3>
       <ul>
-        <li><a href="index.html">documentación de Learninspy - 1.0.0</a> &raquo;</li> 
+        <li class="right" style="margin-right: 10px">
+          <a href="learninspy.core.html" title="learninspy.core package"
+             >anterior</a></li>
+        <li><a href="index.html">documentación de Learninspy - 0.1.0</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
