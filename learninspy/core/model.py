@@ -415,6 +415,18 @@ class NeuralNetwork(object):
         gradient[:] = [grad * self.params.strength_l2 for grad in gradient]
         return cost, gradient
 
+    def set_l1(self, strength_l1):
+        self.params.strength_l1 = strength_l1
+        return
+
+    def set_l2(self, strength_l2):
+        self.params.strength_l2 = strength_l2
+        return
+
+    def set_dropout_ratios(self, dropout_ratios):
+        self.params.dropout_ratios = dropout_ratios
+        return
+    
     def _backprop(self, x, y):
         """
 
