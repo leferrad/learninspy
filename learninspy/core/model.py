@@ -555,6 +555,19 @@ class NeuralNetwork(object):
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             keep_best=False):
+        """
+
+        :param train: :class:`.LabeledDataSet` or list, conjunto de datos de entrenamiento.
+        :param valid: :class:`.LabeledDataSet` or list, conjunto de datos de validación.
+        :param mini_batch: int, cantidad de ejemplos a utilizar durante una época de la optimización.
+        :param parallelism: int, cantidad de modelos a optimizar concurrentemente.
+            Si es -1, se setea como :math:`\\frac{N_{train}}{m}` donde *N* es la cantidad
+            total de ejemplos de entrenamiento y *m* la cantidad de ejemplos para el mini-batch.
+        :param stops: list of Criterions.
+        :param optimizer_params: :class:`.OptimizerParameters`
+        :param keep_best: bool, indicando **True** si se desea mantener al final de la optimización
+            el mejor modelo obtenido.
+        """
         # Si son LabeledDataSet, los colecto en forma de lista
         if type(train) is LabeledDataSet:
             train = train.collect()

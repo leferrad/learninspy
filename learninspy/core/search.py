@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 __author__ = 'leferrad'
 
 # Dependencias externas
@@ -8,6 +11,10 @@ from learninspy.core.activations import fun_activation
 from learninspy.core.model import NetworkParameters, NeuralNetwork
 from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
+from learninspy.utils.fileio import get_logger
+
+logger = get_logger(name=__name__)
+logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
 
 
 # optimization_domain = {}  # TODO Soportar esta funcionalidad
@@ -125,6 +132,13 @@ class RandomSearch(object):
         return net_params
 
     def fit(self, train, valid, test, mini_batch=100, parallelism=4, stops=None, optimizer_params=None, keep_best=True):
+        """
+
+
+        .. note:: Los parámetros son los mismos que recibe la función :func:`~learninspy.core.model.NeuralNetwork.fit`
+            incluyendo también el conjunto de prueba *test* que se utiiza para validar la conveniencia de
+            cada modelo logrado.
+        """
         if stops is None:
             stops = [criterion['MaxIterations'](10),
                      criterion['AchieveTolerance'](0.95, key='hits')]
@@ -137,8 +151,7 @@ class RandomSearch(object):
         best_model = None
         best_hits = 0.0
 
-        print "Optimizacion utilizada: "
-        print str(optimizer_params)
+        logger.info("Optimizacion utilizada: %s", str(optimizer_params))
         for it in xrange(self.n_iter):
             net_params_sample = self._take_sample(seed=self.seeds[it])
             print "Iteracion ", str(it+1), " en busqueda"
@@ -156,7 +169,7 @@ class RandomSearch(object):
         return neural_net, hits_test
 
     @staticmethod
-    def guardar_config(caballo, metrica, n_iter):
+    def save_config():
         pass
 
 
