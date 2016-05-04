@@ -170,7 +170,7 @@ class StackedAutoencoder(NeuralNetwork):
         self.list_layers[-1] = NeuralNetwork(params=params)
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
-            keep_best=False):
+            reproducible=False, keep_best=False):
         """
         Fit de cada autoencoder usando conjuntos de entrenamiento y validación,
         y su apilado para entrenar la red neuronal profunda con aprendizaje no supervisado.
@@ -198,7 +198,7 @@ class StackedAutoencoder(NeuralNetwork):
                         ae.params.units_layers[0], ae.params.units_layers[1])
             ae.assert_regression()  # Aseguro que sea de regresion (no puede ser de clasificacion)
             ae.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
-                   optimizer_params=optimizer_params, keep_best=keep_best)
+                   optimizer_params=optimizer_params, reproducible=reproducible, keep_best=keep_best)
             # Siguen siendo importantes los labels para el sample balanceado por clases
             train_ae = label_data(ae.encode(train_ae), labels_train)
             valid_ae = label_data(ae.encode(valid_ae), labels_valid)

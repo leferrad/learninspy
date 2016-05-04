@@ -351,6 +351,7 @@ class NeuralNetwork(object):
         self.num_layers = len(self.list_layers)
         self.hits_train = 0.0
         self.hits_valid = 0.0
+        self.rnd_state = self.params.rng.get_state()
         #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
 
     def __assert_type_outputlayer(self):
@@ -426,7 +427,7 @@ class NeuralNetwork(object):
     def set_dropout_ratios(self, dropout_ratios):
         self.params.dropout_ratios = dropout_ratios
         return
-    
+
     def _backprop(self, x, y):
         """
 
@@ -514,17 +515,17 @@ class NeuralNetwork(object):
         if self.params.classification is True:
             n_classes = self.params.units_layers[-1]  # La cant de unidades de la ult capa define la cant de clases
             metric = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
-            hits = metric.f_measure()
+            hits = metric.f_measure()  # TODO dar la opcion de elegir metrica
         else:
             metric = RegressionMetrics(zip(predicted, actual))
-            hits = metric.r2()
+            hits = metric.r2()  # TODO dar la opcion de elegir metrica
         if predictions is True:  # Devuelvo ademas el vector de predicciones
             ret = hits, predicted
         else:
             ret = hits
         return ret
 
-    def train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None):
+    def train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None, reproducible=False):
         """
 
         :param train_bc:
@@ -541,6 +542,11 @@ class NeuralNetwork(object):
         # Funcion para minimizar funcion de costo sobre cada modelo del RDD
         minimizer = opt.optimize
         # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
+
+        # TODO guardar state de rng para hacer predecible la salida (opcion por param)
+        if reproducible is True:
+            self.set_initial_rndstate()  # Seteo estado inicial del RandomState (al generarse la instancia NeuralNetwork)
+
         seeds = list(self.params.rng.randint(500, size=parallelism))
         # Paralelizo modelo actual en los nodos dados por parallelism
         models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
@@ -566,7 +572,7 @@ class NeuralNetwork(object):
         return hits
 
     def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
-            keep_best=False):
+            reproducible=False, keep_best=False):
         """
 
         :param train: :class:`.LabeledDataSet` or list, conjunto de datos de entrenamiento.
@@ -601,7 +607,7 @@ class NeuralNetwork(object):
         epoch = 0
         while self.check_stop(epoch+1, stops) is False:
             ini = time.time()  # tic
-            self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params)
+            self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params, reproducible)
             self.hits_valid = self.evaluate(valid_bc.value)
             #print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid
             fin = time.time() - ini  # toc
@@ -646,6 +652,10 @@ class NeuralNetwork(object):
         #     print 'Gradiente de loss OK!'
         # else:
         #     raise Exception('El gradiente de las funcion de error se encuentra mal implementado!')
+
+    def set_initial_rndstate(self):
+        self.params.rng.set_state(self.rnd_state)
+        return
 
     def persist_layers(self):
         logger.warning("Persisting RDDs from NeuralLayer objects")
