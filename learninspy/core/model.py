@@ -321,8 +321,8 @@ class NetworkParameters:
             config += "classification."+os.linesep
         else:
             config += "regression."+os.linesep
-        config += "Strength in L1 norm is "+str(self.strength_l1) + \
-                  " and in L2 norm is "+str(self.strength_l2)+"."+os.linesep
+        config += "L1 strength is "+str(self.strength_l1) + \
+                  " and L2 strength is "+str(self.strength_l2)+"."+os.linesep
         return config
 
 
