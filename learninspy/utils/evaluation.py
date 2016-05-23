@@ -109,7 +109,10 @@ class ClassificationMetrics(object):
     def f_measure(self, beta=1, label=None, macro=True):
         ppv = self.precision(label, macro)
         tpr = self.recall(label, macro)
-        f_score = (1 + beta*beta)*(ppv * tpr) / (beta*beta*ppv + tpr)
+        if ppv == 0 and tpr == 0:
+            f_score = 0.0
+        else:
+            f_score = (1 + beta*beta)*(ppv * tpr) / (beta*beta*ppv + tpr)
         return f_score
 
     def confusion_matrix(self):
