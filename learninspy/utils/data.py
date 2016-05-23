@@ -92,7 +92,7 @@ class StandardScaler(object):
             dataset = LabeledDataSet(labels.zip(dataset))
         return dataset
 
-
+# TODO: permitir que esté guardado localmente y no distribuido en RDD
 class LabeledDataSet(object):
     """
     Clase útil para manejar un conjunto etiquetado de datos. Dicho conjunto se almacena
@@ -244,7 +244,7 @@ def subsample(data, size, balanced=True, seed=123):
     """
     random.seed(seed)
     if balanced is True:  #Problema de clasificacion
-        n_classes = int(max(map(lambda lp: lp.label, data))) + 1
+        n_classes = int(max(map(lambda lp: lp.label, data))) + 1  # TODO: no siempre el batch va a tener todas las clases
         size /= n_classes  # es un int, y puede resultar menor al ingresado (se trunca)
         sample = []
         for c in xrange(n_classes):
@@ -276,9 +276,11 @@ def split_data(data, fractions, seed=123):
         random.shuffle(data)
         # Segmento conjuntos
         size_data = len(data)
-        size_split = map(lambda f: int(size_data * f), fractions)
-        index_split = [0] + size_split[:-1]
-        sets = [data[i:i+size] for i, size in zip(index_split, size_split)]
+        size_split = map(lambda f: int(round(size_data * f)), fractions)  # Int de Round para que no se pierdan rows
+        index_split = [0]
+        for s in size_split:
+            index_split.append(index_split[-1]+s)
+        sets = [data[i:f] for i, f in zip(index_split, index_split[1:])]
     return sets
 
 
@@ -293,6 +295,7 @@ def label_data(data, label):
     :param label: list o numpy.array, correspondiente a **labels**
     :return: list
     """
+    # TODO: si label es int, dice la posicion de data donde esta la columna de labels
     labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
     return labeled_data
 
