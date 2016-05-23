@@ -605,7 +605,7 @@ class NeuralNetwork(object):
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
         epoch = 0
-        while self.check_stop(epoch+1, stops) is False:
+        while self.check_stop(epoch, stops) is False:
             ini = time.time()  # tic
             self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params, reproducible)
             self.hits_valid = self.evaluate(valid_bc.value)

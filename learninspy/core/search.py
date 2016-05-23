@@ -13,6 +13,9 @@ from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
 from learninspy.utils.fileio import get_logger
 
+# Librerias de Python
+import os
+
 logger = get_logger(name=__name__)
 logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
 
@@ -96,7 +99,7 @@ class RandomSearch(object):
         else:
             dropout_ratios = self.net_params.dropout_ratios
             if len(dropout_ratios) != (n_layers - 1):  # Longitud distinta a la requerida
-                dropout_ratios = [0.2] + [0.5] * (n_layers-2) + [0.0]  # Dejo esta config por defecto (chau la otra)
+                dropout_ratios = [0.2] + [0.5] * (n_layers-3) + [0.0]  # Dejo esta config por defecto (chau la otra)
         return dropout_ratios
 
     def _sample_l1_l2(self):
@@ -156,7 +159,7 @@ class RandomSearch(object):
         for it in xrange(self.n_iter):
             net_params_sample = self._take_sample(seed=self.seeds[it])
             logger.info("Iteracion %i en busqueda.", it+1)
-            logger.info("Configuracion usada: %s", net_params_sample)
+            logger.info("Configuracion usada: %s", os.linesep+net_params_sample)
             neural_net = NeuralNetwork(net_params_sample)
             hits_valid = neural_net.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism,
                                         stops=stops, optimizer_params=optimizer_params, keep_best=keep_best)
