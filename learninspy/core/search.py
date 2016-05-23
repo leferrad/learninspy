@@ -159,7 +159,7 @@ class RandomSearch(object):
         for it in xrange(self.n_iter):
             net_params_sample = self._take_sample(seed=self.seeds[it])
             logger.info("Iteracion %i en busqueda.", it+1)
-            logger.info("Configuracion usada: %s", os.linesep+net_params_sample)
+            logger.info("Configuracion usada: %s", os.linesep+str(net_params_sample))
             neural_net = NeuralNetwork(net_params_sample)
             hits_valid = neural_net.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism,
                                         stops=stops, optimizer_params=optimizer_params, keep_best=keep_best)
