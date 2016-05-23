@@ -27,7 +27,7 @@ network_domain = {'n_layers': ((3, 7), 1),  # Teniendo en cuenta capa de entrada
 
 
 class RandomSearch(object):
-    def __init__(self, net_params, n_layers=0, n_iter=100, net_domain=None, seed=None):
+    def __init__(self, net_params, n_layers=0, n_iter=10, net_domain=None, seed=123):
         self.net_params = net_params
         if net_domain is None:
             net_domain = network_domain
@@ -66,6 +66,7 @@ class RandomSearch(object):
                 # Agrego unidades ocultas, siendo un porcentaje de la capa anterior
                 units_layers.append(int(p * units_layers[-1]))
             units_layers.append(n_out)  # Por ultimo la capa de salida
+            # TODO: verificar que haya una lista válida de neuronas
         return units_layers
 
     def _sample_activation(self, n_layers):
@@ -154,9 +155,8 @@ class RandomSearch(object):
         logger.info("Optimizacion utilizada: %s", str(optimizer_params))
         for it in xrange(self.n_iter):
             net_params_sample = self._take_sample(seed=self.seeds[it])
-            print "Iteracion ", str(it+1), " en busqueda"
-            print "Configuracion usada:"
-            print str(net_params_sample)
+            logger.info("Iteracion %i en busqueda.", it+1)
+            logger.info("Configuracion usada: %s", net_params_sample)
             neural_net = NeuralNetwork(net_params_sample)
             hits_valid = neural_net.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism,
                                         stops=stops, optimizer_params=optimizer_params, keep_best=keep_best)

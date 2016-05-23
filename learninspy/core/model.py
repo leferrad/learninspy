@@ -316,7 +316,7 @@ class NetworkParameters:
                 config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
                           + self.activation[l]+" activation and "\
                           + str(self.dropout_ratios[l])+" ratio of DropOut."+os.linesep
-        config += "The loss is "+self.loss+" for a problem of "
+        config += "The loss is "+self.loss+" for a task of "
         if self.classification is True:
             config += "classification."+os.linesep
         else:

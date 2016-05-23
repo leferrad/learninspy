@@ -210,20 +210,20 @@ class StackedAutoencoder(NeuralNetwork):
         logger.info("Entrenando Capa de salida -> In: %i, Out: %i",
                     out_layer.params.units_layers[0], out_layer.params.units_layers[1])
         out_layer.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
-                      optimizer_params=optimizer_params, keep_best=keep_best)
+                      optimizer_params=optimizer_params, reproducible=reproducible, keep_best=keep_best)
         self.list_layers[-1] = copy.deepcopy(out_layer)
 
         self.hits_valid = self.evaluate(valid)
         return self.hits_valid
 
     def finetune(self, train, valid, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
-                 keep_best=False):
+                 reproducible=False, keep_best=False):
         list_layers = copy.deepcopy(self.list_layers)
         list_layers[:-1] = map(lambda ae: ae.encoder_layer(), list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
         list_layers[-1] = list_layers[-1].list_layers[0]  # Agarro la primer capa de la red que se genero para la salida
         nn = NeuralNetwork(self.params, list_layers=list_layers)
         hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, stops=criterions,
-                            optimizer_params=optimizer_params)
+                            optimizer_params=optimizer_params, reproducible=reproducible)
         for l in xrange(len(self.list_layers) - 1):
             # Copio capa con ajuste fino al autoencoder
             self.list_layers[l].list_layers[0] = nn.list_layers[l]  # TODO mejorar esto, para que sea mas legible
