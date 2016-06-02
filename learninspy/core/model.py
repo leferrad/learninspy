@@ -63,8 +63,10 @@ class NeuralLayer(object):
         distributed = False
 
         if rng is None:
-            rng = np.random.RandomState(1234)
+            rng = np.random.RandomState(123)
         self.rng = rng
+        self.rnd_state = self.rng.get_state()
+
         self.shape_w = n_out, n_in
         self.shape_b = n_out, 1
 
@@ -87,7 +89,7 @@ class NeuralLayer(object):
                     dtype=np.dtype(float)
                 )
             else:
-                w = np.random.randn(*self.shape_w) * np.sqrt(2.0/n_in)
+                w = self.rng.randn(*self.shape_w) * np.sqrt(2.0/n_in)
             if sparsity is True:
                 w = sparse.csr_matrix(w)  # Convierto matriz densa a "rala"
 
@@ -165,13 +167,14 @@ class NeuralLayer(object):
 
         .. note:: En las predicciones de la red no se debe efectuar Dropout.
         """
+        self.rng.set_state(self.rnd_state)  # Para que sea reproducible
         out = self.output(x, grad)
         if grad:
             a, d_a = out
-            a, mask = a.dropout(p)
+            a, mask = a.dropout(p, self.rng.randint(500))
             out = a, d_a
         else:
-            out, mask = out.dropout(p)
+            out, mask = out.dropout(p, self.rng.randint(500))
         return out, mask  # Devuelvo ademas la mascara utilizada, para el backprop
 
     def get_weights(self):
@@ -341,6 +344,7 @@ class NeuralNetwork(object):
         self.list_layers = list_layers  # En caso de que la red reciba capas ya inicializadas
         self.loss = loss.fun_loss[self.params.loss]
         self.loss_d = loss.fun_loss_d[self.params.loss]
+        self.rnd_state = self.params.rng.get_state()
 
         if list_layers is None:
             self.list_layers = []  # Creo un arreglo vacio para ir agregando las capas que se inicializan
@@ -351,7 +355,7 @@ class NeuralNetwork(object):
         self.num_layers = len(self.list_layers)
         self.hits_train = 0.0
         self.hits_valid = 0.0
-        self.rnd_state = self.params.rng.get_state()
+        #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
         #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
 
     def __assert_type_outputlayer(self):
@@ -370,16 +374,19 @@ class NeuralNetwork(object):
     def __init_weights(self):  # Metodo privado
         logger.debug("Initializing weights and bias of Neural Layers ...")
         num_layers = len(self.params.units_layers)
+        self.set_initial_rndstate()
         for i in xrange(1, num_layers - 1):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
-                                                self.params.activation[i - 1], self.params.layer_distributed[i]))
+                                                self.params.activation[i - 1], self.params.layer_distributed[i],
+                                                rng=self.params.rng))
         if self.params.classification is True:
             # Ultima capa es de clasificacion, por lo que su activacion es softmax
             self.list_layers.append(ClassificationLayer(self.params.units_layers[-2],
                                                         self.params.units_layers[-1],
                                                         self.params.activation[-2],
                                                         # Notar que no tomo la ultima, ya que la lista tiene 1 elem mas
-                                                        self.params.layer_distributed[-1]))
+                                                        self.params.layer_distributed[-1],
+                                                        rng=self.params.rng))
         else:
             # Ultima capa es de regresion, por lo que su activacion puede ser cualquiera
             # (la misma que las ocultas por default)
@@ -387,7 +394,8 @@ class NeuralNetwork(object):
                                                     self.params.units_layers[num_layers - 1],
                                                     self.params.activation[-1],
                                                     # Notar que ahora tomo la ultima, ya que se corresponde a la salida
-                                                    self.params.layer_distributed[num_layers - 1]))
+                                                    self.params.layer_distributed[num_layers - 1],
+                                                    rng=self.params.rng))
 
     def l1(self):
         """
@@ -498,7 +506,7 @@ class NeuralNetwork(object):
             stop = any(c(results) for c in criterions)
         return stop
 
-    def evaluate(self, data, predictions=False):
+    def evaluate(self, data, predictions=False, metric=None):
         """
 
         :param data:
@@ -514,11 +522,27 @@ class NeuralNetwork(object):
             predicted = map(lambda p: float(np.argmax(p)), predicted)
         if self.params.classification is True:
             n_classes = self.params.units_layers[-1]  # La cant de unidades de la ult capa define la cant de clases
-            metric = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
-            hits = metric.f_measure()  # TODO dar la opcion de elegir metrica
+            metrics = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
+            if metric is None:
+                metric = 'F-measure'
+            # TODO mejorar esto para que quede mas prolijo y generalizable
+            if metric == 'Accuracy':
+                hits = metrics.accuracy()
+            elif metric == 'F-measure':
+                hits = metrics.f_measure()
+            elif metric == 'Precision':
+                hits = metrics.precision()
+            elif metric == 'Recall':
+                hits = metrics.recall()
         else:
-            metric = RegressionMetrics(zip(predicted, actual))
-            hits = metric.r2()  # TODO dar la opcion de elegir metrica
+            metrics = RegressionMetrics(zip(predicted, actual))
+            if metric is None:
+                metric = 'R2'
+            # TODO mejorar esto para que quede mas prolijo y generalizable
+            if metric == 'R2':
+                hits = metrics.r2()
+            elif metric == 'MSE':
+                hits = metrics.mse()
         if predictions is True:  # Devuelvo ademas el vector de predicciones
             ret = hits, predicted
         else:

@@ -304,7 +304,7 @@ class LocalNeurons(object):
         errorDiv = error * (2.0 / n)
         return LocalNeurons(errorDiv, self.shape)
 
-    def dropout(self, p):
+    def dropout(self, p, seed=123):
         """
         Aplica DropOut [srivastava2014dropout]_ sobre el vector alojado, anulando sus elementos con una probabilidad *p*.
 
@@ -314,7 +314,7 @@ class LocalNeurons(object):
             "Dropout: A simple way to prevent neural networks from overfitting".
             The Journal of Machine Learning Research, 15(1), 1929-1958.
         """
-
+        np.random.seed(seed)
         # Aplicable para vectores unicamente
         index = np.random.rand(*self.shape) > p  # Vector de bools, que indican que valor "tirar"
         # Notar que se escala el resultado diviendo por p

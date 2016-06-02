@@ -16,6 +16,7 @@ from learninspy.utils.asserts import assert_features_label
 
 # Librerias de Python
 import random
+from operator import add
 
 
 class StandardScaler(object):
@@ -281,6 +282,25 @@ def split_data(data, fractions, seed=123):
         for s in size_split:
             index_split.append(index_split[-1]+s)
         sets = [data[i:f] for i, f in zip(index_split, index_split[1:])]
+    return sets
+
+
+def split_balanced(data, fractions, seed=123):
+    # 'fractions' es aplicado a cada conjunto formado por c/ clase
+    # 'n' indica la cantidad de clases
+    # Verifico que fractions sea correcto
+    # TODO: assert (sum(fractions) <= 1.0, Exception("Fracciones para conjuntos incorrectas!"))
+    if isinstance(data, pyspark.rdd.RDD):
+        data = data.collect()  # Solución provisoria
+    assert isinstance(data[0], LabeledPoint), Exception("Solo se puede operar con conjunto de LabeledPoints!")
+    n = int(max(map(lambda lp: lp.label, data))) + 1 # Cantidad de clases
+    sets_per_class = [filter(lambda lp: lp.label == c, data) for c in xrange(n)]  # Conjuntos de datos por cada clase
+    sets_splitted = [split_data(s, fractions, seed) for s in sets_per_class]  # Split de cada conjunto de los anteriores
+    sets = reduce(lambda l1, l2: map(add, l1, l2), sets_splitted)  # Sumo splits correspondientes por cada clase
+    # Mezclo un poco los datos
+    random.seed(seed)
+    for i in xrange(len(sets)):
+        random.shuffle(sets[i])
     return sets
 
 
