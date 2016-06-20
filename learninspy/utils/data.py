@@ -179,12 +179,15 @@ class LabeledDataSet(object):
                 self.data = self.data.map(lambda lp: (lp.label, lp.features))
             self.with_lp = False
 
-    def split_data(self, fractions, seed=123):
+    def split_data(self, fractions, seed=123, balanced=False):
         """
         Particionamiento del conjunto de datos, en base a las proporciones dadas por *fractions*.
         Se hace mediante el uso de la función :func:`~learninspy.utils.data.split_data`.
         """
-        sets = split_data(self.data, fractions, seed)
+        if balanced is True:
+            sets = split_balanced(self.data, fractions, seed)
+        else:
+            sets = split_data(self.data, fractions, seed)
         sets = [LabeledDataSet(data) for data in sets]
         return sets
 

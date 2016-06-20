@@ -9,6 +9,7 @@ from learninspy.utils.data import LabeledDataSet
 
 class PCA(object):
     # Ver explicacion en http://cs231n.github.io/neural-networks-2/
+    # TODO: Ver si usar como parametro 'sigmas' que se sumen al mean, en lugar de una varianza acumulada
     def __init__(self, x, threshold_k=0.95):
         self.x = x
         if type(x) is LabeledDataSet:

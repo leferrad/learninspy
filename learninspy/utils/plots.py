@@ -90,6 +90,7 @@ def plot_autoencoders(network):
 
         # Ploteo
         plot_matrix(ae.encoder_layer().weights.matrix, ax_w, values=False, show=False)
+        # TODO estaría faltando el bias...
     plt.show()
 
 
