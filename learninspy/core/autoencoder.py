@@ -14,6 +14,7 @@ from learninspy.utils.fileio import get_logger
 
 # Librerias de Python
 import copy
+import time
 
 logger = get_logger(name=__name__)
 logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
@@ -231,12 +232,15 @@ class StackedAutoencoder(NeuralNetwork):
         return hits_valid
 
     def predict(self, x):
+        beg = time.time()  # tic
         if isinstance(x, list):
             x = map(lambda lp: self.predict(lp.features).matrix(), x)
         else:
             for i in xrange(self.num_layers-1):
                 x = self.list_layers[i].encode(x)
             x = self.list_layers[-1].predict(x)
+        end = (time.time() - beg) * 1000.0  # toc (ms)
+        logger.debug("Duration of computing predictions to produce output : %8.4fms.", end)
         return x
 
     # TODO hacer un override del plotter para graficar los weights y bias

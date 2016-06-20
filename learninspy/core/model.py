@@ -445,6 +445,7 @@ class NeuralNetwork(object):
         """
         # Ver http://neuralnetworksanddeeplearning.com/chap1.html#implementing_our_network_to_classify_digits
         # x, y: numpy array
+        beg = time.time()  # tic
         num_layers = self.num_layers
         drop_fraction = self.params.dropout_ratios  # Vector con las fracciones de DropOut para cada NeuralLayer
         mask = [None] * num_layers  # Vector que contiene None o la mascara de DropOut, segun corresponda
@@ -474,6 +475,8 @@ class NeuralNetwork(object):
                 delta = delta.mul_elemwise(mask[-l])
             nabla_w[-l] = delta.outer(a[-l - 1])
             nabla_b[-l] = delta
+        end = (time.time() - beg) * 1000.0  # toc (ms)
+        logger.debug("Duration of computing gradients on backpropagation: %8.4fms.", end)
         return cost, (nabla_w, nabla_b)
 
     def cost(self, features, label):
@@ -489,12 +492,15 @@ class NeuralNetwork(object):
         return cost, (nabla_w, nabla_b)
 
     def predict(self, x):
+        beg = time.time()  # tic
         if isinstance(x, list):
             x = map(lambda lp: self.predict(lp.features).matrix(), x)
         else:
             # Tener en cuenta que en la prediccion no se aplica el dropout
             for i in xrange(self.num_layers):
                 x = self.list_layers[i].output(x, grad=False)
+        end = (time.time() - beg) * 1000.0  # toc (ms)
+        logger.debug("Duration of computing predictions to produce output : %8.4fms.", end)
         return x
 
     def check_stop(self, epochs, criterions, check_all=False):
@@ -567,7 +573,6 @@ class NeuralNetwork(object):
         minimizer = opt.optimize
         # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
 
-        # TODO guardar state de rng para hacer predecible la salida (opcion por param)
         if reproducible is True:
             self.set_initial_rndstate()  # Seteo estado inicial del RandomState (al generarse la instancia NeuralNetwork)
 
@@ -625,18 +630,20 @@ class NeuralNetwork(object):
             best_valid = 0.0
             best_train = 0.0
         if stops is None:
-            logger.debug("Stops setted by default")
+            logger.debug("Set up stop criterions by default.")
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
         epoch = 0
+        total_end = 0
         while self.check_stop(epoch, stops) is False:
-            ini = time.time()  # tic
+            beg = time.time()  # tic
             self.hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params, reproducible)
             self.hits_valid = self.evaluate(valid_bc.value)
             #print "Epoca ", epoch+1, ". Hits en train: ", self.hits_train, ". Hits en valid: ", self.hits_valid
-            fin = time.time() - ini  # toc
+            end = time.time() - beg  # toc
+            total_end += end  # Acumular total
             logger.info("Epoca %i realizada en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
-                        epoch+1, fin, self.hits_train, self.hits_valid)
+                        epoch+1, end, self.hits_train, self.hits_valid)
             if keep_best is True:
                 if self.hits_valid >= best_valid:
                     best_valid = self.hits_valid
@@ -647,6 +654,8 @@ class NeuralNetwork(object):
             self.list_layers = copy.deepcopy(best_model)
             self.hits_train = best_train
             self.hits_valid = best_valid
+        logger.info("Ajuste total realizado en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
+                    total_end, self.hits_train, self.hits_valid)
         return self.hits_valid
 
     def update(self, stepw, stepb):
