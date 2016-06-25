@@ -3,6 +3,9 @@ language: python
 jdk:
   - openjdk7
 
+python:
+  - "2.7"
+
 env:
   matrix:
     - SPARK_VERSION="1.6.0" PYTHON_VERSION="2.7"
