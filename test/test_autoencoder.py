@@ -3,3 +3,6 @@
 
 __author__ = 'leferrad'
 
+
+def test_autoencoder():
+    assert 1.0 == 1.0  # TODO: hacer esto

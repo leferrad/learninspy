@@ -30,7 +30,7 @@ def test_classification_metrics():
     # F-measure variando Beta
     assert metrics.f_measure(beta=1) == 0.5499999999999999  # F1-score, igual ponderación
     assert metrics.f_measure(beta=0.5) == 0.5188679245283019  # F0.5 score, prioriza precision en lugar de recall
-    assert metrics.f_measure(beta=2) ==0.5851063829787233  # F2-score, prioriza recall en lugar de precision
+    assert metrics.f_measure(beta=2) == 0.5851063829787233  # F2-score, prioriza recall en lugar de precision
 
 
 def test_regression_metrics():
