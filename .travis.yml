@@ -29,7 +29,7 @@ before_script:
   - cd /tmp && tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
  
 script: 
-  - nosetests $@ --verbosity 2 --rednose --nologcapture
+  - nosetests $@ --verbosity 2
 
 notifications:
   email:
