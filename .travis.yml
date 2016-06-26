@@ -28,9 +28,7 @@ before_script:
   - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz	
   - cd /tmp && tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
  
-script:
-  - python setup.py clean bdist_egg
-  - nosetests test
+script: nosetests test
 
 notifications:
   email:
