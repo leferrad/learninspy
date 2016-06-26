@@ -25,8 +25,7 @@ matrix:
         SPARK_VERSION='1.6.0'
         HADOOP_VERSION='2.6'
         SPARK_HOME=/tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
-        PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
-        PYTHONPATH=$SPARK_HOME/python/build:$PYTHONPATH
+        PYTHONPATH=$SPARK_HOME/python/:$SPARK_HOME/python/build:$SPARK_HOME/python/lib/py4j-0.9-src.zip:$PYTHONPATH
 
 before_script:
   # Download Spark
