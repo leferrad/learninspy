@@ -9,15 +9,15 @@ python:
 env:
   global:
     - SPARK_VERSION='1.6.0'
-    - HADOOP_VERSION='2.4'
+    - HADOOP_VERSION='2.6'
     - SPARK_HOME=/tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
 
 before_install:
   - pip install -U pip
-  - curl http://apache.mirror.gtcomm.net/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
-  - cd /tmp && tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
 
 install:
+  - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
+  - tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
   - travis_wait travis_retry pip install -r requirements.txt
   - travis_retry pip install -e . 
  

@@ -17,7 +17,7 @@ Learninspy is a framework for building deep neural networks using Spark features
 * Matplotlib 
 
 ## Testing
-Run ``nosetests tests/`` from the download directory.
+Run ``nosetests test/`` from the download directory.
 
 ### Important links
 * Official repository of source: https://github.com/leferrad/learninspy/
