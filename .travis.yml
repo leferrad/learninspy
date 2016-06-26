@@ -13,24 +13,21 @@ before_install:
 install:
   - pip install -r requirements.txt
 
-evn:
-  global:
-    - PYTHONPATH=`pwd`
-
 matrix:
   include:
     - jdk: openjdk7
       python: 2.7
       env: >
         SPARK_VERSION='1.6.0'
-        HADOOP_VERSION='2.6'
-        SPARK_HOME=/tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
+        HADOOP_VERSION='2.4'
+        SPARK_HOME=`pwd`/thirdparty/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
         PYTHONPATH=$SPARK_HOME/python/:$SPARK_HOME/python/lib/py4j-0.9-src.zip:$PYTHONPATH
 
 before_script:
   # Download Spark
-  - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
-  - tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
+  - mkdir thirdparty
+  - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz 
+  - tar zxfC spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz thirdparty
  
 script: nosetests test
 
