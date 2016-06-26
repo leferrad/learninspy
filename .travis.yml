@@ -15,11 +15,7 @@ install:
 
 env:
   global:
-    - SPARK_VERSION='1.6.0'
-    - HADOOP_VERSION='2.6'
-    - SPARK_HOME=/tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
-    - PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
-    - PYTHONPATH=$SPARK_HOME/python/build:$PYTHONPATH
+    - PYTHONPATH=`pwd`
 
 matrix:
   include:
