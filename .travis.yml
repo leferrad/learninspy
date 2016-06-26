@@ -23,3 +23,8 @@ install:
  
 script: nosetests test
 
+notifications:
+  email:
+    on_success: always
+    on_failure: never
+
