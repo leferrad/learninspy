@@ -7,6 +7,9 @@ addons:
     - liblapack-dev
     - gfortran
 
+virtualenv:
+  system_site_packages: true
+
 before_install:
   - pip install -U pip
 

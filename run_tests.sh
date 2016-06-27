@@ -5,10 +5,8 @@ if [ -z "$SPARK_HOME" ]; then
     exit 1
 fi
 
-PYFORJ=`ls -1 $SPARK_HOME/python/lib/py4j-*-src.zip | head -1`
-
 export PYTHONPATH=$PYTHONPATH:$SPARK_HOME/python:../
-export PYTHONPATH=$PYTHONPATH:$PYFORJ
+export PYTHONPATH=$PYTHONPATH:$SPARK_HOME/python/lib/py4j-0.9-src.zip
 
 export PYTHONWARNINGS="ignore"
 
