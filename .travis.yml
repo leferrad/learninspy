@@ -33,7 +33,6 @@ before_script:
   - tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
  
 script: 
-  - echo $PYTHONPATH
   - sh run_tests.sh
 
 notifications:
