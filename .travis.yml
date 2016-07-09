@@ -26,7 +26,7 @@ before_install:
 
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil statsmodels
-  - conda create --yes -q -n test-environment python=$PYTHON_VERSION nose numpy scipy matplotlib
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy scipy matplotlib
   - source activate test-environment
   - pip install -r requirements.txt
   - python setup.py install
