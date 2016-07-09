@@ -11,6 +11,7 @@ notifications:
     on_failure: never
 
 before_install:
+  # Updates
   - sudo apt-get update
   - pip install -U pip
   # Setup anaconda	
