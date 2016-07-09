@@ -25,6 +25,8 @@ install:
 
 matrix:
   include:
+    - jdk: openjdk7
+      python: 2.7
       env: >
         SPARK_VERSION='1.6.0'
         HADOOP_VERSION='2.4'
