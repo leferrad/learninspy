@@ -5,13 +5,6 @@ __author__ = 'leferrad'
 
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 import numpy as np
-import os
-import sys
-
-
-# Append pyspark  to Python Path
-sys.path.append(os.environ['SPARK_HOME']+"/python/")
-sys.path.append(os.environ['SPARK_HOME']+"/python/lib/py4j-0.9-src.zip")  # Esta soluciona el problema con py4j
 
 
 def test_classification_metrics():
@@ -49,9 +42,9 @@ def test_regression_metrics():
     noise = np.random.uniform(0, 0.1, dim)  # Ruido para ensuciar la sinc (error en la predicción)
     signal = pure + noise  # Señal resultante del ruido aditivo (predict)
     metrics = RegressionMetrics(zip(signal, pure))
-    assert np.allclose(metrics.r2(), 0.9708194315829859, rtol=1e-4)
-    assert np.allclose(metrics.mse(), 0.0031164269743473839, rtol=1e-4)
-    assert np.allclose(metrics.explained_variance(), 0.9943620888461356, rtol=1e-4)
+    assert metrics.r2() == 0.9708194315829859
+    assert metrics.mse() == 0.0031164269743473839
+    assert metrics.explained_variance() == 0.9943620888461356
 
 
 
