@@ -1,18 +1,45 @@
 language: python
 
+python:
+  - "2.7"
 jdk:
   - openjdk7
 
-env:
-  matrix:
-    - SPARK_VERSION="1.6.0" PYTHON_VERSION="2.7"
+notifications:
+  email:
+    on_success: always
+    on_failure: never
 
 before_install:
+  # Updates
+  - sudo apt-get update
   - pip install -U pip
+  # Setup anaconda	
+  - wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH=/home/travis/miniconda/bin:$PATH
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update --yes conda
+  # The next line fixes a crash with multiprocessing on Travis and is not specific to using Miniconda
+  - "sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm"
+
 
 install:
-  - travis_wait travis_retry pip install -r requirements.txt
-  - travis_retry pip install -e . 
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil statsmodels
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy scipy matplotlib
+  - source activate test-environment
+  - pip install -r requirements.txt
+  - python setup.py install
+
+before_script:
+  - export SPARK_VERSION='1.6.0'
+  - export HADOOP_VERSION='2.6'
+  # Download Spark
+  - wget http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz 	
+  - tar -xvzf spark-${SPARK_VERSION}-bin-hadoop$HADOOP_VERSION.tgz && export SPARK_HOME=`pwd`/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION};
  
-script: nosetests test
+script: 
+  - chmod +x run_tests.sh
+  - "./run_tests.sh"
 
