@@ -33,9 +33,9 @@ install:
 
 before_script:
   - export SPARK_VERSION='1.6.0'
-  - export HADOOP_VERSION='2.4'
+  - export HADOOP_VERSION='2.6'
   # Download Spark
-  - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz 	
+  - wget http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz 	
   - tar -xvzf spark-${SPARK_VERSION}-bin-hadoop$HADOOP_VERSION.tgz && export SPARK_HOME=`pwd`/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION};
  
 script: 
