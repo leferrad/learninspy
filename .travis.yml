@@ -43,5 +43,5 @@ before_script:
   - tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
  
 script: 
-  - "./run_tests.sh"
+  - sh run_tests.sh
 
