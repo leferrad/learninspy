@@ -25,7 +25,7 @@ before_install:
 
 
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil statsmodels py4j
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil statsmodels
   - python setup.py install
 
 before_script:
