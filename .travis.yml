@@ -33,14 +33,10 @@ install:
 
 before_script:
   - export SPARK_VERSION='1.6.0'
-  - export HADOOP_VERSION='2.4'
-  - export SPARK_HOME=/tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
-  - export PYTHONPATH=$SPARK_HOME/python/:$SPARK_HOME/python/lib/py4j-0.9-src.zip:$PYTHONPATH
-  - export PYTHONPATH=$SPARK_HOME/python/:$SPARK_HOME/python:$PYTHONPATH
-
+  - export HADOOP_VERSION='2.6'
   # Download Spark
-  - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz	
-  - tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
+  - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz 	
+  - tar -xvzf spark-${SPARK_VERSION}-bin-hadoop$HADOOP_VERSION.tgz && export SPARK_HOME=`pwd`/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION};
  
 script: 
   - chmod +x run_tests.sh
