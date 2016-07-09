@@ -26,6 +26,9 @@ before_install:
 
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil statsmodels
+  - conda create --yes -q -n test-environment python=$PYTHON_VERSION nose numpy scipy matplotlib
+  - source activate test-environment
+  - pip install -r requirements.txt
   - python setup.py install
 
 before_script:
@@ -33,11 +36,12 @@ before_script:
   - export HADOOP_VERSION='2.4'
   - export SPARK_HOME=/tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION
   - export PYTHONPATH=$SPARK_HOME/python/:$SPARK_HOME/python/lib/py4j-0.9-src.zip:$PYTHONPATH
+  - export PYTHONPATH=$SPARK_HOME/python/:$SPARK_HOME/python:$PYTHONPATH
 
   # Download Spark
   - curl http://d3kbcqa49mib13.cloudfront.net/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz --output /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz	
   - tar -xvzf /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION.tgz
  
 script: 
-  - sh run_tests.sh
+  - "./run_tests.sh"
 
