@@ -1,3 +1,8 @@
+Learninspy
+==========
+
+[![Build Status](https://travis-ci.org/leferrad/learninspy.svg?branch=master)](https://travis-ci.org/leferrad/learninspy)
+
 ### Welcome to learninspy!
 Learninspy is a framework for building deep neural networks using Spark features on Python API (PySpark). The project was started in April 2015 by Leandro Ferrado, and it aims to exploit distributed computing capabilities provided by Spark to build and train neural networks with Deep Learning in a simple and flexible way. So, the key features pursued here are:
 * **Simple and easy-to-follow:** That's why Python was chosen as the basis for developing on Spark, so this project must be easy to reuse in any application of deep learning.  
@@ -12,7 +17,7 @@ Learninspy is a framework for building deep neural networks using Spark features
 * Matplotlib 
 
 ## Testing
-To be defined...
+Run ``nosetests test/`` from the download directory.
 
 ### Important links
 * Official repository of source: https://github.com/leferrad/learninspy/
