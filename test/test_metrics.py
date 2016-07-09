@@ -5,13 +5,6 @@ __author__ = 'leferrad'
 
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 import numpy as np
-import os
-import sys
-
-
-# Append pyspark  to Python Path
-sys.path.append(os.environ['SPARK_HOME']+"/python/")
-sys.path.append(os.environ['SPARK_HOME']+"/python/lib/py4j-0.9-src.zip")  # Esta soluciona el problema con py4j
 
 
 def test_classification_metrics():
