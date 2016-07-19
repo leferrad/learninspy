@@ -3,17 +3,13 @@
 
 __author__ = 'leferrad'
 
-# Dependencias externas
-from scipy.io import loadmat, savemat
-
 # Librerias internas
 from learninspy.context import sc
 
 # Librerias de Python
 import re
 import logging
-
-text_extensions = ['.dat', '.txt', '.csv']
+import string
 
 
 def parse_point(line, delimiter=r'[ ,|;"]+'):
@@ -36,38 +32,51 @@ def label_point(row, pos_label=-1):
     return label, features
 
 
-# Checks
+# Adaptación de http://code.activestate.com/recipes/173220/
 def is_text_file(path):
-    return any([path.lower().endswith(ext) for ext in text_extensions])
+    text_characters = "".join(map(chr, range(32, 127)) + list("\n\r\t\b"))
+    _null_trans = string.maketrans("", "")
+    s = open(path).read(512)
+    condition = True
+    if not s:  # Archivos vacíos se consideran como texto
+        condition = True
+    if "\0" in s:  # Posiblemente binario si tiene caracteres nulos
+        condition = False
+    # Obtener los caracteres que no son texto (i.e. mapear un caracter
+    # a si mismo. para usar la opción 'remove' que desheche lo que es texto)
+    nt = s.translate(_null_trans, text_characters)
+    # If more than 30% non-text characters, then
+    # this is considered a binary file
+    # Si más del 30% son caracteres que no son texto,
+    # entonces se considera binario al archivo
+    if float(len(nt))/float(len(s)) > 0.30:
+        condition = False
+    return condition
 
 
-def is_mat_file(path):
-    return path.lower().endswith('.mat')
-
-
-# Loader TODO mejorar manejo de .mat
-def load_file(path, pos_label=-1, varname=None):
+# Loader
+def load_file(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
     if is_text_file(path):
-        dataset = sc.textFile(path).map(parse_point).map(lambda row: label_point(row, pos_label))
-    elif is_mat_file(path):
-        dataset = loadmat(path)[varname]
+        dataset = (sc.textFile(path)
+                     .map(lambda p: parse_point(p, delimiter))
+                     .map(lambda row: label_point(row, pos_label))
+                   )
     else:
-        dataset = sc.binaryFiles(path).map(parse_point)
+        dataset = sc.binaryFiles(path)  # TODO: mejorar esto
     return dataset
 
 
-# Saver TODO mejorar esto que ni anda
+# Saver
+# TODO mejorar esto que ni anda
 def save_file(data, path):
     if is_text_file(path):
         data.saveAsTextFile(path+'.txt')
-    elif is_mat_file(path):
-        savemat(path, {'dataset': data.collect()})
     else:
         data.saveAsPickleFile(path)
     return
 
 
-def get_logger(name='Learninspy', level=logging.INFO):
+def get_logger(name='learninspy', level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
