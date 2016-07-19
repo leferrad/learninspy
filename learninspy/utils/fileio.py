@@ -9,6 +9,7 @@ from learninspy.context import sc
 # Librerias de Python
 import re
 import logging
+import csv
 import string
 
 
@@ -55,7 +56,7 @@ def is_text_file(path):
 
 
 # Loader
-def load_file(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
+def load_file_spark(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
     if is_text_file(path):
         dataset = (sc.textFile(path)
                      .map(lambda p: parse_point(p, delimiter))
@@ -66,14 +67,25 @@ def load_file(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
     return dataset
 
 
-# Saver
-# TODO mejorar esto que ni anda
-def save_file(data, path):
+def load_file_local(path, pos_label=-1, delimiter=','):
     if is_text_file(path):
-        data.saveAsTextFile(path+'.txt')
+        with open(path, 'rb') as f:
+            reader = csv.reader(f, delimiter=delimiter)
+            dataset = [x for x in reader]
+            dataset = map(lambda row: label_point(row, pos_label), dataset)
     else:
-        data.saveAsPickleFile(path)
-    return
+        dataset = None  # TODO: permitir manejo de binarios
+    return dataset
+
+
+# Saver
+# TODO: hacer estas funciones
+def save_file_spark(data, path):
+    pass
+
+
+def save_file_local(data, path):
+    pass
 
 
 def get_logger(name='learninspy', level=logging.INFO):

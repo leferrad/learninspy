@@ -93,6 +93,7 @@ class StandardScaler(object):
             dataset = LabeledDataSet(labels.zip(dataset))
         return dataset
 
+
 # TODO: permitir que esté guardado localmente y no distribuido en RDD
 class LabeledDataSet(object):
     """
@@ -152,7 +153,7 @@ class LabeledDataSet(object):
         :param path: string, indicando la ruta de donde cargar los datos.
         :param pos_label: int, posición o n° de elemento de cada línea del archivo, que corresponde al **label** (por defecto es -1, que corresponde a la última posición).
         """
-        self.data = fileio.load_file(path, pos_label=pos_label)
+        self.data = fileio.load_file_spark(path, pos_label=pos_label)
         self._labeled_point()
 
     def save_file(self, path):  # TODO mejorar pq no anda
@@ -163,7 +164,7 @@ class LabeledDataSet(object):
         :param path: string, indicando la ruta en donde se guardan los datos.
         """
 
-        fileio.save_file(self.data, path)
+        raise NotImplementedError
 
     def _labeled_point(self):
         """
@@ -216,6 +217,119 @@ class LabeledDataSet(object):
         if self.data is not None:
             rows = self.data.count()
             cols = len(self.features.take(1)[0].toArray())
+            shape = (rows, cols)
+        return shape
+
+
+class LocalLabeledDataSet(object):
+    """
+    TBC
+    """
+    @assert_features_label
+    def __init__(self, data=None):
+        self.with_lp = False  # Flag que indica si se almaceno entradas en forma de LabeledPoints
+        if data is not None:
+            if isinstance(data, pyspark.rdd.RDD):
+                data = data.collect()
+            if type(data[0]) is LabeledPoint:
+                self.with_lp = True
+        self.data = data
+        if self.with_lp is False and self.data is not None:  # Por ahora que quede etiquetado con LabeledPoints
+            self._labeled_point()
+
+    @property
+    def features(self):
+        """
+        Devuelve sólo las características del conjunto de datos, en el correspondiente orden almacenado.
+
+        :return: list
+        """
+        if self.with_lp is True:
+            features = map(lambda lp: lp.features, self.data)
+        else:
+            features = map(lambda (l, f): f, self.data)
+        return features
+
+    @property
+    def labels(self):
+        """
+        Devuelve sólo las etiquetas del conjunto de datos, en el correspondiente orden almacenado.
+
+        :return: list
+        """
+        if self.with_lp is True:
+            labels = map(lambda lp: lp.label, self.data)
+        else:
+            labels = map(lambda (l, f): l, self.data)
+        return labels
+
+    def load_file(self, path, pos_label=-1):
+        """
+        Carga de conjunto de datos desde archivo. El formato aceptado es de archivos de texto, como CSV, donde
+        los valores se separan por un caracter delimitador
+        (configurable en :func:`~learninspy.utils.fileio.parse_point`).
+
+
+        :param path: string, indicando la ruta de donde cargar los datos.
+        :param pos_label: int, posición o n° de elemento de cada línea del archivo,
+                          que corresponde al **label** (por defecto es -1, que corresponde a la última posición).
+        """
+        self.data = fileio.load_file_local(path, pos_label=pos_label)
+        self._labeled_point()
+
+    def save_file(self, path):  # TODO mejorar pq no anda
+        """
+        Guardar conjunto de datos en archivo de texto.
+
+
+        :param path: string, indicando la ruta en donde se guardan los datos.
+        """
+
+        raise NotImplementedError
+
+    def _labeled_point(self):
+        """
+        Función para transformar cada entrada del conjunto de datos, de LabeledPoint a tupla o viceversa.
+
+        """
+        if self.with_lp is False:
+            if self.data is not None:
+                self.data = map(lambda (l, f): LabeledPoint(l, f), self.data)
+            self.with_lp = True
+        else:
+            if self.data is not None:
+                self.data = map(lambda lp: (lp.label, lp.features), self.data)
+            self.with_lp = False
+
+    def split_data(self, fractions, seed=123, balanced=False):
+        """
+        Particionamiento del conjunto de datos, en base a las proporciones dadas por *fractions*.
+        Se hace mediante el uso de la función :func:`~learninspy.utils.data.split_data`.
+        """
+        if balanced is True:
+            sets = split_balanced(self.data, fractions, seed)
+        else:
+            sets = split_data(self.data, fractions, seed)
+        sets = [LocalLabeledDataSet(data) for data in sets]
+        return sets
+
+    def collect(self):
+        """
+        Función que retorna el conjunto de datos como una lista. Creada para lograr compatibilidad con LabeledDataSet.
+        """
+        return self.data
+
+    @property
+    def shape(self):
+        """
+        Devuelve el tamaño del conjunto de datos alojado.
+
+        :return: tuple, de cantidad de filas y columnas.
+        """
+        shape = None
+        if self.data is not None:
+            rows = len(self.data)
+            cols = len(self.features[0])
             shape = (rows, cols)
         return shape
 

@@ -13,7 +13,7 @@ from learninspy.core.stops import criterion
 from learninspy.core.neurons import LocalNeurons
 from learninspy.utils import checks
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
-from learninspy.utils.data import LabeledDataSet
+from learninspy.utils.data import LabeledDataSet, LocalLabeledDataSet
 from learninspy.context import sc
 from learninspy.utils.fileio import get_logger
 
@@ -519,7 +519,7 @@ class NeuralNetwork(object):
         :param predictions: bool, for returning predictions too
         :return:
         """
-        if type(data) is LabeledDataSet:
+        if type(data) is LabeledDataSet or type(data) is LocalLabeledDataSet:
             data = data.collect()
         actual = map(lambda lp: lp.label, data)
         predicted = map(lambda lp: self.predict(lp.features).matrix, data)
@@ -616,9 +616,9 @@ class NeuralNetwork(object):
             el mejor modelo obtenido.
         """
         # Si son LabeledDataSet, los colecto en forma de lista
-        if type(train) is LabeledDataSet:
+        if type(train) is LabeledDataSet or type(train) is LocalLabeledDataSet:
             train = train.collect()
-        if type(valid) is LabeledDataSet:
+        if type(valid) is LabeledDataSet or type(train) is LocalLabeledDataSet:
             valid = valid.collect()
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
         logger.debug("Broadcasting datasets ...")
