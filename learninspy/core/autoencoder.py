@@ -57,6 +57,7 @@ class AutoEncoder(NeuralNetwork):
     # Override del backpropagation, para que sea de una sola capa oculta (TODO que incluya sparsity)
     def _backprop(self, x, y):
         # y es el label del aprendizaje supervisado. lo omito
+        beg = time.time()  # tic
         num_layers = self.num_layers
         a = [None] * (num_layers + 1)  # Vector que contiene las activaciones de las salidas de cada NeuralLayer
         d_a = [None] * num_layers  # Vector que contiene las derivadas de las salidas activadas de cada NeuralLayer
@@ -78,9 +79,11 @@ class AutoEncoder(NeuralNetwork):
             delta = w_t.mul_array(delta).mul_elemwise(d_a[-l])
             nabla_w[-l] = delta.outer(a[-l - 1])
             nabla_b[-l] = delta
+        end = (time.time() - beg) * 1000.0  # toc (ms)
+        logger.debug("Duration of computing gradients on backpropagation: %8.4fms.", end)
         return cost, (nabla_w, nabla_b)
 
-    def evaluate(self, data, predictions=False):
+    def evaluate(self, data, predictions=False, metric=None):
         """
         Evalúa AutoEncoder sobre un conjunto de datos.
         Se utiliza :math:`r^2` como métrica en la evaluación.
@@ -91,8 +94,16 @@ class AutoEncoder(NeuralNetwork):
         """
         actual = map(lambda lp: lp.features, data)  # Tiene que aprender a reconstruir la entrada
         predicted = map(lambda lp: self.predict(lp.features).matrix.T, data)  # TODO notar que tuve q transponer
-        metric = RegressionMetrics(zip(predicted, actual))
-        hits = metric.r2()
+
+        metrics = RegressionMetrics(zip(predicted, actual))
+        if metric is None:
+            metric = 'R2'
+        # TODO mejorar esto para que quede mas prolijo y generalizable
+        if metric == 'R2':
+            hits = metrics.r2()
+        elif metric == 'MSE':
+            hits = metrics.mse()
+
         if predictions is True:  # Devuelvo ademas el vector de predicciones
             ret = hits, predicted
         else:
