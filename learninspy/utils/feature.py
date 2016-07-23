@@ -4,7 +4,7 @@ __author__ = 'leferrad'
 import numpy as np
 
 # Librerias internas
-from learninspy.utils.data import LabeledDataSet
+from learninspy.utils.data import LabeledDataSet, LocalLabeledDataSet
 
 
 class PCA(object):
@@ -12,8 +12,11 @@ class PCA(object):
     # TODO: Ver si usar como parametro 'sigmas' que se sumen al mean, en lugar de una varianza acumulada
     def __init__(self, x, threshold_k=0.95):
         self.x = x
-        if type(x) is LabeledDataSet:
+        type_x = type(x)
+        if type_x is LabeledDataSet:
             x = x.features.collect()
+        elif type_x is LocalLabeledDataSet:
+            x = x.features
         x = np.array(x)
         self.mean = np.mean(x, axis=0)
         self.std = np.std(x, axis=0, ddof=1)
@@ -40,20 +43,22 @@ class PCA(object):
             self.k = k
         if data is None:
             data = self.x
-        lp_data = False  # Flag que indica que data es LabeledPoint, y debo preservar sus labels
         label = None
-        if type(data) is LabeledDataSet:
+        type_data = type(data)  # Para saber si la entrada es un dataset, y debo conservar sus labels
+        if type_data is LabeledDataSet:
             label = data.labels.collect()  # Guardo labels para concatenarlos al final
             data = np.array(data.features.collect())
-            lp_data = True
+        elif type_data is LocalLabeledDataSet:
+            label = data.labels  # Guardo labels para concatenarlos al final
+            data = np.array(data.features)
         data -= self.mean  # zero-center sobre data (importante)
         if standarize is True:
             data /= self.std
         xrot = np.dot(data, self.u[:, :self.k])
         if whitening is True:
             xrot = xrot / np.sqrt(self.s[:self.k] + self.whitening_offset)
-        if lp_data is True:
-            xrot = LabeledDataSet(zip(label, xrot.tolist()))
+        if type_data is LabeledDataSet or type_data is LocalLabeledDataSet:
+            xrot = type_data(zip(label, xrot.tolist()))
         return xrot
 
     def _optimal_k(self):
