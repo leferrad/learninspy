@@ -22,6 +22,7 @@ import copy
 import cPickle as pickle
 import os
 import time
+import gc
 
 logger = get_logger(name=__name__)
 logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
@@ -621,15 +622,12 @@ class NeuralNetwork(object):
         # Si son LabeledDataSet, los colecto en forma de lista
         if type(train) is LabeledDataSet or type(train) is LocalLabeledDataSet:
             train = train.collect()
+        # TODO: quizas no es necesario el collect, puede hacerse la evaluacion con un RDD
         if type(valid) is LabeledDataSet or type(train) is LocalLabeledDataSet:
             valid = valid.collect()
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
-        logger.debug("Broadcasting datasets ...")
-        train_bc = sc.broadcast(train)
-        valid_bc = sc.broadcast(valid)  # Por ahora no es necesario el bc, pero puede q luego lo use en batchs p/ train
-        # Anulo datasets que no se usan más
-        train = None
-        valid = None
+        logger.debug("Broadcasting training dataset ...")
+        train = sc.broadcast(train)
         # TODO: ver si hay mas opciones que quedarse con el mejor
         if keep_best is True:
             best_model = self.list_layers
@@ -644,13 +642,13 @@ class NeuralNetwork(object):
         while self.check_stop(epoch, stops) is False:
             beg = time.time()  # tic
             evaluate = epoch % valid_iters == 0
-            hits_train = self.train(train_bc, mini_batch, parallelism, optimizer_params, reproducible, evaluate=evaluate)
+            hits_train = self.train(train, mini_batch, parallelism, optimizer_params, reproducible, evaluate=evaluate)
             end = time.time() - beg  # toc
             total_end += end  # Acumular total
             # Validacion cada ciertas iteraciones, dado por valid_iters
             if evaluate is True:
                 self.hits_train = hits_train
-                self.hits_valid = self.evaluate(valid_bc.value)
+                self.hits_valid = self.evaluate(valid)
                 logger.info("Epoca %i realizada en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
                             epoch+1, end, self.hits_train, self.hits_valid)
             else:
@@ -661,14 +659,18 @@ class NeuralNetwork(object):
                     best_valid = self.hits_valid
                     best_train = self.hits_train
                     best_model = self.list_layers
+            # Recoleccion de basura manual para borrar de memoria los objetos largos generados por los datasets
+            # Ver http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection
+            collected = gc.collect()
+            logger.info("Garbage Collector: Recolectados %d objetos.", collected)
             epoch += 1
         if keep_best is True:
             self.list_layers = copy.deepcopy(best_model)
             self.hits_train = best_train
             self.hits_valid = best_valid
-        train_bc.unpersist()
-        valid_bc.unpersist()
-        self.hits_valid = self.evaluate(valid_bc.value)  # Validacion final
+        logger.debug("Unpersisting training dataset...")
+        train.unpersist()
+        self.hits_valid = self.evaluate(valid)  # Validacion final
         logger.info("Ajuste total realizado en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
                     total_end, self.hits_train, self.hits_valid)
         return self.hits_valid
