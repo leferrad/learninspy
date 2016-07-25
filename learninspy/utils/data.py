@@ -210,7 +210,7 @@ class DistributedLabeledDataSet(LabeledDataSet):
             sets = split_balanced(self.data, fractions, seed)
         else:
             sets = split_data(self.data, fractions, seed)
-        sets = [LabeledDataSet(data) for data in sets]
+        sets = [DistributedLabeledDataSet(data) for data in sets]
         return sets
 
     def collect(self, unpersist=True):
