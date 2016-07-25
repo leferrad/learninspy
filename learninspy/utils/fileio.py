@@ -67,10 +67,13 @@ def load_file_spark(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
     return dataset
 
 
-def load_file_local(path, pos_label=-1, delimiter=','):
+def load_file_local(path, pos_label=-1):
     if is_text_file(path):
         with open(path, 'rb') as f:
-            reader = csv.reader(f, delimiter=delimiter)
+            # Uso de Sniffer para deducir el formato del archivo CSV
+            dialect = csv.Sniffer().sniff(f.read(1024))  # Ver https://docs.python.org/3/library/csv.html
+            f.seek(0)
+            reader = csv.reader(f, dialect)
             dataset = [x for x in reader]
             dataset = map(lambda row: label_point(row, pos_label), dataset)
     else:
