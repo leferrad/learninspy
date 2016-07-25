@@ -6,6 +6,7 @@ __author__ = 'leferrad'
 # Dependencias externas
 import numpy as np
 from scipy import sparse
+from pyspark import StorageLevel
 
 # Dependencias internas
 from learninspy.core import activations as act, loss, optimization as opt
@@ -13,7 +14,7 @@ from learninspy.core.stops import criterion
 from learninspy.core.neurons import LocalNeurons
 from learninspy.utils import checks
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
-from learninspy.utils.data import LabeledDataSet, LocalLabeledDataSet
+from learninspy.utils.data import LabeledDataSet, DistributedLabeledDataSet
 from learninspy.context import sc
 from learninspy.utils.fileio import get_logger
 
@@ -520,14 +521,13 @@ class NeuralNetwork(object):
         :param predictions: bool, for returning predictions too
         :return:
         """
-        if type(data) is LabeledDataSet or type(data) is LocalLabeledDataSet:
+        if isinstance(data, LabeledDataSet):
             data = data.collect()
         actual = map(lambda lp: lp.label, data)
         predicted = map(lambda lp: self.predict(lp.features).matrix, data)
         if self.params.classification is True:
             # En problemas de clasificacion, se determina la prediccion por la unidad de softmax que predomina
             predicted = map(lambda p: float(np.argmax(p)), predicted)
-        if self.params.classification is True:
             n_classes = self.params.units_layers[-1]  # La cant de unidades de la ult capa define la cant de clases
             metrics = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
             if metric is None:
@@ -557,7 +557,7 @@ class NeuralNetwork(object):
         return ret
 
     # TODO: hacer privado este metodo (_train) ya que no tendria que ser accedido desde afuera (por train_bc)
-    def train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None, reproducible=False, evaluate=True):
+    def _train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None, reproducible=False, evaluate=True):
         """
 
         :param train_bc:
@@ -580,12 +580,15 @@ class NeuralNetwork(object):
 
         seeds = list(self.params.rng.randint(500, size=parallelism))
         # Paralelizo modelo actual en los nodos dados por parallelism
-        models_rdd = sc.parallelize(zip([self] * parallelism, seeds))
+        # NOTA: se persiste en memoria serializando ya que se supone que son objetos grandes y no conviene cachearlos
+        models_rdd = sc.parallelize(zip([self] * parallelism, seeds)).persist(StorageLevel.MEMORY_ONLY_SER)
         # Minimizo el costo de las redes en paralelo
-        # NOTA: cache() es importante porque se traza varias veces el grafo de acciones sobre el RDD results
+        # NOTA: persist() es importante porque se traza varias veces el grafo de acciones sobre el RDD results
         logger.debug("Training %i models in parallel.", parallelism)
-        results = models_rdd.map(lambda (model, seed):
-                                 minimizer(model, train_bc.value, optimizer_params, mini_batch, seed)).cache()
+        results = (models_rdd.map(lambda (model, seed):
+                                  minimizer(model, train_bc.value, optimizer_params, mini_batch, seed))
+                             .persist(StorageLevel.MEMORY_ONLY_SER)
+                   )
         # Junto modelos entrenados en paralelo, en base a un criterio de ponderacion sobre un valor objetivo
         logger.debug("Merging models ...")
         if self.params.classification is True:
@@ -599,8 +602,11 @@ class NeuralNetwork(object):
         logger.debug("Unpersisting replicated models ...")
         results.unpersist()
         models_rdd.unpersist()
-        # Evaluo tasa de aciertos de entrenamiento
-        hits = self.evaluate(train_bc.value)
+        if evaluate is True:
+            # Evaluo tasa de aciertos de entrenamiento
+            hits = self.evaluate(train_bc.value)
+        else:
+            hits = None
         return hits
 
     # TODO: crear un fit_params que abarque stops, parallelism, reproducible, keep_best, y valid_iters
@@ -620,10 +626,10 @@ class NeuralNetwork(object):
             el mejor modelo obtenido.
         """
         # Si son LabeledDataSet, los colecto en forma de lista
-        if type(train) is LabeledDataSet or type(train) is LocalLabeledDataSet:
+        if isinstance(train, LabeledDataSet):
             train = train.collect()
         # TODO: quizas no es necesario el collect, puede hacerse la evaluacion con un RDD
-        if type(valid) is LabeledDataSet or type(train) is LocalLabeledDataSet:
+        if isinstance(valid, LabeledDataSet):
             valid = valid.collect()
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
         logger.debug("Broadcasting training dataset ...")
@@ -642,7 +648,7 @@ class NeuralNetwork(object):
         while self.check_stop(epoch, stops) is False:
             beg = time.time()  # tic
             evaluate = epoch % valid_iters == 0
-            hits_train = self.train(train, mini_batch, parallelism, optimizer_params, reproducible, evaluate=evaluate)
+            hits_train = self._train(train, mini_batch, parallelism, optimizer_params, reproducible, evaluate=evaluate)
             end = time.time() - beg  # toc
             total_end += end  # Acumular total
             # Validacion cada ciertas iteraciones, dado por valid_iters
@@ -662,7 +668,7 @@ class NeuralNetwork(object):
             # Recoleccion de basura manual para borrar de memoria los objetos largos generados por los datasets
             # Ver http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection
             collected = gc.collect()
-            logger.info("Garbage Collector: Recolectados %d objetos.", collected)
+            logger.debug("Garbage Collector: Recolectados %d objetos.", collected)
             epoch += 1
         if keep_best is True:
             self.list_layers = copy.deepcopy(best_model)
