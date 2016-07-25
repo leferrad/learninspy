@@ -53,7 +53,7 @@ class StandardScaler(object):
         :param dataset: pyspark.rdd.RDD o numpy.array o :class:`.LabeledDataSet`
 
         """
-        if type(dataset) is LabeledDataSet:
+        if isinstance(dataset, LabeledDataSet):
             dataset = dataset.features
         if isinstance(dataset, pyspark.rdd.RDD):
             standarizer = StdSc(self.flag_mean, self.flag_std)
@@ -75,7 +75,8 @@ class StandardScaler(object):
 
         """
         labels = None  # Por si el dataset viene con labels
-        if type(dataset) is LabeledDataSet:
+        type_dataset = type(dataset)
+        if isinstance(dataset, LabeledDataSet):
             labels = dataset.labels
             dataset = dataset.features
         if self.model is not None:  # Se debe usar modelo de pyspark
@@ -90,12 +91,32 @@ class StandardScaler(object):
             if self.flag_std is True:
                 dataset /= self.std  # Scale unit variance
         if labels is not None:
-            dataset = LabeledDataSet(labels.zip(dataset))
+            if type_dataset is DistributedLabeledDataSet:
+                dataset = DistributedLabeledDataSet(labels.zip(dataset))
+            else:
+                dataset = LocalLabeledDataSet(zip(labels, dataset))
         return dataset
 
 
-# TODO: permitir que esté guardado localmente y no distribuido en RDD
 class LabeledDataSet(object):
+
+    @property
+    def features(self):
+        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+
+    @property
+    def labels(self):
+        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+
+    def collect(self):
+        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+
+    @property
+    def shape(self):
+        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+
+
+class DistributedLabeledDataSet(LabeledDataSet):
     """
     Clase útil para manejar un conjunto etiquetado de datos. Dicho conjunto se almacena
     como un `pyspark.rdd.RDD <https://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.RDD>`_
@@ -204,6 +225,7 @@ class LabeledDataSet(object):
         data_list = self.data.collect()
         if unpersist is True:
             self.data.unpersist()
+            self.data = None
         return data_list
 
     @property
@@ -221,7 +243,7 @@ class LabeledDataSet(object):
         return shape
 
 
-class LocalLabeledDataSet(object):
+class LocalLabeledDataSet(LabeledDataSet):
     """
     TBC
     """
