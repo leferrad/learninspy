@@ -522,9 +522,15 @@ class NeuralNetwork(object):
         :return:
         """
         if isinstance(data, LabeledDataSet):
-            data = data.collect()
-        actual = map(lambda lp: lp.label, data)
-        predicted = map(lambda lp: self.predict(lp.features).matrix, data)
+            actual = data.labels
+            if type(data) is DistributedLabeledDataSet:
+                actual = actual.collect()
+                predicted = data.features.map(lambda f: self.predict(f).matrix).collect()
+            else:
+                predicted = map(lambda f: self.predict(f).matrix, data.features)
+        else:
+            actual = map(lambda lp: lp.label, data)
+            predicted = map(lambda lp: self.predict(lp.features).matrix, data)
         if self.params.classification is True:
             # En problemas de clasificacion, se determina la prediccion por la unidad de softmax que predomina
             predicted = map(lambda p: float(np.argmax(p)), predicted)
@@ -625,12 +631,9 @@ class NeuralNetwork(object):
         :param keep_best: bool, indicando **True** si se desea mantener al final de la optimización
             el mejor modelo obtenido.
         """
-        # Si son LabeledDataSet, los colecto en forma de lista
+        # Si es LabeledDataSet, lo colecto en forma de lista
         if isinstance(train, LabeledDataSet):
             train = train.collect()
-        # TODO: quizas no es necesario el collect, puede hacerse la evaluacion con un RDD
-        if isinstance(valid, LabeledDataSet):
-            valid = valid.collect()
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
         logger.debug("Broadcasting training dataset ...")
         train = sc.broadcast(train)
@@ -640,7 +643,7 @@ class NeuralNetwork(object):
             best_valid = 0.0
             best_train = 0.0
         if stops is None:
-            logger.debug("Set up stop criterions by default.")
+            logger.debug("Setting up stop criterions by default.")
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
         epoch = 0
