@@ -8,32 +8,32 @@ import os
 from learninspy.core import model as mod
 from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
-from learninspy.utils.data import StandardScaler, LabeledDataSet
+from learninspy.utils.data import StandardScaler, LocalLabeledDataSet
 from learninspy.utils.evaluation import ClassificationMetrics
 
 
-net_params = mod.NetworkParameters(units_layers=[4, 10, 5, 3], activation='Softplus',
-                                    dropout_ratios=[0.5, 0.5, 0.0], classification=True)
+net_params = mod.NetworkParameters(units_layers=[4, 10, 10, 3], activation='Softplus',
+                                   dropout_ratios=[0.5, 0.5, 0.0], classification=True)
 
-local_stops = [criterion['MaxIterations'](50),
+local_stops = [criterion['MaxIterations'](10),
                criterion['AchieveTolerance'](0.95, key='hits')]
 
-global_stops = [criterion['MaxIterations'](5),
-                criterion['AchieveTolerance'](0.99, key='hits')]
+global_stops = [criterion['MaxIterations'](30),
+                criterion['AchieveTolerance'](0.95, key='hits')]
 
-opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops)
+opt_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops, merge_criter='w_avg')
 
 
 neural_net = mod.NeuralNetwork(net_params)
 
 print "Cargando base de datos ..."
-dataset = LabeledDataSet()
+dataset = LocalLabeledDataSet()
 dataset.load_file(os.path.dirname(os.path.realpath(__file__))+'/datasets/iris.csv')
 print "Size de la data: "
 print dataset.shape
 
 print "Creando conjuntos de train, valid y test ..."
-train, valid, test = dataset.split_data([.7, .2, .1])  # Particiono conjuntos
+train, valid, test = dataset.split_data([.5, .3, .2])  # Particiono conjuntos
 # Standarize data
 std = StandardScaler()
 std.fit(train)
@@ -47,8 +47,8 @@ test = test.collect()
 
 print "Entrenando red neuronal ..."
 t1 = time.time()
-hits_valid = neural_net.fit(train, valid, mini_batch=50, parallelism=4, stops=global_stops,
-                            optimizer_params=opt_params)
+hits_valid = neural_net.fit(train, valid, valid_iters=1, mini_batch=30, parallelism=4, stops=global_stops,
+                            optimizer_params=opt_params, keep_best=True, reproducible=True)
 hits_test, predict = neural_net.evaluate(test, predictions=True)
 t1f = time.time() - t1
 

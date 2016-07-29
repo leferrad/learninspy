@@ -7,12 +7,12 @@ from sklearn import datasets
 from learninspy.core.model import NeuralNetwork, NetworkParameters
 from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
-from learninspy.utils.data import split_data, label_data
+from learninspy.utils.data import split_data, label_data, LocalLabeledDataSet
 from learninspy.utils.evaluation import RegressionMetrics
 
 
 net_params = NetworkParameters(units_layers=[13, 8, 1], activation='Identity',
-                               dropout_ratios=[0.0, 0.0, 0.0], classification=False)
+                               dropout_ratios=[0.0, 0.0], classification=False)
 
 local_stops = [criterion['MaxIterations'](50),
                criterion['AchieveTolerance'](0.99, key='hits')]
@@ -29,9 +29,10 @@ print "Cargando base de datos ..."
 data = datasets.load_boston()
 features = data.data
 labels = data.target
-print "Size de la data: ", features.shape
+data = LocalLabeledDataSet(zip(labels, features))
+print "Size de la data: ", data.shape
 
-train, valid, test = split_data(label_data(features, labels), [.7, .2, .1])
+train, valid, test = data.split_data([.7, .2, .1])
 
 print "Entrenando red neuronal ..."
 t1 = time.time()
