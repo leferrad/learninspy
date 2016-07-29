@@ -26,7 +26,7 @@ def mse(o, t):
     """
     err = np.array(map(lambda(output, target): output - target, zip(o, t)))
     n = err.size
-    return np.sum(np.square(err)) / (1.0 * n)
+    return np.sum(np.square(err)) / float(n)
 
 
 def mse_d(o, t):
@@ -39,7 +39,7 @@ def mse_d(o, t):
     """
     err = np.array(map(lambda(output, target): output - target, zip(o, t)))
     n = err.size
-    return 2 * err / (1.0 * n)
+    return 2 * err / float(n)
 
 
 def cross_entropy(o, t):

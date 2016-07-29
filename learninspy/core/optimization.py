@@ -269,7 +269,9 @@ def mix_models(left, right):
         left[l].update(w, b)  # Update suma el w y el b
     return left
 
+# TODO: completar esto
 fun_criter = {'avg': lambda x: 1.0, 'w_avg': lambda x: x, 'log_avg': lambda x: 1.0 + np.log(x)}
+
 
 def merge_models(results_rdd, criter='w_avg', goal='hits'):
     """
