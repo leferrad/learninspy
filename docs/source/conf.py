@@ -18,7 +18,10 @@ import os
 # For compiling in Readthedocs ...
 import mock
 
-MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'matplotlib.pyplot', 'scipy.interpolate']
+MOCK_MODULES = ['numpy', 'scipy',   # SciPy imports
+                'matplotlib', 'matplotlib.pyplot', 'matplotlib.gridspec',  # Matplotlib imports
+                'pyspark', 'pyspark.rdd',   # Spark imports
+                'pyspark.mllib', 'pyspark.mllib.regression', 'pyspark.mllib.feature']  # Spark MLlib imports
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
