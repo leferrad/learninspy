@@ -1,12 +1,26 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+En este módulo se pueden configurar las funciones de activación que se deseen.
+Para ello, simplemente se codifica tanto la función como su derivada analítica
+(o aproximación, como en el caso de la ReLU), y luego se insertan en los diccionarios
+de funciones correspondientes, que se encuentran al final del script,
+con una key común que identifique la activación.
+
+.. note:: Las derivadas deben tener un underscore '_' de prefijo en su nombre, de forma que no sean parte de la API.
+"""
+
 __author__ = 'leferrad'
 
-# Dependencias externas
 import numpy as np
 
 
+# NOTA: las derivadas deben tener un underscore '_' de prefijo en su nombre, de forma que no sean parte de la API.
+
 def tanh(z):
     r"""
-    Tangente Hiperbolica
+    Tangente Hiperbólica
 
     :math:`f(z)=\dfrac{e^z - e^{-z}}{e^z + e^{-z}}`
 
@@ -14,9 +28,9 @@ def tanh(z):
     return np.tanh(z)
 
 
-def tanh_d(z):
+def _tanh_d(z):
     r"""
-    Derivada de Tangente Hiperbolica
+    Derivada de Tangente Hiperbólica
 
     :math:`f(z)=1-tanh^2(z)`
 
@@ -34,7 +48,7 @@ def sigmoid(z):
     return 1.0 / (1.0 + np.exp(-z))
 
 
-def sigmoid_d(z):
+def _sigmoid_d(z):
     r"""
     Derivada de Sigmoidea
 
@@ -56,7 +70,7 @@ def relu(z):
     return max(0.0, z)
 
 
-def relu_d(z):
+def _relu_d(z):
     r"""
     Derivada de ReLU
 
@@ -70,7 +84,7 @@ def relu_d(z):
     return ret
 
 
-def lrelu(z):
+def leaky_relu(z):
     r"""
     Leaky ReLU
 
@@ -83,7 +97,7 @@ def lrelu(z):
         ret = 0.01 * z
     return ret
 
-def lrelu_d(z):
+def _lrelu_d(z):
     r"""
     Derivada de Leaky ReLU
 
@@ -107,7 +121,7 @@ def softplus(z):
     return np.log(1.0 + np.exp(z))
 
 
-def softplus_d(z):
+def _softplus_d(z):
     r"""
     Derivada de Softplus
 
@@ -119,7 +133,7 @@ def softplus_d(z):
 
 def identity(z):
     r"""
-    Identidad
+    Lineal o identidad
 
     :math:`f(z)=z`
 
@@ -127,7 +141,7 @@ def identity(z):
     return z
 
 
-def identity_d(z):
+def _identity_d(z):
     r"""
     Derivada de Identidad
 
@@ -139,35 +153,38 @@ def identity_d(z):
 
 def lecunn_sigmoid(z):
     r"""
-    Sigmoidea recomendada por LeCunn
-
-    http://yann.lecun.com/exdb/publis/pdf/lecun-89.pdf
+    Sigmoidea propuesta por LeCunn en [lecun2012efficient]_.
 
     :math:`f(z)=1.7159 tanh(\dfrac{2z}{3})`
+
+    En dicha definicion, se escala una función Tanh de forma que se obtenga
+    máxima derivada segunda en valor absoluto para z=1 y z=-1, lo cual mejora
+    la convergencia del entrenamiento, y una efectiva ganancia de dicha
+    transformación cerca de 1.
+
+
+    .. [lecun2012efficient] LeCun, Y. A. et. al (2012).
+     Efficient backprop. In Neural networks: Tricks of the trade (pp. 9-48).
+     Springer Berlin Heidelberg.
+     http://yann.lecun.com/exdb/publis/pdf/lecun-89.pdf
+
+
     """
     return 1.7159 * np.tanh(z * 2.0/3.0)
 
 
-def lecunn_sigmoid_d(z):
+def _lecunn_sigmoid_d(z):
     r"""
-    Derivada de Sigmoidea recomendada por LeCunn
+    Derivada de Sigmoidea propuesta por LeCunn
 
     :math:`f(z)=1.14393 (1 - tanh^2(\dfrac{2z}{3}))`
 
     """
     return 1.7159 * (2.0 / 3.0) * (1.0 - np.tanh(z * 2.0/3.0) ** 2)
 
-# TODO definirlas mejor
-# def sin(z):
-#     return np.sin(z)
-#
-#
-# def sin_d(z):
-#     return np.cos(z)
-
 
 fun_activation = {'Tanh': tanh, 'Sigmoid': sigmoid, 'ReLU': relu, 'Softplus': softplus,
-                                'Identity': identity, 'LeakyReLU': lrelu, 'LeCunnSigm': lecunn_sigmoid}
-fun_activation_d = {'Tanh': tanh_d, 'Sigmoid': sigmoid_d, 'ReLU': relu_d, 'Softplus': softplus_d,
-                                    'Identity': identity_d, 'LeakyReLU': lrelu_d, 'LeCunnSigm': lecunn_sigmoid_d}
+                                'Identity': identity, 'LeakyReLU': leaky_relu, 'LeCunnSigm': lecunn_sigmoid}
+fun_activation_d = {'Tanh': _tanh_d, 'Sigmoid': _sigmoid_d, 'ReLU': _relu_d, 'Softplus': _softplus_d,
+                                    'Identity': _identity_d, 'LeakyReLU': _lrelu_d, 'LeCunnSigm': _lecunn_sigmoid_d}
 
