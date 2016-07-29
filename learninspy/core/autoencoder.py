@@ -8,7 +8,7 @@ import numpy as np
 
 # Librerias de Learninspy
 from learninspy.utils.evaluation import RegressionMetrics
-from learninspy.utils.data import label_data
+from learninspy.utils.data import label_data, LabeledDataSet, DistributedLabeledDataSet
 from learninspy.core.model import NeuralNetwork, NetworkParameters, RegressionLayer, ClassificationLayer
 from learninspy.utils.fileio import get_logger
 
@@ -46,7 +46,7 @@ class AutoEncoder(NeuralNetwork):
         # Aseguro algunos parametros
         params.classification = False
         n_in = params.units_layers[0]
-        # params.activation[0] = 'Identity'
+        params.layer_distributed.append(False)  # Ya que se agrega una dimension, se debe reflejar aqui tmb (False por ahora)
 
         params.units_layers.append(n_in)  # Unidades en la salida en igual cantidad que la entrada
         params.dropout_ratios = [dropout_in, 0.0]  # Dropout en encoder, pero nulo en decoder
@@ -92,8 +92,16 @@ class AutoEncoder(NeuralNetwork):
         :param predictions: si es True, retorna las predicciones (salida del AutoEncoder)
         :return: resultado de evaluación, y predicciones si se solicita en *predictions*
         """
-        actual = map(lambda lp: lp.features, data)  # Tiene que aprender a reconstruir la entrada
-        predicted = map(lambda lp: self.predict(lp.features).matrix.T, data)  # TODO notar que tuve q transponer
+        if isinstance(data, LabeledDataSet):
+            actual = data.features  # Tiene que aprender a reconstruir la entrada
+            if type(data) is DistributedLabeledDataSet:
+                actual = actual.collect()
+                predicted = data.features.map(lambda f: self.predict(f).matrix.T).collect()  # TODO: notar la transposic
+            else:
+                predicted = map(lambda f: self.predict(f).matrix.T, data.features)
+        else:
+            actual = map(lambda lp: lp.features, data)
+            predicted = map(lambda lp: self.predict(lp.features).matrix.T, data)
 
         metrics = RegressionMetrics(zip(predicted, actual))
         if metric is None:
@@ -164,24 +172,24 @@ class StackedAutoencoder(NeuralNetwork):
             dropout = [0.0] * self.num_layers
         self.dropout = dropout
         NeuralNetwork.__init__(self, params, list_layers=None)
-        self._init_ae()  # Creo autoencoders que se guardan en list_layers
+        self._init_autoencoders()  # Creo autoencoders que se guardan en list_layers
 
-    def _init_ae(self):  # TODO: cambiar nombre (no "ae")
+    def _init_autoencoders(self):
         for l in xrange(self.num_layers - 1):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
-            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation[l], # TODO: ojo si activation es una lista
-                                        layer_distributed=self.params.layer_distributed, dropout_ratios=None,
-                                        classification=False, strength_l1=self.params.strength_l1,
-                                        strength_l2=self.params.strength_l2)
+            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation[l],  # TODO: ojo si activation es una lista
+                                       layer_distributed=self.params.layer_distributed, dropout_ratios=None,
+                                       classification=False, strength_l1=self.params.strength_l1,
+                                       strength_l2=self.params.strength_l2)
             self.list_layers[l] = AutoEncoder(params=params, dropout_in=self.dropout[l])
         # Configuro y creo la capa de salida (clasificación o regresión)
         params = NetworkParameters(self.params.units_layers[-2:], activation=self.params.activation,
-                                        layer_distributed=self.params.layer_distributed, dropout_ratios=[0.0], # en salida no debe haber DropOut
-                                        classification=self.params.classification, strength_l1=self.params.strength_l1,
-                                        strength_l2=self.params.strength_l2)
+                                   layer_distributed=self.params.layer_distributed, dropout_ratios=[0.0],  # en salida no debe haber DropOut
+                                   classification=self.params.classification, strength_l1=self.params.strength_l1,
+                                   strength_l2=self.params.strength_l2)
         self.list_layers[-1] = NeuralNetwork(params=params)
 
-    def fit(self, train, valid=None, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
+    def fit(self, train, valid=None, valid_iters=10, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             reproducible=False, keep_best=False):
         """
         Fit de cada autoencoder usando conjuntos de entrenamiento y validación,
@@ -201,6 +209,8 @@ class StackedAutoencoder(NeuralNetwork):
         # Entreno Autoencoders
         train_ae = train
         valid_ae = valid
+        train = None  # No se usa más
+
         labels_train = map(lambda lp: lp.label, train_ae)
         labels_valid = map(lambda lp: lp.label, valid_ae)
         for l in xrange(len(self.list_layers[:-1])):
@@ -209,7 +219,7 @@ class StackedAutoencoder(NeuralNetwork):
             logger.info("Entrenando AutoEncoder -> In: %i, Hidden: %i",
                         ae.params.units_layers[0], ae.params.units_layers[1])
             ae.assert_regression()  # Aseguro que sea de regresion (no puede ser de clasificacion)
-            ae.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
+            ae.fit(train_ae, valid_ae, valid_iters=valid_iters, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
                    optimizer_params=optimizer_params, reproducible=reproducible, keep_best=keep_best)
             # Siguen siendo importantes los labels para el sample balanceado por clases
             train_ae = label_data(ae.encode(train_ae), labels_train)
@@ -221,21 +231,21 @@ class StackedAutoencoder(NeuralNetwork):
         out_layer = self.list_layers[-1]
         logger.info("Entrenando Capa de salida -> In: %i, Out: %i",
                     out_layer.params.units_layers[0], out_layer.params.units_layers[1])
-        out_layer.fit(train_ae, valid_ae, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
+        out_layer.fit(train_ae, valid_ae, valid_iters=valid_iters, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
                       optimizer_params=optimizer_params, reproducible=reproducible, keep_best=keep_best)
         self.list_layers[-1] = copy.deepcopy(out_layer)
 
-        self.hits_valid = self.evaluate(valid)
+        self.hits_valid = self.evaluate(valid)  # Validacion final
         return self.hits_valid
 
-    def finetune(self, train, valid, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
+    def finetune(self, train, valid, valid_iters=10, criterions=None, mini_batch=50, parallelism=4, optimizer_params=None,
                  reproducible=False, keep_best=False):
         list_layers = copy.deepcopy(self.list_layers)
         list_layers[:-1] = map(lambda ae: ae.encoder_layer(), list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
         list_layers[-1] = list_layers[-1].list_layers[0]  # Agarro la primer capa de la red que se genero para la salida
         nn = NeuralNetwork(self.params, list_layers=list_layers)
-        hits_valid = nn.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism, stops=criterions,
-                            optimizer_params=optimizer_params, reproducible=reproducible)
+        hits_valid = nn.fit(train, valid, valid_iters=valid_iters, mini_batch=mini_batch, parallelism=parallelism,
+                            stops=criterions, optimizer_params=optimizer_params, reproducible=reproducible)
         for l in xrange(len(self.list_layers) - 1):
             # Copio capa con ajuste fino al autoencoder
             self.list_layers[l].list_layers[0] = nn.list_layers[l]  # TODO mejorar esto, para que sea mas legible
@@ -253,5 +263,3 @@ class StackedAutoencoder(NeuralNetwork):
         end = (time.time() - beg) * 1000.0  # toc (ms)
         logger.debug("Duration of computing predictions to produce output : %8.4fms.", end)
         return x
-
-    # TODO hacer un override del plotter para graficar los weights y bias
