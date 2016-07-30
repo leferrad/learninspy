@@ -29,7 +29,7 @@ def mse(o, t):
     y la esperada de predicciones realizadas sobre un batch de N ejemplos. La función devuelve el
     error cuadrático medio asociado a dichas predicciones.
 
-    :math:`J=\\frac{1}{2}\sum_i (o^{(i)}-t^{(i)})^2`
+    :math:`J=\\dfrac{1}{N}\displaystyle\sum\limits_{i}^N (o^{(i)}-t^{(i)})^2`
 
     :param o: np.array
     :param t: np.array
@@ -63,7 +63,7 @@ def cross_entropy(o, t):
     :func:`~learninspy.utils.data.label_to_vector`), por lo cual se aplica en forma directa
     la función de CE que resulta en el costo asociado a las predicciones hechas sobre el batch.
 
-    :math:`J=-\sum_i \sum_k \left(t^{(i)}_k \cdot \log(o^{(i)}) \\right)`
+    :math:`J=-\displaystyle\sum\limits_{i}^N \displaystyle\sum\limits_{k}^K \left(t^{(i)}_k \cdot \log(o^{(i)}) \\right)`
 
     :param o: np.array
     :param t: np.array
