@@ -276,6 +276,7 @@ fun_criter = {'avg': lambda x: 1.0, 'w_avg': lambda x: x, 'log_avg': lambda x: 1
 def merge_models(results_rdd, criter='w_avg', goal='hits'):
     """
     Funcion para hacer merge de modelos, en base a un criterio de ponderacion sobre un valor objetivo
+
     :param results_rdd: **pyspark.rdd**, resultado del mapeo de optimización sobre los modelos replicados a mergear.
     :param criter: string, indicando el tipo de ponderación para hacer el merge.
         Si es 'avg' se realiza un promedio no ponderado, 'w_avg' para un promedio con ponderación lineal
@@ -283,6 +284,7 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
     :param goal: string, indicando qué parte del resultado utilizar para la función de consenso.
         Si es 'hits' se debe hacer sobre el resultado obtenido con las métricas de evaluación, y si
         es 'cost' es sobre el resultado de la función de costo.
+
     :return: list of
     """
     assert goal == 'hits' or goal == 'cost', "Solo se puede ponderar por hits o cost!"

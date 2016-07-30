@@ -16,8 +16,6 @@ __author__ = 'leferrad'
 import numpy as np
 
 
-# NOTA: las derivadas deben tener un underscore '_' de prefijo en su nombre, de forma que no sean parte de la API.
-
 def tanh(z):
     r"""
     Tangente Hiperbólica
