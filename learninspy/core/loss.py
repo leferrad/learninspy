@@ -8,7 +8,8 @@ se corresponde a la tarea designada para el modelo:
     * **Clasificación**: Entropía Cruzada (en inglés, *Cross Entropy* o *CE*),
     * **Regresión**: Error Cuadrático Medio (en inglés, *Mean Squared Error* o *MSE*).
 
-Se define la funcion de error ‘fun(o, t)’, y su derivada ‘_fun_d(o, t)’ respecto a la entrada x,
+Para agregar más a este módulo, se debe definir la funcion de error ‘fun(o, t)’,
+y su derivada ‘_fun_d(o, t)’ respecto a la entrada x,
 siendo ‘o(x)’ la activación de dicha entrada (llamada salida real) y ‘t’ la salida esperada.
 
 .. note:: Las derivadas deben tener un underscore '_' de prefijo en su nombre, de forma que no sean parte de la API.
@@ -16,20 +17,23 @@ siendo ‘o(x)’ la activación de dicha entrada (llamada salida real) y ‘t�
 
 __author__ = 'leferrad'
 
-from learninspy.utils.data import label_to_vector
 import numpy as np
 
 
 def mse(o, t):
     """
     Función de error cuadrático medio.
-    Ver más info en `Mean squared error <https://en.wikipedia.org/wiki/Mean_squared_error>`_
+    Ver más info en Wikipedia: `Mean squared error <https://en.wikipedia.org/wiki/Mean_squared_error>`_
+
+    Las entradas *o* y *t* son arreglos de N x 1, y corresponden respectivamente a la salida real
+    y la esperada de predicciones realizadas sobre un batch de N ejemplos. La función devuelve el
+    error cuadrático medio asociado a dichas predicciones.
 
     :math:`J=\\frac{1}{2}\sum_i (o^{(i)}-t^{(i)})^2`
 
-    :param o: list, correspondiente a la salida real.
-    :param t: list, correspondiente a la salida esperada.
-    :return: float, costo asociado a la predicción.
+    :param o: np.array
+    :param t: np.array
+    :return: float
     """
     err = np.array(map(lambda(output, target): output - target, zip(o, t)))
     n = err.size
@@ -40,9 +44,9 @@ def _mse_d(o, t):
     """
     Derivada de la función MSE.
 
-    :param o: list, correspondiente a la salida real.
-    :param t: list, correspondiente a la salida esperada.
-    :return: list, derivada de la función de error.
+    :param o: np.array
+    :param t: np.array
+    :return: np.array
     """
     err = np.array(map(lambda(output, target): output - target, zip(o, t)))
     n = err.size
@@ -51,34 +55,38 @@ def _mse_d(o, t):
 
 def cross_entropy(o, t):
     """
-    Función de entropía cruzada.
+    Función de entropía cruzada, usada para medir el error de clasificación sobre una regresión Softmax.
+
+    La entrada *o* es un arreglo de N x K que representa la salida real de una clasificación realizada por la
+    función softmax sobre un batch de N ejemplos, y *t* es la salida esperada en dicha clasificación.
+    Dicho parámetro *t* corresponde a un vector binario de dimensión K (obtenido por
+    :func:`~learninspy.utils.data.label_to_vector`), por lo cual se aplica en forma directa
+    la función de CE que resulta en el costo asociado a las predicciones hechas sobre el batch.
 
     :math:`J=-\sum_i \sum_k \left(t^{(i)}_k \cdot \log(o^{(i)}) \\right)`
 
-    :param o: list, correspondiente a la salida real.
-    :param t: float, correspondiente a la salida esperada.
-    :return: float, costo asociado a la predicción.
+    :param o: np.array
+    :param t: np.array
+    :return: float
 
-    .. note:: el vector *o* debe ser la salida de la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`
+    .. note:: el arreglo *o* debe ser generado por la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`.
     """
-    num_classes = len(o)
-    t = label_to_vector(t, num_classes)
-    return -sum(t * np.log(o))[0]
+    return -sum(t * np.log(o))[0]  # sum(np.array) devuelve un np.array de un elemento, por lo cual accedo a él con [0]
 
 
 def _cross_entropy_d(o, t):
     """
     Derivada de la función CE.
 
-    :param o: list, correspondiente a la salida real.
-    :param t: float, correspondiente a la salida esperada.
-    :return: list, derivada de la función de error.
+    Por regla de la cadena, se puede demostrar que la derivada del error respecto a la entrada (generada por
+    la función softmax) es *o - t*.
 
-    .. note:: el vector *o* debe ser la salida de la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`
+    :param o: np.array
+    :param t: float
+    :return: np.array
+
+    .. note:: el arreglo *o* debe ser generado por la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`.
     """
-    # Por regla de la cadena, se puede demostrar que la derivada del error respecto a la entrada es o - t
-    num_classes = len(o)
-    t = label_to_vector(t, num_classes)
     return o - t
 
 

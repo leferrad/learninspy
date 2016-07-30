@@ -379,7 +379,7 @@ class LocalNeurons(object):
 
     def loss(self, fun, y):
         """
-        Aplica una función de error entre el vector almacenado y el vector *y*.
+        Aplica una función de error entre el vector almacenado y la entrada *y*.
 
         :param fun: función soportada en :mod:`~learninspy.core.loss`
         :param y: list o np.array
@@ -407,11 +407,15 @@ class LocalNeurons(object):
     def softmax(self):
         """
         Aplica la función *Softmax* sobre el vector alojado.
+        Ver más info en Wikipedia: `Softmax function <https://en.wikipedia.org/wiki/Softmax_function>`_
+
+        :return: np.array
         """
         # Uso de tip de implementacion (http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression)
         x = self.matrix
-        x = x - max(x)  # Se previene valores muy grandes del exp con valores altos de x
-        softmat = np.exp(x) / (sum(np.exp(x)))
+        x = x - max(x)  # Se previene llegar a valores muy grandes del exp(x)
+        exp_x = np.exp(x)
+        softmat = exp_x / sum(exp_x)
         return LocalNeurons(softmat, self.shape)
 
     def transpose(self):

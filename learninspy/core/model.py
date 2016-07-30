@@ -14,7 +14,7 @@ from learninspy.core.stops import criterion
 from learninspy.core.neurons import LocalNeurons
 from learninspy.utils import checks
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
-from learninspy.utils.data import LabeledDataSet, DistributedLabeledDataSet
+from learninspy.utils.data import LabeledDataSet, DistributedLabeledDataSet, label_to_vector
 from learninspy.context import sc
 from learninspy.utils.fileio import get_logger
 
@@ -482,6 +482,21 @@ class NeuralNetwork(object):
         return cost, (nabla_w, nabla_b)
 
     def cost(self, features, label):
+        """
+
+        Para problemas de clasificación, el float *label* se convierte a un vector binario
+        de dimensión K (dado por la cantidad de clases a predecir) mediante
+        :func:`~learninspy.utils.data.label_to_vector` para así poder aplicar una función de costo
+        en forma directa contra la predicción realizada por la softmax (que es un vector).
+
+        :param features:
+        :param label:
+        :return:
+        """
+        # Si la tarea de la red es de clasificación, entonces 'label' se debe convertir a vector binario.
+        # Así, se puede aplicar directamente a una función de costo contra la salida del softmax (vector).
+        if self.params.classification is True:
+            label = label_to_vector(label, self.params.units_layers[-1])  # n_classes dado por la dim de la últ capa
         cost, (nabla_w, nabla_b) = self._backprop(features, label)
         if self.params.strength_l1 > 0.0:
             cost_l1, nabla_w_l1 = self.l1()
