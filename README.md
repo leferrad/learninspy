@@ -1,6 +1,10 @@
 Learninspy
 ==========
 
+<img style="display: inline;" src="docs/img/Learninspy-logo_grande2.png" width="300" />
+
+*Deep Learning in Spark, with Python*
+
 [![Build Status](https://travis-ci.org/leferrad/learninspy.svg?branch=master)](https://travis-ci.org/leferrad/learninspy)
 [![Documentation Status](http://readthedocs.org/projects/learninspy/badge/?version=latest)](http://learninspy.readthedocs.io/?badge=latest)
 
