@@ -35,24 +35,34 @@ class NeuralLayer(object):
     Contiene sus "neuronas" representadas por pesos sinápticos **w** y **b**,
     además de una función de activación asociada para dichos pesos.
 
-    Una correcta inicialización de los pesos sinápticos está muy ligada a la función de activación elegida.
-    Por defecto, los pesos sinápticos se inicializan con una distribución uniforme
-    con media :math:`0` y varianza :math:`\\frac{2.0}{\sqrt{n_{in}}}`,
-    lo cual da buenos resultados especialmente usando ReLUs.
-    Para la función *Tanh* se muestrea sobre una distribución uniforme
-    en el rango :math:`\pm \sqrt{\\frac{6}{n_{in}+n_{out}}}`, y para la *Sigmoid* en el rango
-    :math:`\pm 4.0 \sqrt{\\frac{6}{n_{in}+n_{out}}}`.
+    Una correcta inicialización de los pesos sinápticos está muy ligada a la función de activación elegida:
+
+    * Por defecto, los pesos sinápticos se inicializan con una distribución uniforme \
+        con media *0* y varianza :math:`\\tfrac{2.0}{\sqrt{n_{in}}}`, \
+        lo cual da buenos resultados especialmente usando ReLUs.
+    * Para la función *Tanh* se muestrea sobre una distribución uniforme \
+        en el rango :math:`\pm \sqrt{\\frac{6}{n_{in}+n_{out}}}`.
+    * Para la *Sigmoid* en el rango :math:`\pm 4.0 \sqrt{\\frac{6}{n_{in}+n_{out}}}`.
 
     :param n_in: int, dimensión de la entrada.
     :param n_out: int, dimensión de la salida.
-    :param activation: string, key de la función de activación asignada a la capa.
-    :param distribute: si es True, indica que se utilicen arreglos distribuidos para **w** y **b**.
-    :param w: :class:`.LocalNeurons`, matriz de pesos sinápticos.
-    :param b: :class:`.LocalNeurons`, vector de pesos bias.
+    :param activation: string, key de alguna función de activación soportada en :mod:`~learninspy.core.activations`.
+    :param distributed: si es True, indica que se utilicen arreglos distribuidos para **w** y **b**.
+    :param w: :class:`.LocalNeurons`, matriz de pesos sinápticos. Si es *None*, se crea por defecto.
+    :param b: :class:`.LocalNeurons`, vector de pesos bias. Si es *None*, se crea por defecto.
     :param sparsity: si es True, los arreglos se almacenan en formato **scipy.sparse.csr_matrix**.
-    :param rng: si es *None*, se crea un generador de números aleatorios mediante una instancia **numpy.random.RandomState**.
+    :param rng: si es *None*, se crea un generador de números aleatorios
+     mediante una instancia **numpy.random.RandomState**.
 
-    .. note:: el parámetro *distribute* no tiene efecto, ya que el uso de arreglos distribuidos se deja para un próximo release.
+    .. note:: el parámetro *distributed* no tiene efecto, ya que el uso de arreglos distribuidos
+       se deja para un próximo release.
+
+    >>> n_in, n_out = (10, 5)
+    >>> layer = NeuralLayer(n_in, n_out, activation='Tanh')
+    >>> x = np.random.rand(n_in)
+    >>> out = layer.output(x)
+    >>> len(out)
+    5
 
     """
 
@@ -62,7 +72,7 @@ class NeuralLayer(object):
         self.activation = act.fun_activation[activation]
         self.activation_d = act.fun_activation_d[activation]
         sparsity = False  # TODO completar esta funcionalidad
-        distributed = False
+        distributed = False  # TODO completar esta funcionalidad
 
         if rng is None:
             rng = np.random.RandomState(123)
@@ -72,7 +82,8 @@ class NeuralLayer(object):
         self.shape_w = n_out, n_in
         self.shape_b = n_out, 1
 
-        #  Recomendaciones de http://cs231n.github.io/neural-networks-2/ y http://deeplearning.net/tutorial/mlp.html#mlp
+        # Recomendaciones de http://cs231n.github.io/neural-networks-2/ y http://deeplearning.net/tutorial/mlp.html#mlp
+        # TODO: ver si conviene dejar acá la inicializ de pesos, o en core.neurons (en términos de legibilidad)
         if w is None:
             if activation is "Tanh":
                 w = np.asarray(
@@ -124,32 +135,42 @@ class NeuralLayer(object):
 
     def l1(self):
         """
-        Norma **L1** sobre la matriz **w** de pesos sinápticos.
-        :return: float, resultado de aplicar norma.
+        Norma **L1** sobre la matriz **w** de pesos sinápticos,
+        utilizando la funcion :func:`~learninspy.core.neurons.LocalNeurons.l1`.
+
+        Por lo tanto, se retorna el resultado de aplicar la norma y el gradiente de la misma.
+
+        :return: tuple de float, :class:`~learninspy.core.neurons.LocalNeurons`
         """
         return self.weights.l1()
 
     def l2(self):
         """
-        Norma **L2** sobre la matriz **w** de pesos sinápticos.
-        :return: float, resultado de aplicar norma.
+        Norma **L2** sobre la matriz **w** de pesos sinápticos,
+        utilizando la funcion :func:`~learninspy.core.neurons.LocalNeurons.l2`.
+
+        Por lo tanto, se retorna el resultado de aplicar la norma y el gradiente de la misma.
+
+        :return: tuple de float, :class:`~learninspy.core.neurons.LocalNeurons`
         """
         return self.weights.l2()
 
     def output(self, x, grad=False):
         """
         Salida de la capa neuronal. Se toma una entrada :math:`x \in \Re^{n_{in}}`, se pondera con los
-        pesos sinápticos **W** y el bias **b**, y luego se aplica la función de activación **f** para retornar el
-        resultado :math:`a = f(Wx + b)`.
+        pesos sinápticos **W** y el bias **b**, y luego se aplica la función de activación **f** para retornar como
+        resultado:
 
-        :param x: **numpy.array**, vector de entrada
+        :math:`a = f(Wx + b), \quad a' = f'(Wx + b)`
+
+        :param x: **numpy.ndarray**, vector de entrada
         :param grad: Si es *True*, se retorna además el gradiente de la salida.
-        :return: **numpy.array**, o tupla de ellos si *grad* es True.
+        :return: **numpy.ndarray**, o tupla de ellos si *grad* es True.
         """
         wx = self.weights.mul_array(x)
         z = wx.sum_array(self.bias)
         a = z.activation(self.activation)
-        if grad:
+        if grad is True:
             d_a = z.activation(self.activation_d)
             a = (a, d_a)
         return a
@@ -157,21 +178,20 @@ class NeuralLayer(object):
     # Basado en http://cs231n.github.io/neural-networks-2/
     def dropoutput(self, x, p, grad=False):
         """
-        Salida de la capa neuronal, luego de aplicar la regularización de los pesos sinápticos por Dropout.
+        Salida de la capa neuronal, luego de aplicar la regularización de los pesos sinápticos por Dropout
+        utilizando la funcion :func:`~learninspy.core.neurons.LocalNeurons.dropout`.
 
-
-        http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf
-
-        :param x: **numpy.array**, vector de entrada
+        :param x: numpy.ndarray, vector de entrada
         :param p: float, tal que :math:`0<p<1`
         :param grad: Si es *True*, se retorna además el gradiente de la salida.
-        :return: **numpy.array**, o tupla de ellos si *grad* es True.
+        :return: numpy.ndarray, (o tuple de  numpy.ndarray, numpy.ndarray si *grad* es *True*),
+         numpy.ndarray correspondiente a la máscara binaria utilizada en el DropOut.
 
         .. note:: En las predicciones de la red no se debe efectuar Dropout.
         """
         self.rng.set_state(self.rnd_state)  # Para que sea reproducible
         out = self.output(x, grad)
-        if grad:
+        if grad is True:
             a, d_a = out
             a, mask = a.dropout(p, self.rng.randint(500))
             out = a, d_a
@@ -179,11 +199,24 @@ class NeuralLayer(object):
             out, mask = out.dropout(p, self.rng.randint(500))
         return out, mask  # Devuelvo ademas la mascara utilizada, para el backprop
 
+    def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos
+        """
+        Se actualizan los arreglos **w** y **b** sumando respectivamente los incrementos
+        dados por los parámetros recibidos.
+
+        :param step_w: :class:`.LocalNeurons`
+        :param step_b: :class:`.LocalNeurons`
+        """
+        self.weights += step_w
+#        self.weights_T += step_w.transpose()
+        self.bias += step_b
+        return
+
     def get_weights(self):
         """
         Se devuelve la matriz de pesos sinápticos **w**.
 
-        :return: **numpy.array**.
+        :return: numpy.ndarray.
         """
         return self.weights
 
@@ -191,10 +224,11 @@ class NeuralLayer(object):
         """
         Se devuelve el vector de bias **b**.
 
-        :return: **numpy.array**.
+        :return: numpy.ndarray.
         """
         return self.bias
 
+    # TODO: deprecate, ya que están para tener compatibilidad con DistributedNeurons
     def _persist_layer(self):
         self.weights._persist()
         self.bias._persist()
@@ -203,19 +237,6 @@ class NeuralLayer(object):
     def _unpersist_layer(self):
         self.weights._unpersist()
         self.bias._unpersist()
-        return
-
-    def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos
-        """
-        Se actualizan los arreglos **w** y **b** sumando respectivamente los incrementos
-        recibidos por parámetros.
-
-        :param step_w: :class:`.LocalNeurons`
-        :param step_b: :class:`.LocalNeurons`
-        """
-        self.weights += step_w
-#        self.weights_T += step_w.transpose()
-        self.bias += step_b
         return
 
 

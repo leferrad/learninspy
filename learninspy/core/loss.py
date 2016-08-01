@@ -31,8 +31,8 @@ def mse(o, t):
 
     :math:`J=\\dfrac{1}{N}\displaystyle\sum\limits_{i}^N (o^{(i)}-t^{(i)})^2`
 
-    :param o: np.array
-    :param t: np.array
+    :param o: numpy.ndarray
+    :param t: numpy.ndarray
     :return: float
     """
     err = np.array(map(lambda(output, target): output - target, zip(o, t)))
@@ -44,9 +44,9 @@ def _mse_d(o, t):
     """
     Derivada de la función MSE.
 
-    :param o: np.array
-    :param t: np.array
-    :return: np.array
+    :param o: numpy.ndarray
+    :param t: numpy.ndarray
+    :return: numpy.ndarray
     """
     err = np.array(map(lambda(output, target): output - target, zip(o, t)))
     n = err.size
@@ -63,15 +63,16 @@ def cross_entropy(o, t):
     :func:`~learninspy.utils.data.label_to_vector`), por lo cual se aplica en forma directa
     la función de CE que resulta en el costo asociado a las predicciones hechas sobre el batch.
 
-    :math:`J=-\displaystyle\sum\limits_{i}^N \displaystyle\sum\limits_{k}^K \left(t^{(i)}_k \cdot \log(o^{(i)}) \\right)`
+    :math:`J=-\displaystyle\sum\limits_{i}^N \displaystyle\sum\limits_{k}^K \left(t^{(i)}_k  \log(o^{(i)}_k) \\right)`
 
-    :param o: np.array
-    :param t: np.array
+    :param o: numpy.ndarray
+    :param t: numpy.ndarray
     :return: float
 
     .. note:: el arreglo *o* debe ser generado por la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`.
     """
-    return -sum(t * np.log(o))[0]  # sum(np.array) devuelve un np.array de un elemento, por lo cual accedo a él con [0]
+    # return np.sum(np.log(o[range(len(o)), t]))/float(len(o))  # extraido de http://cs231n.github.io/neural-networks-case-study/
+    return -sum(t * np.log(o))[0]  # sum(np.ndarray) devuelve un np.ndarray de un elemento, por lo cual accedo a él con [0]
 
 
 def _cross_entropy_d(o, t):
@@ -81,9 +82,9 @@ def _cross_entropy_d(o, t):
     Por regla de la cadena, se puede demostrar que la derivada del error respecto a la entrada (generada por
     la función softmax) es *o - t*.
 
-    :param o: np.array
+    :param o: numpy.ndarray
     :param t: float
-    :return: np.array
+    :return: numpy.ndarray
 
     .. note:: el arreglo *o* debe ser generado por la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`.
     """

@@ -388,7 +388,7 @@ class LocalNeurons(object):
         Aplica la función *Softmax* sobre el vector alojado.
         Ver más info en Wikipedia: `Softmax function <https://en.wikipedia.org/wiki/Softmax_function>`_
 
-        :return: numpy.array
+        :return: numpy.ndarray
         """
         # Uso de tip de implementacion (http://ufldl.stanford.edu/wiki/index.php/Exercise:Softmax_Regression)
         x = self.matrix
@@ -404,7 +404,7 @@ class LocalNeurons(object):
         Aplica una función de error entre el vector almacenado y la entrada *y*.
 
         :param fun: función soportada en :mod:`~learninspy.core.loss`
-        :param y: list o numpy.array
+        :param y: list o numpy.ndarray
         :return: float
         """
         return fun(self.matrix, y)
@@ -414,7 +414,7 @@ class LocalNeurons(object):
         Aplica una función derivada de error entre el vector almacenado y el vector *y*.
 
         :param fun: función derivada soportada en :mod:`~learninspy.core.loss`
-        :param y: list o numpy.array
+        :param y: list o numpy.ndarray
         :return: :class:`~learninspy.core.neurons.LocalNeurons`
         """
         return LocalNeurons(fun(self.matrix, y), self.shape)
@@ -449,7 +449,7 @@ class LocalNeurons(object):
         en donde se almacena *1* en las entradas donde respectivamente se aplicó DropOut y *0* en el resto.
 
         :param p: float, tal que :math:`0<p<1`
-        :return: tuple de :class:`~learninspy.core.neurons.LocalNeurons`, numpy.array
+        :return: tuple de :class:`~learninspy.core.neurons.LocalNeurons`, numpy.ndarray
 
         .. [srivastava2014dropout] Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov, R. (2014):
             "Dropout: A simple way to prevent neural networks from overfitting".
@@ -469,7 +469,7 @@ class LocalNeurons(object):
 
         Se retorna una tupla con el resultado y además el gradiente de dicha norma.
 
-        :return: tuple de float y LocalNeurons
+        :return: tuple de float, :class:`~learninspy.core.neurons.LocalNeurons`
         """
         cost = sum(sum(abs(self.matrix)))
         gradient = np.sign(self.matrix)  # en x=0 no es diferenciable, pero que sea igual a 0 la derivada anda bien
@@ -481,7 +481,7 @@ class LocalNeurons(object):
 
         Se retorna una tupla con el resultado y además el gradiente de dicha norma.
 
-        :return: tuple de float y LocalNeurons
+        :return: tuple de float, :class:`~learninspy.core.neurons.LocalNeurons`
         """
         cost = sum(sum(self.matrix ** 2))
         gradient = self.matrix
@@ -510,7 +510,7 @@ class LocalNeurons(object):
         """
         Retorna el arreglo alojado.
 
-        :return: numpy.array
+        :return: numpy.ndarray
         """
         return self.matrix
 
