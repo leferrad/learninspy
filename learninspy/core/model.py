@@ -249,12 +249,27 @@ class ClassificationLayer(NeuralLayer):
     """
 
     def output(self, x, grad=False):
+        """
+        Salida de la capa de clasificación. Similar a la función de la clase madre
+        :func:`~learninspy.core.model.NeuralLayer.output`, pero la activación está dada
+        por la función Softmax utilizando el método :func:`~learninspy.core.neurons.LocalNeurons.softmax`
+        para efectuar la clasificación deseada sobre la entrada *x*.
+
+        Dado que el gradiente del Softmax está computado en la función por la regla de la cadena,
+        se omite el cómputo aquí y por ende el parámetro *grad* es innecesario
+        aunque persiste para tener compatibilidad con el resto del esquema.
+
+        :param x: **numpy.ndarray**, vector de entrada
+        :param grad: bool
+        :return: **numpy.ndarray**, o tupla de ellos si *grad* es True.
+
+        .. note:: si *grad* es True, sólo se retorna un vector "basura" que no es utilizado en el backpropagation.
+        """
         wx = self.weights.mul_array(x)
         z = wx.sum_array(self.bias)
         a = z.softmax()  # La activacion es un clasificador softmax
-        if grad:
-            d_a = z.activation(self.activation_d)
-            a = (a, d_a)
+        if grad is True:  # Dado que el gradiente está cubierto por el loss de CE, no se necesita computar aquí
+            a = (a, a)  # Por lo tanto, se retorna un vector "basura" para no romper el esquema del backpropagation
         return a
 
     def dropoutput(self, x, p, grad=False):
@@ -486,7 +501,12 @@ class NeuralNetwork(object):
         cost = a[-1].loss(self.loss, y)
         # Backward pass
         d_cost = a[-1].loss_d(self.loss_d, y)
-        delta = d_cost.mul_elemwise(d_a[-1])
+        # Si el problema es de clasificación, entonces se utiliza una Softmax y por ende
+        # el gradiente ya está computado en d_cost por el loss de CE.
+        if self.params.classification is True:
+            delta = d_cost  # Ya incluye el producto con el gradiente del Softmax
+        else:
+            delta = d_cost.mul_elemwise(d_a[-1])
         if drop_fraction[-1] > 0.0:  # No actualizo las unidades "tiradas"
             delta = delta.mul_elemwise(mask[-1])
         nabla_w[-1] = delta.outer(a[-2])
