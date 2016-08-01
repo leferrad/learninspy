@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Este es el módulo principal del framework, donde se proveen las clases referidas al modelado de redes neuronales.
+El mismo consta de clases para crear una red neuronal, su composición de capas de neuronas, y la configuración
+de la misma mediante la especificación de parámetros.
+"""
+
 __author__ = 'leferrad'
 
-# Dependencias externas
-import numpy as np
-from scipy import sparse
-from pyspark import StorageLevel
-
-# Dependencias internas
 from learninspy.core import activations as act, loss, optimization as opt
 from learninspy.core.stops import criterion
 from learninspy.core.neurons import LocalNeurons
@@ -18,12 +18,16 @@ from learninspy.utils.data import LabeledDataSet, DistributedLabeledDataSet, lab
 from learninspy.context import sc
 from learninspy.utils.fileio import get_logger
 
-# Librerias de Python
 import copy
 import cPickle as pickle
 import os
 import time
 import gc
+
+import numpy as np
+from scipy import sparse
+from pyspark import StorageLevel
+
 
 logger = get_logger(name=__name__)
 logger.propagate = False  # Para que no se dupliquen los mensajes por herencia

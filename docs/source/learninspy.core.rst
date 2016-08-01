@@ -39,9 +39,24 @@ learninspy.core.model
 ----------------------------
 
 .. automodule:: learninspy.core.model
-    :members:
-    :undoc-members:
-    :show-inheritance:
+
+Capas neuronales
+""""""""""""""""
+
+.. autoclass:: NeuralLayer
+.. autoclass:: ClassificationLayer
+.. autoclass:: RegressionLayer
+
+Red neuronal
+""""""""""""
+
+.. autoclass:: NeuralNetwork
+
+Parámetros
+""""""""""
+
+.. autoclass:: NetworkParameters
+
 
 learninspy.core.neurons
 ------------------------------
