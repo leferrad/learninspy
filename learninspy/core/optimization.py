@@ -315,8 +315,12 @@ def mix_models(left, right):
         left[l].update(w, b)  # Update suma el w y el b
     return left
 
-# TODO: completar esto
-fun_criter = {'avg': lambda x: 1.0, 'w_avg': lambda x: x, 'log_avg': lambda x: 1.0 + np.log(x)}
+# Funciones de merge o consenso para ponderar modelos entrenados en forma paralela
+
+fun_criter = {'avg': lambda x: 1.0,  # Promedio sin ponderación (todos los pesos son 1/n)
+              'w_avg': lambda x: x,  # Promedio con ponderacion lineal
+              'log_avg': lambda x: 1.0 + np.log(x)  # Promedio con ponderación logarítmica
+              }
 
 
 def merge_models(results_rdd, criter='w_avg', goal='hits'):
@@ -333,25 +337,15 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
 
     :return: list of
     """
-    assert goal == 'hits' or goal == 'cost', "Solo se puede ponderar por hits o cost!"
-    if criter == 'avg':
-        # Promedio sin ponderacion (todos los pesos son 1/n)
-        merge_fun = lambda res: [layer for layer in res['model']]
-        weights = lambda res: 1
-    elif criter == 'w_avg':
-        # Promedio con ponderacion lineal
-        # TODO: y si todas las tasas son 0.0 ?? se divide por 0?!
-        merge_fun = lambda res: [layer * res[goal] for layer in res['model']]
-        weights = lambda res: res[goal]
-    elif criter == 'log_avg':
-        # Promedio con ponderacion logaritmica
-        merge_fun = lambda res: [layer * (1.0 + np.log(res[goal])) for layer in res['model']]
-        weights = lambda res: (1.0 + np.log(res[goal]))
-    else:
-        raise ValueError('No existe tal criterio para merge!')
+    assert goal == 'hits' or goal == 'cost', ValueError("Solo se puede ponderar por hits o cost!")
+    assert criter in fun_criter.keys(), ValueError("No existe tal criterio para merge!")
+    # Defino numerador y denominador de la ponderación en base a 'fun_criter'
+    merge_fun = lambda res: [layer * fun_criter[criter](res[goal]) for layer in res['model']]
+    weights = lambda res: fun_criter[criter](res[goal])
     # Mezclo modelos con la funcion de merge definida
     layers = (results_rdd.map(merge_fun).reduce(lambda left, right: mix_models(left, right)))
     total = results_rdd.map(weights).sum()
+    total = max(total, 1e-3)  # Asegurar que no se va a dividir por 0 o valores pequeños que hagan diverger los pesos
     # Promedio sobre todas las capas
-    final_list_layers = map(lambda layer: layer / total, layers)
+    final_list_layers = map(lambda layer: layer / float(total), layers)
     return final_list_layers
