@@ -645,9 +645,11 @@ class NeuralNetwork(object):
             self.set_initial_rndstate()  # Seteo estado inicial del RandomState (al generarse la instancia NeuralNetwork)
 
         seeds = list(self.params.rng.randint(500, size=parallelism))
-        # Paralelizo modelo actual en los nodos dados por parallelism
+        # Paralelizo modelo actual en los nodos mediante parallelism (que define el n° de particiones o slices del RDD)
         # NOTA: se persiste en memoria serializando ya que se supone que son objetos grandes y no conviene cachearlos
-        models_rdd = sc.parallelize(zip([self] * parallelism, seeds)).persist(StorageLevel.MEMORY_ONLY_SER)
+        models_rdd = (sc.parallelize(zip([self] * parallelism, seeds), numSlices=parallelism)
+                        .persist(StorageLevel.MEMORY_ONLY_SER)
+                      )
         # Minimizo el costo de las redes en paralelo
         # NOTA: persist() es importante porque se traza varias veces el grafo de acciones sobre el RDD results
         logger.debug("Training %i models in parallel.", parallelism)
