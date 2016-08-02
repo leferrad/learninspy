@@ -1,27 +1,56 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Dependencias externas
-import numpy as np
+"""
+Este módulo se realizó en base al excelente package de optimización `climin <https://github.com/BRML/climin>`_ ,
+de donde se adaptaron algunos algoritmos de optimización para su uso en redes neuronales.
 
-# Dependencias internas
+.. note:: Proximamente se migrará a un package *optimization*, separando por scripts los algoritmos de optimización.
+"""
+
 from learninspy.core.neurons import LocalNeurons
 from learninspy.core.stops import criterion
 from learninspy.utils.data import subsample
 from learninspy.utils.fileio import get_logger
 
-# Librerias de Python
 import copy
 import os
 
-logger = get_logger(name=__name__)
+import numpy as np
 
-# TODO en algun momento se va a tener que organizar como un package 'optimization'
+logger = get_logger(name=__name__)
 
 
 class OptimizerParameters:
-    def __init__(self, algorithm='Adadelta', options=None, stops=None,
-                 merge_criter='w_avg', merge_goal='hits'):
+    """
+    Clase utilizada para especificar la configuración deseada en la optimización de la red neuronal.
+    Se define el algoritmo de optimización, las opciones o hiper-parámetros propios del mismo y
+    los criterios de corte para frenar tempranamente la optimización.
+    Además, se especifica aquí cómo es realizado el mezclado durante el entrenamiento distribuido
+    mediante :func:`~learninspy.core.optimization.merge_models`.
+
+    :param algorithm: string,key de algún algoritmo de optimización que hereda de :class:`.Optimizer`,
+    :param options: dict, donde se indican los hiper-parámetros de optimización específicos del algoritmo elegido.
+    :param stops: list de *criterion*, instanciados desde :mod:`~learninspy.core.stops`.
+    :param merge_criter: string, parámetro *criter* de la función :func:`~learninspy.core.optimization.merge_models`.
+    :param merge_goal: string, parámetro *goal* de la función :func:`~learninspy.core.optimization.merge_models`.
+
+    >>> from learninspy.core.stops import criterion
+    >>> local_stops = [criterion['MaxIterations'](10), criterion['AchieveTolerance'](0.95, key='hits')]
+    >>> opt_options = {'step-rate': 1, 'decay': 0.9, 'momentum': 0.0, 'offset': 1e-8}
+    >>> opt_params = OptimizerParameters(algorithm='Adadelta', options=opt_options, stops=local_stops, \
+                                         merge_criter='w_avg', merge_goal='hits')
+    >>> print str(opt_params)
+    The algorithm used is Adadelta with the next parameters:
+    offset: 1e-08
+    step-rate: 1
+    momentum: 0.0
+    decay: 0.9
+    The stop criteria used for optimization is:
+    Stop at a maximum of 10 iterations.
+    Stop when a tolerance of 0.95 is achieved in hits.
+    """
+    def __init__(self, algorithm='Adadelta', options=None, stops=None, merge_criter='w_avg', merge_goal='hits'):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-6}
@@ -48,9 +77,12 @@ class OptimizerParameters:
 
 class Optimizer(object):
     """
+    Clase base para realizar la optimización de un modelo sobre un conjunto de datos.
 
+    :param model: :class:`.NeuralNetwork`, modelo a optimizar.
+    :param data: list de *pyspark.mllib.regression.LabeledPoint*. batch de datos a utilizar en el ajuste.
+    :param parameters: :class:`.OptimizerParameters`, parámetros de la optimización.
     """
-
     def __init__(self, model, data, parameters=None):
         self.model = copy.copy(model)
         self.num_layers = model.num_layers
@@ -98,23 +130,20 @@ class Optimizer(object):
 
 class Adadelta(Optimizer):
     """
+    ...
 
+    :param model: :class:`.NeuralNetwork`,
+    :param data: list de *pyspark.mllib.regression.LabeledPoint*.
+    :param parameters: :class:`.OptimizerParameters`,
+    :return:
     """
     def __init__(self, model, data, parameters=None):
-        """
-
-        :param model: NeuralNetwork
-        :param data: list of LabeledPoint
-        :param parameters: OptimizerParameters
-        :return:
-        """
         super(Adadelta, self).__init__(model, data, parameters)
         self._init_acummulators()
 
     def _init_acummulators(self):
         """
-        Inicializo acumuladores usados para la optimizacion
-        :return:
+        Inicializo acumuladores usados para la optimizacion.
         """
         self.gms_w = []
         self.gms_b = []
@@ -168,6 +197,14 @@ class Adadelta(Optimizer):
 
 
 class GD(Optimizer):
+    """
+    ...
+
+    :param model: :class:`.NeuralNetwork`,
+    :param data: list de *pyspark.mllib.regression.LabeledPoint*.
+    :param parameters: :class:`.OptimizerParameters`,
+    :return:
+    """
     def __init__(self, model, data, parameters=None):
         super(GD, self).__init__(model, data, parameters)
         self._init_acummulators()
@@ -234,6 +271,15 @@ Minimizer = {'Adadelta': Adadelta, 'GD': GD}
 
 
 def optimize(model, data, params=None, mini_batch=50, seed=123):
+    """
+
+    :param model:
+    :param data:
+    :param params:
+    :param mini_batch:
+    :param seed:
+    :return:
+    """
     final = {
         'model': model.list_layers,
         'hits': 0.0,
@@ -241,12 +287,12 @@ def optimize(model, data, params=None, mini_batch=50, seed=123):
         'cost': -1.0,
         'seed': seed
     }
-    # TODO: modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
+    # TODO: se podría modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
     balanced = model.params.classification  # Bool que indica que se balanceen clases (problema de clasificacion)
     batch = subsample(data, mini_batch, balanced, seed)  # Se balancea si se trata con clases
     minimizer = Minimizer[params.algorithm](model, batch, params)
-    # TODO: OJO que al ser un iterator, result vuelve a iterar cada vez
-    # que se hace una accion desde la funcion 'train' (solucionado con .cache() para que no se vuelva a lanzar la task)
+    # OJO que al ser un iterator, result vuelve a iterar cada vez que se hace una accion desde la funcion 'train'
+    # (se soluciona con .cache() o .persist() para que no se vuelva a lanzar la task)
     for result in minimizer:
         final = result
         logger.info("Cant de iteraciones: %i. Hits en batch: %12.11f. Costo: %12.11f",
@@ -257,8 +303,8 @@ def optimize(model, data, params=None, mini_batch=50, seed=123):
 
 def mix_models(left, right):
     """
-    Se devuelve el resultado de sumar las NeuralLayers
-    de left y right
+    Se devuelve el resultado de sumar las NeuralLayers de left y right.
+
     :param left: list of NeuralLayer
     :param right: list of NeuralLayer
     :return: list of NeuralLayer

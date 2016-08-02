@@ -44,8 +44,11 @@ Capas neuronales
 """"""""""""""""
 
 .. autoclass:: NeuralLayer
+    :show-inheritance:
 .. autoclass:: ClassificationLayer
+    :show-inheritance:
 .. autoclass:: RegressionLayer
+    :show-inheritance:
 
 Red neuronal
 """"""""""""
@@ -68,15 +71,30 @@ learninspy.core.neurons
 
 learninspy.core.optimization
 -----------------------------------
-Este módulo se realizó en base al excelente package de optimización `climin <https://github.com/BRML/climin>`_ , de donde se adaptaron algunos algoritmos de optimización para su uso en redes neuronales. 
-
-.. note:: Proximamente se migrará a un package *optimization*, separando por scripts los algoritmos de optimización.
-
 
 .. automodule:: learninspy.core.optimization
-    :members:
-    :undoc-members:
+
+Parámetros
+""""""""""
+
+.. autoclass:: OptimizerParameters
+
+Algoritmos de optimización
+""""""""""""""""""""""""""
+
+.. autoclass:: Optimizer
     :show-inheritance:
+.. autoclass:: GD
+    :show-inheritance:
+.. autoclass:: Adadelta
+    :show-inheritance:
+
+Entrenamiento distribuido
+"""""""""""""""""""""""""
+
+.. autofunction:: optimize
+.. autofunction:: merge_models
+.. autofunction:: mix_models
 
 learninspy.core.search
 -----------------------------
