@@ -12,4 +12,4 @@ export PYTHONPATH=$PYTHONPATH:$PYFORJ
 
 export PYTHONWARNINGS="ignore"
 
-nosetests $@ --verbosity 2
+nosetests $@ --verbosity 2 --with-coverage --cover-package=learninspy

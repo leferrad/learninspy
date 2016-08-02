@@ -30,6 +30,7 @@ install:
   - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION nose numpy scipy matplotlib
   - source activate test-environment
   - pip install -r requirements.txt
+  - pip install coveralls
   - python setup.py install
 
 before_script:
@@ -42,4 +43,7 @@ before_script:
 script: 
   - chmod +x run_tests.sh
   - "./run_tests.sh"
+
+after_success:
+  coveralls
 
