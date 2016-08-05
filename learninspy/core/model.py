@@ -751,6 +751,7 @@ class NeuralNetwork(object):
         for l in xrange(self.num_layers):
             self.list_layers[l].update(stepw[l], stepb[l])
 
+    # TODO: redefinir todo esto! (actualizar)
     def check_gradients(self):
         fun_act = self.params.activation
         fun_loss = self.params.loss

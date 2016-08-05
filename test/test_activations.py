@@ -8,6 +8,10 @@ from learninspy.utils.checks import CheckGradientActivation
 
 
 def test_activations_gradients():
-    check = CheckGradientActivation(fun_activation.keys())  # Chequeo de todas las funciones de activ implementadas
-    bad_gradients = check()
-    assert bad_gradients is None
+    # TODO: logging
+    for act in fun_activation.keys():
+        check = CheckGradientActivation(act)  # Chequeo de todas las funciones de activ implementadas
+        good_grad = check()
+        assert good_grad, AssertionError("Gradiente de función "+act+" mal implementado!")
+
+test_activations_gradients()
