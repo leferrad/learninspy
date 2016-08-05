@@ -72,7 +72,10 @@ def cross_entropy(o, t):
     .. note:: el arreglo *o* debe ser generado por la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`.
     """
     # return np.sum(np.log(o[range(len(o)), t]))/float(len(o))  # extraido de http://cs231n.github.io/neural-networks-case-study/
-    return -sum(t * np.log(o))[0]  # sum(np.ndarray) devuelve un np.ndarray de un elemento, por lo cual accedo a él con [0]
+    loss = -sum(t * np.log(o))
+    if type(loss) is list:
+        loss = loss[0]
+    return loss  # sum(np.ndarray) devuelve un np.ndarray de un elemento, por lo cual accedo a él con [0]
 
 
 def _cross_entropy_d(o, t):
@@ -83,7 +86,7 @@ def _cross_entropy_d(o, t):
     la función softmax) es *o - t*.
 
     :param o: numpy.ndarray
-    :param t: float
+    :param t: numpy.ndarray
     :return: numpy.ndarray
 
     .. note:: el arreglo *o* debe ser generado por la función :func:`~learninspy.core.neurons.LocalNeurons.softmax`.
