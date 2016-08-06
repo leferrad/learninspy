@@ -4,14 +4,16 @@
 __author__ = 'leferrad'
 
 from learninspy.core.activations import fun_activation
+from learninspy.utils.fileio import get_logger
 from learninspy.utils.checks import CheckGradientActivation
 
+logger = get_logger(name=__name__)
 
 def test_activations_gradients():
-    # TODO: logging
+    logger.info("Testeando gradientes implementados para las funciones de activación...")
     for act in fun_activation.keys():
-        check = CheckGradientActivation(act)  # Chequeo de todas las funciones de activ implementadas
+        logger.info("Gradiente de función %s:", act)
+        check = CheckGradientActivation(act)
         good_grad = check()
         assert good_grad, AssertionError("Gradiente de función "+act+" mal implementado!")
-
-test_activations_gradients()
+        logger.info("OK.")
