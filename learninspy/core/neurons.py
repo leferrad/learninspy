@@ -268,8 +268,11 @@ class LocalNeurons(object):
     def __pow__(self, power, modulo=None):
         return LocalNeurons(self.matrix ** power, self.shape)
 
-    def __sizeof__(self):
-        return self.matrix.nbytes + sys.getsizeof(self.rows) + sys.getsizeof(self.cols)  # TODO: mejorar estimación
+    def __eq__(self, other):
+        return np.array_equiv(self.matrix, other)
+
+    #def __sizeof__(self):
+    #    return self.matrix.nbytes + sys.getsizeof(self.rows) + sys.getsizeof(self.cols)  # TODO: mejorar estimación
 
     # ### Operaciones algebraicas ###
 
@@ -289,22 +292,6 @@ class LocalNeurons(object):
         shape = self.rows, arrshape[1]
         return LocalNeurons(self.matrix.dot(array), shape)
 
-    def _mul_array2(self, array):
-        """
-        .. note:: pensado para la compatibilidad con DistributedNeurons.
-        :param array:
-        :return:
-        """
-        pass
-
-    def _mul_arrayrdd(self, rdd):
-        """
-        .. note:: pensado para la compatibilidad con DistributedNeurons.
-        :param rdd:
-        :return:
-        """
-        pass
-
     def outer(self, array):
         """
         Producto exterior entre vectores. Equivalente a *numpy.outer*.
@@ -318,15 +305,18 @@ class LocalNeurons(object):
         shape = res.shape
         return LocalNeurons(res, shape)
 
-    #@assert_samedimension
-    def dot(self, vec):
-        """
-        Producto punto entre vectores. Equivalente a *numpy.array.dot*.
 
-        :param vec: numpy.array o list.
-        :return: int o float
-        """
-        return self.matrix.dot(vec)
+    # #@assert_samedimension
+    # def dot(self, vec):
+    #     """
+    #     Producto punto entre vectores. Equivalente a *numpy.array.dot*.
+    #
+    #     :param vec: numpy.array o list.
+    #     :return: int o float
+    #     """
+    #     # TODO: assert same dimension (or transpose 'vec' at least)
+    #     return self.matrix.dot(vec)
+
 
     #@assert_samedimension
     def mul_elemwise(self, array):
@@ -356,13 +346,14 @@ class LocalNeurons(object):
             array = array.matrix
         return LocalNeurons(self.matrix + array, self.shape)
 
-    def sum(self):
+    def sum(self, axis=None):
         """
-        Suma de los elementos del arreglo alojado.
+        Suma de los elementos del arreglo alojado. Equivalente a *numpy.array.sum*
 
+        :param axis: None o int o tuple de ints, optional. Indicando dimensión/es a tomar en la suma.
         :return: numpy.array
         """
-        return sum(self.matrix)
+        return np.sum(self.matrix, axis=axis)
 
     def transpose(self):
         """
@@ -419,24 +410,25 @@ class LocalNeurons(object):
         """
         return LocalNeurons(fun(self.matrix, y), self.shape)
 
-    #@assert_samedimension
-    def _mse(self, y):
-        n = self.count()
-        error = (y - self.matrix) ** 2
-        sumError = sum(error)
-        return sumError / (1.0 * n)
-
-    #@assert_samedimension
-    def _mse_d(self, y):
-        """
-
-        :param y:
-        :return: :class:`~learninspy.core.neurons.LocalNeurons`
-        """
-        n = self.count()
-        error = y - self.matrix
-        errorDiv = error * (2.0 / n)
-        return LocalNeurons(errorDiv, self.shape)
+    # TODO: deprecate
+    # #@assert_samedimension
+    # def _mse(self, y):
+    #     n = self.count()
+    #     error = (y - self.matrix) ** 2
+    #     sum_error = sum(error)
+    #     return sum_error / (1.0 * n)
+    #
+    # #@assert_samedimension
+    # def _mse_d(self, y):
+    #     """
+    #
+    #     :param y:
+    #     :return: :class:`~learninspy.core.neurons.LocalNeurons`
+    #     """
+    #     n = self.count()
+    #     error = y - self.matrix
+    #     error_div = error * (2.0 / n)
+    #     return LocalNeurons(error_div, self.shape)
 
     # ### Normas de regularización sobre pesos ###
 
@@ -513,22 +505,5 @@ class LocalNeurons(object):
         :return: numpy.ndarray
         """
         return self.matrix
-
-    # ### No usadas ### (implementadas por compatibilidad con DistributedNeurons)
-
-    def _zip(self, rdd):
-        """
-        .. note:: pensado para la compatibilidad con DistributedNeurons.
-
-        :param rdd:
-        :return:
-        """
-        pass
-
-    def _persist(self):
-        pass
-
-    def _unpersist(self):
-        pass
 
 

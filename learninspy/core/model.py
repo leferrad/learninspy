@@ -232,17 +232,6 @@ class NeuralLayer(object):
         """
         return self.bias
 
-    # TODO: deprecate, ya que están para tener compatibilidad con DistributedNeurons
-    def _persist_layer(self):
-        self.weights._persist()
-        self.bias._persist()
-        return
-
-    def _unpersist_layer(self):
-        self.weights._unpersist()
-        self.bias._unpersist()
-        return
-
 
 class ClassificationLayer(NeuralLayer):
     """
