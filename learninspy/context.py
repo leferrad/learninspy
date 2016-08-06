@@ -15,7 +15,7 @@ if 'sc' not in locals() or sc is None:
     master = 'local[*]'
     extraJavaOptions = '-XX:+UseG1GC'
     conf = (SparkConf().setAppName(appName)
-            .set("Xmx", "3g")
+    #        .set("Xmx", "3g")
             .setMaster(master)
             .set('spark.ui.showConsoleProgress', False)  # Para que no muestre el progreso de los Stages (comentar sino)
             .set('spark.driver.extraJavaOptions', extraJavaOptions)
@@ -23,7 +23,7 @@ if 'sc' not in locals() or sc is None:
             .set('spark.executor.extraJavaOptions', '-XX:+UseCompressedOops')  # Cuando se tiene menos de 32GB de RAM, punteros de 4 bytes en vez de 8 bytes
     #       .set("spark.storage.memoryFraction", "0.5")
             .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-            .set("spark.kryoserializer.buffer.mb", "256")
+    #        .set("spark.kryoserializer.buffer", "256")
             .set("spark.rdd.compress", "true")
             .set("spark.logConf", "false"))
     sc = SparkContext(conf=conf).getOrCreate(conf=conf)
