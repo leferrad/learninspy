@@ -28,6 +28,6 @@ Run ``nosetests test/`` from the download directory.
 ### Important links
 * Official repository of source: https://github.com/leferrad/learninspy/
 * Documentation: http://learninspy.readthedocs.io/ (still in development)
-* Contact: ljferrado@gmail.com
+* Contact: ljferrado@gmail.com (Leandro Ferrado)
 
 > DISCLAIMER: Documentation stuff **is in Spanish** due to an agreed scope.
