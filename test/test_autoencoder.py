@@ -49,7 +49,7 @@ class TestAutoEncoder(object):
                                     keep_best=True, reproducible=True)
         return hits_valid
 
-    def test_fitting(self, opt_params=None, stops=None, mini_batch=30, parallelism=2):
+    def test_fitting(self, opt_params=None, stops=None, mini_batch=30, parallelism=1):
         hits_valid = self._fit(opt_params=opt_params, stops=stops, mini_batch=mini_batch, parallelism=parallelism)
         logger.info("Asegurando salidas correctas...")
         assert hits_valid
@@ -57,9 +57,9 @@ class TestAutoEncoder(object):
         assert hits_test > 0.3
         logger.info("OK")
 
-
+"""
 test_ae = TestAutoEncoder()
 test_ae.test_fitting()
-
+"""
 
 
