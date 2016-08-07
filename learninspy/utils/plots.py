@@ -162,3 +162,24 @@ def plot_activations(params):
         ax_d_act.plot(x_axis, d_act)
     plt.show()
     return
+
+
+def plot_fitting(network, show=True):
+    """
+
+    :param network:
+    :return:
+    """
+    x = network.epochs
+    y_train = network.hits_train
+    y_valid = network.hits_valid
+    ax = plt.subplot()
+    ax.set_title("Ajuste de la red durante entrenamiento", color='b')
+    plt.setp(ax, xlabel='Epochs', ylabel='Hits')
+    plt.xlim([x[0] - 1, x[-1] + 1])
+    plt.ylim([0, 1])
+    ax.plot(x, y_train, 'bs-', label='Train')
+    ax.plot(x, y_valid, 'g^-', label='Valid')
+    ax.legend(loc='upper left', shadow=True, fancybox=True)
+    if show is True:
+        plt.show()
