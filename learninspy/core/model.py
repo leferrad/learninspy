@@ -384,8 +384,9 @@ class NeuralNetwork(object):
             # Me aseguro que la capa de salida sea acorde al problema en cuestion (dado por flag params.classification)
             self.__assert_type_outputlayer()
         self.num_layers = len(self.list_layers)
-        self.hits_train = 0.0
-        self.hits_valid = 0.0
+        self.hits_train = []
+        self.hits_valid = []
+        self.epochs = []
         #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
         #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
 
@@ -555,7 +556,11 @@ class NeuralNetwork(object):
         return x
 
     def check_stop(self, epochs, criterions, check_all=False):
-        results = {'hits': self.hits_valid,
+        if len(self.hits_valid) == 0:
+            hits = 0.0
+        else:
+            hits = self.hits_valid[-1]
+        results = {'hits': hits,
                    'iterations': epochs}
         if check_all is True:
             stop = all(c(results) for c in criterions)
@@ -611,7 +616,6 @@ class NeuralNetwork(object):
             ret = hits
         return ret
 
-    # TODO: hacer privado este metodo (_train) ya que no tendria que ser accedido desde afuera (por train_bc)
     def _train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None, reproducible=False, evaluate=True):
         """
 
@@ -690,15 +694,21 @@ class NeuralNetwork(object):
         train = sc.broadcast(train)
         # TODO: ver si hay mas opciones que quedarse con el mejor
         if keep_best is True:
-            best_model = self.list_layers
+            best_epoch = 0
             best_valid = 0.0
-            best_train = 0.0
+            best_model = None
         if stops is None:
             logger.debug("Setting up stop criterions by default.")
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
+        # Inicializo variable a utilizar
         epoch = 0
         total_end = 0
+        hits_train = 0.0
+        # Reset de historial de train y valid (es preferible para ser consistente a lo largo de muchos fits)
+        self.hits_valid = []
+        self.hits_train = []
+        self.epochs = []
         while self.check_stop(epoch, stops) is False:
             beg = time.time()  # tic
             evaluate = epoch % valid_iters == 0
@@ -707,17 +717,18 @@ class NeuralNetwork(object):
             total_end += end  # Acumular total
             # Validacion cada ciertas iteraciones, dado por valid_iters
             if evaluate is True:
-                self.hits_train = hits_train
-                self.hits_valid = self.evaluate(valid)
+                self.hits_train.append(hits_train)
+                self.hits_valid.append(self.evaluate(valid, predictions=False))
+                self.epochs.append(epoch + 1)
                 logger.info("Epoca %i realizada en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
-                            epoch+1, end, self.hits_train, self.hits_valid)
+                            epoch+1, end, self.hits_train[-1], self.hits_valid[-1])
             else:
                 logger.info("Epoca %i realizada en %8.4fs.",
                             epoch+1, end)
             if keep_best is True and evaluate:
-                if self.hits_valid >= best_valid:
-                    best_valid = self.hits_valid
-                    best_train = self.hits_train
+                if self.hits_valid[-1] >= best_valid:
+                    best_epoch = epoch + 1
+                    best_valid = self.hits_valid[-1]
                     best_model = self.list_layers
             # Recoleccion de basura manual para borrar de memoria los objetos largos generados por los datasets
             # Ver http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection
@@ -726,14 +737,20 @@ class NeuralNetwork(object):
             epoch += 1
         if keep_best is True:
             self.list_layers = copy.deepcopy(best_model)
-            self.hits_train = best_train
-            self.hits_valid = best_valid
+            # Se truncan las siguientes listas hasta el indice correspondiente al best model
+            i = self.epochs.index(best_epoch)
+            self.epochs = self.epochs[:i]
+            self.hits_train = self.hits_train[:i]
+            self.hits_valid = self.hits_valid[:i]
         logger.debug("Unpersisting training dataset...")
         train.unpersist()
-        self.hits_valid = self.evaluate(valid)  # Validacion final
+        # Evaluación final
+        self.epochs.append(epoch + 1)
+        self.hits_train.append(hits_train)
+        self.hits_valid.append(self.evaluate(valid, predictions=False))
         logger.info("Ajuste total realizado en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
-                    total_end, self.hits_train, self.hits_valid)
-        return self.hits_valid
+                    total_end, self.hits_train[-1], self.hits_valid[-1])
+        return self.hits_valid[-1]
 
     def update(self, stepw, stepb):
         # Cada parametro step es una lista, para actualizar cada capa
@@ -741,6 +758,7 @@ class NeuralNetwork(object):
             self.list_layers[l].update(stepw[l], stepb[l])
 
     # TODO: redefinir todo esto! (actualizar)
+    """
     def check_gradients(self):
         fun_act = self.params.activation
         fun_loss = self.params.loss
@@ -763,20 +781,11 @@ class NeuralNetwork(object):
         #     print 'Gradiente de loss OK!'
         # else:
         #     raise Exception('El gradiente de las funcion de error se encuentra mal implementado!')
+    """
 
     def set_initial_rndstate(self):
         self.params.rng.set_state(self.rnd_state)
         return
-
-    def persist_layers(self):
-        logger.warning("Persisting RDDs from NeuralLayer objects")
-        for i in xrange(len(self.list_layers)):
-            self.list_layers[i].persist_layer()
-
-    def unpersist_layers(self):
-        logger.warning("Unpersisting RDDs from NeuralLayer objects")
-        for i in xrange(len(self.list_layers)):
-            self.list_layers[i].unpersist_layer()
 
     def save(self, name, path):
         file = open(path+name+'.lea', 'w')

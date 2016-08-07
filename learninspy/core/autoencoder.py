@@ -189,6 +189,7 @@ class StackedAutoencoder(NeuralNetwork):
                                    strength_l2=self.params.strength_l2)
         self.list_layers[-1] = NeuralNetwork(params=params)
 
+    # TODO: renombrar a 'pretrain' y que la función 'fit' llame a esta fun y luego a 'finetune'
     def fit(self, train, valid=None, valid_iters=10, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
             reproducible=False, keep_best=False):
         """
@@ -209,7 +210,7 @@ class StackedAutoencoder(NeuralNetwork):
         # Entreno Autoencoders
         train_ae = train
         valid_ae = valid
-        train = None  # No se usa más
+        train = None  # Dejo en None ya que no se usa más. TODO: está bien?
 
         labels_train = map(lambda lp: lp.label, train_ae)
         labels_valid = map(lambda lp: lp.label, valid_ae)
@@ -234,9 +235,11 @@ class StackedAutoencoder(NeuralNetwork):
         out_layer.fit(train_ae, valid_ae, valid_iters=valid_iters, stops=stops, mini_batch=mini_batch, parallelism=parallelism,
                       optimizer_params=optimizer_params, reproducible=reproducible, keep_best=keep_best)
         self.list_layers[-1] = copy.deepcopy(out_layer)
-
-        self.hits_valid = self.evaluate(valid)  # Validacion final
-        return self.hits_valid
+        # Evaluación final (copio resultados de última capa)
+        self.hits_train = out_layer.hits_train
+        self.hits_valid = out_layer.hits_valid
+        self.epochs = out_layer.epochs
+        return self.hits_valid[-1]
 
     def finetune(self, train, valid, valid_iters=10, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
                  reproducible=False, keep_best=False):
@@ -250,6 +253,10 @@ class StackedAutoencoder(NeuralNetwork):
             # Copio capa con ajuste fino al autoencoder
             self.list_layers[l].list_layers[0] = nn.list_layers[l]  # TODO mejorar esto, para que sea mas legible
         self.list_layers[-1].list_layers[0] = nn.list_layers[-1]
+        # Copio los resultados de evaluación también (sobrescribir en lugar de guardar dos listas más)
+        self.hits_train = nn.hits_train
+        self.hits_valid = nn.hits_valid
+        self.epochs = nn.epochs
         return hits_valid
 
     def predict(self, x):
