@@ -106,11 +106,8 @@ class AutoEncoder(NeuralNetwork):
         metrics = RegressionMetrics(zip(predicted, actual))
         if metric is None:
             metric = 'R2'
-        # TODO mejorar esto para que quede mas prolijo y generalizable
-        if metric == 'R2':
-            hits = metrics.r2()
-        elif metric == 'MSE':
-            hits = metrics.mse()
+        # Evaluo en base a la métrica elegida (key perteneciente al diccionario de metrics)
+        hits = metrics.evaluate(metric=metric)
 
         if predictions is True:  # Devuelvo ademas el vector de predicciones
             ret = hits, predicted

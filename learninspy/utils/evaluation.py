@@ -44,6 +44,8 @@ class ClassificationMetrics(object):
             self.fn.append(sum(map(lambda (p, a): p != c and a == c, predicted_actual)))
         self.n_classes = n_classes
         self.n_elem = len(predicted_actual)
+        self.metrics = {'F-measure': self.f_measure, 'Accuracy': self.accuracy,
+                        'Precision': self.precision, 'Recall': self.recall}
 
     def accuracy(self, label=None):
         """
@@ -128,12 +130,18 @@ class ClassificationMetrics(object):
                 conf_mat.append(sum(map(lambda (p, a): p == c, pre_act)))
         return np.array(conf_mat).reshape((self.n_classes, self.n_classes))
 
+    def evaluate(self, metric='F-measure', **kwargs):
+        assert metric in self.metrics.keys(), ValueError('No se encontró la métrica '+metric+'.')
+        return self.metrics[metric](**kwargs)
+
 
 class RegressionMetrics(object):
     def __init__(self, predicted_actual):
         self.predicted_actual = predicted_actual
         self.n_elem = len(predicted_actual)
         self.error = map(lambda (p, a): a - p, self.predicted_actual)
+        self.metrics = {'MSE': self.mse, 'RMSE': self.rmse, 'MAE': self.mae,
+                        'R2': self.r2, 'ExplVar': self.explained_variance}
 
     def mse(self):
         return np.sum(np.square(self.error)) / float(self.n_elem)
@@ -155,3 +163,7 @@ class RegressionMetrics(object):
         var_error = np.var(self.error)
         var_actual = np.var(map(lambda (p, a): a, self.predicted_actual))
         return 1 - float(var_error / var_actual)
+
+    def evaluate(self, metric='F-measure', **kwargs):
+        assert metric in self.metrics.keys(), ValueError('No se encontró la métrica '+metric+'.')
+        return self.metrics[metric](**kwargs)
