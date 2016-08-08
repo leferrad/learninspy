@@ -387,8 +387,6 @@ class NeuralNetwork(object):
         self.hits_train = []
         self.hits_valid = []
         self.epochs = []
-        #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
-        #self.check_gradients()  # Validar los gradientes de las funciones de activacion y error elegidas
 
     def __assert_type_outputlayer(self):
         if self.params.classification is True:  # Problema de clasificacion
@@ -568,11 +566,13 @@ class NeuralNetwork(object):
             stop = any(c(results) for c in criterions)
         return stop
 
-    def evaluate(self, data, predictions=False, metric=None):
+    def evaluate(self, data, predictions=False, measure=None):
         """
 
         :param data:
-        :param predictions: bool, for returning predictions too
+        :param predictions:
+        :param measure: string, key de alguna medida implementada en alguna de las métricas
+         diponibles en :mod:`~learninspy.utils.evaluation`.
         :return:
         """
         if isinstance(data, LabeledDataSet):
@@ -590,27 +590,31 @@ class NeuralNetwork(object):
             predicted = map(lambda p: float(np.argmax(p)), predicted)
             n_classes = self.params.units_layers[-1]  # La cant de unidades de la ult capa define la cant de clases
             metrics = ClassificationMetrics(zip(predicted, actual), n_classes=n_classes)
-            if metric is None:
-                metric = 'F-measure'
+            if measure is None:
+                measure = 'F-measure'
         else:
             metrics = RegressionMetrics(zip(predicted, actual))
-            if metric is None:
-                metric = 'R2'
-        # Evaluo en base a la métrica elegida (key perteneciente al diccionario de metrics)
-        hits = metrics.evaluate(metric=metric)
+            if measure is None:
+                measure = 'R2'
+        # Evaluo en base a la medida elegida (key perteneciente al dict 'metrics.measures')
+        hits = metrics.evaluate(measure=measure)
         if predictions is True:  # Devuelvo ademas el vector de predicciones
             ret = hits, predicted
         else:
             ret = hits
         return ret
 
-    def _train(self, train_bc, mini_batch=50, parallelism=4, optimizer_params=None, reproducible=False, evaluate=True):
+    def _train(self, train_bc, mini_batch=50, parallelism=4, measure=None, optimizer_params=None,
+               reproducible=False, evaluate=True):
         """
 
         :param train_bc:
         :param mini_batch:
         :param parallelism:
         :param optimizer_params:
+        :param measure:
+        :param reproducible:
+        :param evaluate:
         :return:
         """
         if parallelism == -1:
@@ -653,14 +657,14 @@ class NeuralNetwork(object):
         models_rdd.unpersist()
         if evaluate is True:
             # Evaluo tasa de aciertos de entrenamiento
-            hits = self.evaluate(train_bc.value)
+            hits = self.evaluate(train_bc.value, predictions=False, measure=measure)
         else:
             hits = None
         return hits
 
-    # TODO: crear un fit_params que abarque stops, parallelism, reproducible, keep_best, y valid_iters
-    def fit(self, train, valid=None, valid_iters=10, stops=None, mini_batch=50, parallelism=4, optimizer_params=None,
-            reproducible=False, keep_best=False):
+    # TODO: crear un fit_params que abarque stops, parallelism, reproducible, keep_best, valid_iters y measure
+    def fit(self, train, valid=None, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
+            stops=None, optimizer_params=None, reproducible=False, keep_best=False):
         """
 
         :param train: :class:`.LabeledDataSet` or list, conjunto de datos de entrenamiento.
@@ -669,10 +673,14 @@ class NeuralNetwork(object):
         :param parallelism: int, cantidad de modelos a optimizar concurrentemente.
             Si es -1, se setea como :math:`\\frac{N_{train}}{m}` donde *N* es la cantidad
             total de ejemplos de entrenamiento y *m* la cantidad de ejemplos para el mini-batch.
+        :param valid_iters:
+        :param measure:
         :param stops: list of Criterions.
         :param optimizer_params: :class:`.OptimizerParameters`
+        :param reproducible:
         :param keep_best: bool, indicando **True** si se desea mantener al final de la optimización
             el mejor modelo obtenido.
+        :return:
         """
         # Si es LabeledDataSet, lo colecto en forma de lista
         if isinstance(train, LabeledDataSet):
@@ -700,13 +708,14 @@ class NeuralNetwork(object):
         while self.check_stop(epoch, stops) is False:
             beg = time.time()  # tic
             evaluate = epoch % valid_iters == 0
-            hits_train = self._train(train, mini_batch, parallelism, optimizer_params, reproducible, evaluate=evaluate)
+            hits_train = self._train(train, mini_batch=mini_batch, parallelism=parallelism, measure=measure,
+                                     optimizer_params=optimizer_params, reproducible=reproducible, evaluate=evaluate)
             end = time.time() - beg  # toc
             total_end += end  # Acumular total
             # Validacion cada ciertas iteraciones, dado por valid_iters
             if evaluate is True:
                 self.hits_train.append(hits_train)
-                self.hits_valid.append(self.evaluate(valid, predictions=False))
+                self.hits_valid.append(self.evaluate(valid, predictions=False, measure=measure))
                 self.epochs.append(epoch + 1)
                 logger.info("Epoca %i realizada en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
                             epoch+1, end, self.hits_train[-1], self.hits_valid[-1])
@@ -735,7 +744,7 @@ class NeuralNetwork(object):
         # Evaluación final
         self.epochs.append(epoch + 1)
         self.hits_train.append(hits_train)
-        self.hits_valid.append(self.evaluate(valid, predictions=False))
+        self.hits_valid.append(self.evaluate(valid, predictions=False, measure=measure))
         logger.info("Ajuste total realizado en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
                     total_end, self.hits_train[-1], self.hits_valid[-1])
         return self.hits_valid[-1]
