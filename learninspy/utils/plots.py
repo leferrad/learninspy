@@ -38,7 +38,7 @@ def plot_matrix(matrix, ax=None, values=True, show=True):
     # Matriz de confusion final normalizada (para pintar las celdas)
     normalized = map(lambda (row, tot): [r / (tot * 1.0) for r in row], zip(matrix, total_row))
 
-    res = ax.imshow(normalized, cmap=plt.get_cmap('jet'), interpolation='nearest', aspect='auto')  # Dibujo grilla con colores
+    res = ax.imshow(normalized, cmap=plt.get_cmap('YlGn'), interpolation='nearest', aspect='auto')  # Dibujo grilla con colores
 
     if values is True:
         # Agrego numeros en celdas
@@ -53,17 +53,18 @@ def plot_matrix(matrix, ax=None, values=True, show=True):
     return
 
 
-def plot_confusion_matrix(matrix):
+def plot_confusion_matrix(matrix, show=True):
     """
-    Ploteo de una matrix de confusión, realizada mediante :class:`.ClassificationMetrics`.
+    Ploteo de una matrix de confusión, realizada mediante la función
+    :func:`~learninspy.utils.evaluation.ClassificationMetrics.confusion_matrix`.
 
     :param matrix: numpy.array
     """
     m, n = matrix.shape
     fig, ax = plt.subplots()
-    ax.set_title('Confusion Matrix', color='b')
+    ax.set_title('Confusion Matrix', color='g')
     plt.setp(ax, xticks=range(n), yticks=range(m), xlabel='Actual', ylabel='Predicted')
-    plot_matrix(matrix, ax, values=True)
+    plot_matrix(matrix, ax, values=True, show=show)
 
 
 def plot_autoencoders(network):
