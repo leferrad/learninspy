@@ -24,9 +24,19 @@ learninspy.utils.evaluation
 ----------------------------------
 
 .. automodule:: learninspy.utils.evaluation
+
+Clasificación
+"""""""""""""
+
+.. autoclass:: ClassificationMetrics
     :members:
-    :undoc-members:
-    :show-inheritance:
+
+Regresión
+"""""""""
+
+.. autoclass:: RegressionMetrics
+    :members:
+
 
 learninspy.utils.feature
 -------------------------------
@@ -48,14 +58,6 @@ learninspy.utils.plots
 -----------------------------
 
 .. automodule:: learninspy.utils.plots
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-learninspy.utils.util
-----------------------------
-
-.. automodule:: learninspy.utils.util
     :members:
     :undoc-members:
     :show-inheritance:
