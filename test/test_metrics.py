@@ -53,6 +53,7 @@ def test_regression_metrics():
     assert np.allclose(metrics.explained_variance(), 0.9943620888461356, rtol=1e-4)
     assert np.allclose(metrics.rmse(), 0.0558249673027, rtol=1e-4)
     assert np.allclose(metrics.mae(), 5.01428880051, rtol=1e-4)
+    assert np.allclose(metrics.rmae(), 2.23926077099, rtol=1e-4)
     logger.info("OK")
 
 
