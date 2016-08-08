@@ -53,7 +53,7 @@ class TestAutoEncoder(object):
         hits_valid = self._fit(opt_params=opt_params, stops=stops, mini_batch=mini_batch, parallelism=parallelism)
         logger.info("Asegurando salidas correctas...")
         assert hits_valid > 0.8
-        hits_test = self.model.evaluate(self.test, predictions=False, metric='R2')
+        hits_test = self.model.evaluate(self.test, predictions=False, measure='R2')
         assert hits_test > 0.8
         logger.info("OK")
 
@@ -108,10 +108,10 @@ class TestStackedAutoEncoder(object):
     def test_fitting(self, opt_params=None, stops=None, mini_batch=30, parallelism=1):
         hits_valid_pretrain = self._fit(opt_params=opt_params, stops=stops,
                                         mini_batch=mini_batch, parallelism=parallelism)
-        hits_test_pretrain = self.model.evaluate(self.test, predictions=False, metric='F-measure')
+        hits_test_pretrain = self.model.evaluate(self.test, predictions=False, measure='F-measure')
         hits_valid_finetune = self._finetune(opt_params=opt_params, stops=stops,
                                              mini_batch=mini_batch, parallelism=parallelism)
-        hits_test_finetune = self.model.evaluate(self.test, predictions=False, metric='F-measure')
+        hits_test_finetune = self.model.evaluate(self.test, predictions=False, measure='F-measure')
         logger.info("Asegurando salidas correctas...")
         assert hits_valid_pretrain > 0.8
         assert hits_valid_finetune > 0.8
