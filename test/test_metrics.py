@@ -9,6 +9,7 @@ import numpy as np
 
 logger = get_logger(name=__name__)
 
+
 def test_classification_metrics():
     logger.info("Testeando métricas de evaluación para clasificación...")
     # Ejemplos para testear evaluación sobre 3 clases
