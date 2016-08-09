@@ -16,9 +16,45 @@ learninspy.utils.data
 ----------------------------
 
 .. automodule:: learninspy.utils.data
+
+Normalización de datos
+""""""""""""""""""""""
+
+.. autoclass:: StandardScaler
     :members:
-    :undoc-members:
     :show-inheritance:
+
+
+Conjuntos de datos etiquetados
+""""""""""""""""""""""""""""""
+
+.. autoclass:: LabeledDataSet
+    :show-inheritance:
+
+.. autoclass:: DistributedLabeledDataSet
+    :members:
+    :show-inheritance:
+
+.. autoclass:: LocalLabeledDataSet
+    :members:
+    :show-inheritance:
+
+
+Funciones
+"""""""""
+
+.. autofunction:: label_data
+.. autofunction:: label_to_vector
+.. autofunction:: split_balanced
+.. autofunction:: split_data
+.. autofunction:: subsample
+
+
+Datos de ejemplo
+"""""""""""""""""""
+
+.. autofunction:: load_iris
+.. autofunction:: load_mnist
 
 learninspy.utils.evaluation
 ----------------------------------

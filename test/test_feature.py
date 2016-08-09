@@ -19,7 +19,7 @@ def test_pca():
     features = map(lambda lp: lp.features, data)
     pca = PCA(features, threshold_k=0.99)
     assert pca.k == 2
-    transformed = pca.transform(k=3)
+    transformed = pca.transform(k=3, standarize=True, whitening=True)
     assert len(transformed[0]) == 3
 
     # Testeo de soporte para DataSets
@@ -27,7 +27,8 @@ def test_pca():
     pca_loc = PCA(local_data.features)
     distributed_data = DistributedLabeledDataSet(data)
     pca_dist = PCA(distributed_data.features.collect())
-    assert np.array_equiv(pca_loc.transform(k=3), pca_dist.transform(k=3))
+    assert np.array_equiv(pca_loc.transform(k=3, data=local_data).features,
+                          pca_dist.transform(k=3, data=distributed_data).features.collect())
 
 
 def test_stdscaler():

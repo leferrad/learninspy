@@ -81,7 +81,7 @@ class PCA(object):
             data = self.x
         label = None
         type_data = type(data)  # Para saber si la entrada es un dataset, y debo conservar sus labels
-        if type_data is LabeledDataSet:
+        if type_data is DistributedLabeledDataSet:
             label = data.labels.collect()  # Guardo labels para concatenarlos al final
             data = np.array(data.features.collect())
         elif type_data is LocalLabeledDataSet:
@@ -93,7 +93,7 @@ class PCA(object):
         xrot = np.dot(data, self.u[:, :self.k])
         if whitening is True:
             xrot = xrot / np.sqrt(self.s[:self.k] + self.whitening_offset)
-        if type_data is LabeledDataSet or type_data is LocalLabeledDataSet:
+        if type_data is DistributedLabeledDataSet or type_data is LocalLabeledDataSet:
             xrot = type_data(zip(label, xrot.tolist()))
         return xrot
 
