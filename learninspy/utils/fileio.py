@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Módulo destinado al tratamiento de archivos y parseo de datos,
+y además se provee el logger utilizado por Learninspy en su ejecución.
+"""
+
 __author__ = 'leferrad'
 
-# Librerias internas
 from learninspy.context import sc
 
-# Librerias de Python
 import re
 import logging
 import csv
@@ -18,7 +21,7 @@ def parse_point(line, delimiter=r'[ ,|;"]+'):
     Convierte un string en list, separando elementos mediante la aparición un caracter delimitador entre ellos.
 
     :param line: string, contenedor de los caracteres que se desea separar.
-    :param delimiter: string, contenedor de los posibles caracteres delimitadores.
+    :param delimiter: string, donde se indican los posibles caracteres delimitadores.
     :return: list con elementos deseados.
     """
     # TODO dar posibilidad de cambiar delimiter
@@ -26,15 +29,14 @@ def parse_point(line, delimiter=r'[ ,|;"]+'):
     return values
 
 
-def label_point(row, pos_label=-1):
-    label = row[pos_label]
-    row.pop(pos_label)
-    features = row
-    return label, features
-
-
 # Adaptación de http://code.activestate.com/recipes/173220/
 def is_text_file(path):
+    """
+    Función utilizada para reconocer si un archivo es probablemente de texto o del tipo binario.
+
+    :param path: string, path al archivo a analizar.
+    :return: bool. *True* si es un archivo de texto, *False* si es binario.
+    """
     text_characters = "".join(map(chr, range(32, 127)) + list("\n\r\t\b"))
     _null_trans = string.maketrans("", "")
     s = open(path).read(512)
@@ -55,12 +57,34 @@ def is_text_file(path):
     return condition
 
 
+def _label_point(row, pos_label=-1):
+    """
+    Función interna para dividir una línea en *label* y *features*.
+
+    :param row: list
+    :param pos_label: int, posición donde se ubica el *label*. Si es -1, se indica la última posición de la lista.
+    :return: tuple de (label, features)
+    """
+    label = row[pos_label]
+    row.pop(pos_label)
+    features = row
+    return label, features
+
+
 # Loader
 def load_file_spark(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
+    """
+    Carga de un archivo de datos mediante Apache Spark en RDD.
+
+    :param path: string, path al archivo.
+    :param pos_label: int, posición donde se ubica el *label* para cada línea. Si es -1, se indica la última posición.
+    :param delimiter: string, donde se indican los posibles caracteres delimitadores.
+    :return: **pyspark.rdd.RDD** de LabeledPoints.
+    """
     if is_text_file(path):
         dataset = (sc.textFile(path)
                      .map(lambda p: parse_point(p, delimiter))
-                     .map(lambda row: label_point(row, pos_label))
+                     .map(lambda row: _label_point(row, pos_label))
                    )
     else:
         dataset = sc.binaryFiles(path)  # TODO: mejorar esto
@@ -68,6 +92,13 @@ def load_file_spark(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
 
 
 def load_file_local(path, pos_label=-1):
+    """
+    Carga de un archivo de datos en forma local.
+
+    :param path: string, path al archivo.
+    :param pos_label: int, posición donde se ubica el *label* para cada línea. Si es -1, se indica la última posición.
+    :return: list de LabeledPoints.
+    """
     if is_text_file(path):
         with open(path, 'rb') as f:
             # Uso de Sniffer para deducir el formato del archivo CSV
@@ -75,7 +106,7 @@ def load_file_local(path, pos_label=-1):
             f.seek(0)
             reader = csv.reader(f, dialect)
             dataset = [x for x in reader]
-            dataset = map(lambda row: label_point(row, pos_label), dataset)
+            dataset = map(lambda row: _label_point(row, pos_label), dataset)
     else:
         dataset = None  # TODO: permitir manejo de binarios
     return dataset
@@ -84,14 +115,35 @@ def load_file_local(path, pos_label=-1):
 # Saver
 # TODO: hacer estas funciones
 def save_file_spark(data, path):
-    pass
+    """
+    .. warning:: No se encuentra implementada.
+
+    :param data:
+    :param path:
+    :return:
+    """
+    raise NotImplementedError
 
 
 def save_file_local(data, path):
-    pass
+    """
+    .. warning:: No se encuentra implementada.
+
+    :param data:
+    :param path:
+    :return:
+    """
+    raise NotImplementedError
 
 
 def get_logger(name='learninspy', level=logging.INFO):
+    """
+    Función para obtener el logger de Learninspy.
+
+    :param name: string
+    :param level: instancias del *logging* de Python (e.g. logging.INFO, logging.DEBUG)
+    :return: logging.Logger
+    """
     logger = logging.getLogger(name)
     logger.setLevel(level)
 

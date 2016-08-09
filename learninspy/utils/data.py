@@ -1,23 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Módulo destinado al tratamiento de datos, en la construcción y procesamiento de datasets."""
+
 __author__ = 'leferrad'
 
-# Dependencias externas
+from learninspy.utils import fileio
+from learninspy.context import sc
+from learninspy.utils.asserts import assert_features_label
+
 import numpy as np
 import pyspark.rdd
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.mllib.feature import StandardScaler as StdSc
 
-# Dependencias internas
-import learninspy.utils.fileio as fileio
-from learninspy.context import sc
-from learninspy.utils.asserts import assert_features_label
-
-# Librerias de Python
+import cPickle
+import gzip
 import random
+import os
 from operator import add
 
+
+# -- Normalización de datos --
 
 class StandardScaler(object):
     """
@@ -50,7 +54,7 @@ class StandardScaler(object):
         """
         Computa la media y desvio estándar de un conjunto de datos, las cuales se usarán para estandarizar datos.
 
-        :param dataset: pyspark.rdd.RDD o numpy.array o :class:`.LabeledDataSet`
+        :param dataset: pyspark.rdd.RDD o numpy.ndarray o :class:`.LabeledDataSet`
 
         """
         if isinstance(dataset, LabeledDataSet):
@@ -71,7 +75,7 @@ class StandardScaler(object):
         """
         Aplica estandarización sobre **dataset**.
 
-        :param dataset: pyspark.rdd.RDD o numpy.array o :class:`.LabeledDataSet`
+        :param dataset: pyspark.rdd.RDD o numpy.ndarray o :class:`.LabeledDataSet`
 
         """
         labels = None  # Por si el dataset viene con labels
@@ -97,34 +101,38 @@ class StandardScaler(object):
                 dataset = LocalLabeledDataSet(zip(labels, dataset))
         return dataset
 
+# -- Clases para datasets --
 
 class LabeledDataSet(object):
+    """
+    Clase base para construcción de datasets.
+    """
 
     @property
     def features(self):
-        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+        raise NotImplementedError("Definicion en subclases Distributed o Local")
 
     @property
     def labels(self):
-        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+        raise NotImplementedError("Definicion en subclases Distributed o Local")
 
     def collect(self):
-        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+        raise NotImplementedError("Definicion en subclases Distributed o Local")
 
     @property
     def shape(self):
-        raise NotImplementedError, "Definicion en subclases de Distributed o Local"
+        raise NotImplementedError("Definicion en subclases Distributed o Local")
 
 
 class DistributedLabeledDataSet(LabeledDataSet):
     """
     Clase útil para manejar un conjunto etiquetado de datos. Dicho conjunto se almacena
     como un `pyspark.rdd.RDD <https://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.RDD>`_
-    donde cada entrada posee una lista de **features** y su correspondiente **label**.
+    donde cada entrada posee un *pyspark.mllib.regression.LabeledPoint*.
     Se proveen funcionalidades para manejo de archivos, así como para partir el conjunto de datos
     (e.g. train, valid y test).
 
-    :param data: list o numpy.array o pyspark.rdd.RDD, o bien *None* si se desea iniciar un conjunto vacío.
+    :param data: list o numpy.ndarray o pyspark.rdd.RDD, o bien *None* si se desea iniciar un conjunto vacío.
     """
     @assert_features_label
     def __init__(self, data=None):
@@ -181,6 +189,7 @@ class DistributedLabeledDataSet(LabeledDataSet):
         """
         Guardar conjunto de datos en archivo de texto.
 
+        .. warning:: No se encuentra implementada.
 
         :param path: string, indicando la ruta en donde se guardan los datos.
         """
@@ -205,6 +214,11 @@ class DistributedLabeledDataSet(LabeledDataSet):
         """
         Particionamiento del conjunto de datos, en base a las proporciones dadas por *fractions*.
         Se hace mediante el uso de la función :func:`~learninspy.utils.data.split_data`.
+
+        :param fractions: list de floats, indicando la fracción del total a tomar por cada dataset (deben sumar 1).
+        :param seed: int, semilla a utilizar en el módulo *random* que hace el split.
+        :param balanced: bool, si es *True* se recurre a la función :func:`~learninspy.utils.data.split_balanced`.
+        :return: list de conjuntos :class:`learninspy.utils.data.DistributedLabeledDataSet`.
         """
         if balanced is True:
             sets = split_balanced(self.data, fractions, seed)
@@ -215,12 +229,10 @@ class DistributedLabeledDataSet(LabeledDataSet):
 
     def collect(self, unpersist=True):
         """
-        Devuelve el conjunto de datos como lista, mediante la aplicación del método *collect()* sobre un
-        `pyspark.rdd.RDD <https://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.RDD>`_.
+        Devuelve el conjunto de datos como lista, mediante la aplicación del método *collect()* sobre el RDD.
 
-        :param unpersist: bool, indicando si además se quiere llamar al método *unpersist()* del **pyspark.rdd.RDD** alojado.
+        :param unpersist: bool, indicando si además se quiere llamar al método *unpersist()* del RDD alojado.
         :return: list
-
         """
         data_list = self.data.collect()
         if unpersist is True:
@@ -245,7 +257,13 @@ class DistributedLabeledDataSet(LabeledDataSet):
 
 class LocalLabeledDataSet(LabeledDataSet):
     """
-    TBC
+    Clase útil para manejar un conjunto etiquetado de datos. Dicho conjunto se almacena
+    de manera local mediante una lista
+    donde cada entrada posee un *pyspark.mllib.regression.LabeledPoint*.
+    Se proveen funcionalidades para manejo de archivos, así como para partir el conjunto de datos
+    (e.g. train, valid y test).
+
+    :param data: list o numpy.ndarray o pyspark.rdd.RDD, o bien *None* si se desea iniciar un conjunto vacío.
     """
     @assert_features_label
     def __init__(self, data=None):
@@ -303,6 +321,7 @@ class LocalLabeledDataSet(LabeledDataSet):
         """
         Guardar conjunto de datos en archivo de texto.
 
+        .. warning:: No se encuentra implementada.
 
         :param path: string, indicando la ruta en donde se guardan los datos.
         """
@@ -327,6 +346,11 @@ class LocalLabeledDataSet(LabeledDataSet):
         """
         Particionamiento del conjunto de datos, en base a las proporciones dadas por *fractions*.
         Se hace mediante el uso de la función :func:`~learninspy.utils.data.split_data`.
+
+        :param fractions: list de floats, indicando la fracción del total a tomar por cada dataset (deben sumar 1).
+        :param seed: int, semilla a utilizar en el módulo *random* que hace el split.
+        :param balanced: bool, si es *True* se recurre a la función :func:`~learninspy.utils.data.split_balanced`.
+        :return: list de conjuntos :class:`learninspy.utils.data.LocalLabeledDataSet`.
         """
         if balanced is True:
             sets = split_balanced(self.data, fractions, seed)
@@ -337,7 +361,8 @@ class LocalLabeledDataSet(LabeledDataSet):
 
     def collect(self):
         """
-        Función que retorna el conjunto de datos como una lista. Creada para lograr compatibilidad con LabeledDataSet.
+        Función que retorna el conjunto de datos como una lista.
+        Creada para lograr compatibilidad con DistributedLabeledDataSet.
         """
         return self.data
 
@@ -356,6 +381,8 @@ class LocalLabeledDataSet(LabeledDataSet):
         return shape
 
 
+# -- Funciones --
+
 def label_to_vector(label, n_classes):
     """
     Función para mapear una etiqueta numérica a un vector de dimensión igual a **n_classes**,
@@ -363,7 +390,7 @@ def label_to_vector(label, n_classes):
 
     :param label: int, pertenenciente al rango [0, *n_classes* - 1].
     :param n_classes: int, correspondiente a la cantidad de clases posibles para *label*.
-    :return: numpy.array
+    :return: numpy.ndarray
     """
     lab = np.zeros((n_classes, 1), dtype=np.int8)
     label = int(label)
@@ -376,10 +403,10 @@ def subsample(data, size, balanced=True, seed=123):
     """
     Muestreo de data, con resultado balanceado por clases si se lo pide.
 
-    :param data: list of LabeledPoint
+    :param data: list de LabeledPoint.
     :param size: int, tamaño del muestreo.
     :param seed: int, semilla del random.
-    :return: list
+    :return: list de LabeledPoint.
 
     """
     random.seed(seed)
@@ -401,9 +428,9 @@ def split_data(data, fractions, seed=123):
     """
     Split data en sets en base a fractions.
 
-    :param data: list o np.array
-    :param fractions: list [f_train, f_valid, f_test]
-    :param seed: int, semilla para el random
+    :param data: list o numpy.ndarray o pyspark.rdd.RDD.
+    :param fractions: list de floats, indicando la fracción del total a tomar por cada dataset (deben sumar 1).
+    :param seed: int, semilla a utilizar en el módulo *random* que hace el split.
     :return: list de conjuntos (e.g. train, valid, test)
     """
     # Verifico que fractions sea correcto
@@ -425,6 +452,17 @@ def split_data(data, fractions, seed=123):
 
 
 def split_balanced(data, fractions, seed=123):
+    """
+    Split data en sets en base a fractions, pero de forma balanceada por clases (fracción aplicada a cada clase).
+
+    .. note:: Se infiere la cantidad total de clases en base a los labels en 'data'.
+
+    :param data: list o numpy.ndarray o pyspark.rdd.RDD.
+    :param fractions: list de floats, indicando la fracción del total a tomar por cada dataset (deben sumar 1).
+    :param seed: int, semilla a utilizar en el módulo *random* que hace el split.
+    :return: list de conjuntos (e.g. train, valid, test)
+    """
+
     # 'fractions' es aplicado a cada conjunto formado por c/ clase
     # 'n' indica la cantidad de clases
     # Verifico que fractions sea correcto
@@ -443,18 +481,51 @@ def split_balanced(data, fractions, seed=123):
     return sets
 
 
-def label_data(data, label):
+def label_data(data, labels):
     """
     Función para etiquetar cada elemento de **data** con su correspondiente de **label**,
     formando una list de elementos
     `pyspark.mllib.regression.LabeledPoint
     <https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#pyspark.mllib.regression.LabeledPoint>`_.
 
-    :param data: list o numpy.array, correspondiente a **features**
-    :param label: list o numpy.array, correspondiente a **labels**
+    :param data: list o numpy.ndarray, correspondiente a **features**
+    :param labels: list o numpy.ndarray, correspondiente a **labels**
     :return: list
     """
     # TODO: si label es int, dice la posicion de data donde esta la columna de labels
-    labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, label))
+    labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, labels))
     return labeled_data
 
+
+# -- Datos de ejemplo --
+
+def load_iris():
+    """
+    Carga del conjunto de datos de Iris.
+
+    :return: list de LabeledPoints.
+    """
+    path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'examples/datasets/iris.csv')
+    data = fileio.load_file_local(path)
+    data = map(lambda (l, f): LabeledPoint(l, f), data)
+    return data
+
+
+def load_mnist():
+    """
+    Carga del conjunto de datos original de MNIST.
+
+    :return: tuple de lists con LabeledPoints, correspondientes a los conjuntos de train, valid y test respectivamente.
+    """
+    # Datos y procedim extraídos de http://deeplearning.net/tutorial/gettingstarted.html
+    path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'examples/datasets/mnist.pkl.gz')
+    f = gzip.open(path, 'rb')
+    train, valid, test = cPickle.load(f)
+    f.close()
+
+    # Etiqueto datos en LabeledPoints
+    train = label_data(data=train[0], labels=train[1])
+    valid = label_data(data=valid[0], labels=valid[1])
+    test = label_data(data=test[0], labels=test[1])
+
+    return train, valid, test

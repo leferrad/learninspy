@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""Módulo para llevar a cabo las visualizaciones en Learninspy."""
+
 __author__ = 'leferrad'
 
-# Dependencias externas
+from learninspy.core.activations import fun_activation, fun_activation_d
+from learninspy.core.autoencoder import StackedAutoencoder
+
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
-
-# Librerias internas
-from learninspy.core.activations import fun_activation, fun_activation_d
-from learninspy.core.autoencoder import StackedAutoencoder
 
 
 def plot_matrix(matrix, ax=None, values=True, show=True):
@@ -167,9 +167,11 @@ def plot_activations(params):
 
 def plot_fitting(network, show=True):
     """
+    Ploteo del ajuste obtenido en el entrenamiento de un modelo, utilizando la información
+    almacenada en dicha instancia.
 
-    :param network:
-    :return:
+    :param network: red neuronal del tipo :class:`.NeuralNetwork`.
+    :param show: bool, para indicar si se debe imprimir inmediatamente en pantalla mediante **matplotlib.pyplot.show()**
     """
     x = network.epochs
     y_train = network.hits_train
