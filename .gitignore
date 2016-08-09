@@ -43,3 +43,6 @@
 # Spark stuff
 /sparkdata
 
+# Sphinx build
+/docs/build
+
