@@ -15,6 +15,7 @@ from learninspy.utils.fileio import get_logger
 
 import copy
 import os
+from math import sqrt
 
 import numpy as np
 
@@ -179,8 +180,8 @@ class Adadelta(Optimizer):
                     self.gms_w[l] = (self.gms_w[l] * d) + (nabla_w[l] ** 2) * (1 - d)
                     self.gms_b[l] = (self.gms_b[l] * d) + (nabla_b[l] ** 2) * (1 - d)
                     # 3) Computar actualizaciones
-                    step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
-                    step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
+                    step2w = sqrt(self.sms_w[l] + o) / sqrt(self.gms_w[l] + o) * nabla_w[l] * sr
+                    step2b = sqrt(self.sms_b[l] + o)/ sqrt(self.gms_b[l] + o) * nabla_b[l] * sr
                     # 4) Acumular actualizaciones
                     self.step_w[l] = step1w + step2w
                     self.step_b[l] = step1b + step2b
@@ -191,7 +192,7 @@ class Adadelta(Optimizer):
                 self._update()
             # --- Evaluo modelo optimizado---
             data = copy.deepcopy(self.data)
-            self.hits = self.model.evaluate(data)
+            self.hits = self.model.evaluate(data, predictions=False)
             self.n_iter += 1
             yield self.check_stop()
 
