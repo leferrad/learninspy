@@ -15,7 +15,6 @@ from learninspy.utils.fileio import get_logger
 
 import copy
 import os
-from math import sqrt
 
 import numpy as np
 
@@ -180,8 +179,8 @@ class Adadelta(Optimizer):
                     self.gms_w[l] = (self.gms_w[l] * d) + (nabla_w[l] ** 2) * (1 - d)
                     self.gms_b[l] = (self.gms_b[l] * d) + (nabla_b[l] ** 2) * (1 - d)
                     # 3) Computar actualizaciones
-                    step2w = sqrt(self.sms_w[l] + o) / sqrt(self.gms_w[l] + o) * nabla_w[l] * sr
-                    step2b = sqrt(self.sms_b[l] + o)/ sqrt(self.gms_b[l] + o) * nabla_b[l] * sr
+                    step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
+                    step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
                     # 4) Acumular actualizaciones
                     self.step_w[l] = step1w + step2w
                     self.step_b[l] = step1b + step2b
@@ -268,8 +267,29 @@ class GD(Optimizer):
 
 Minimizer = {'Adadelta': Adadelta, 'GD': GD}
 
-# Funciones usadas en model
 
+class FitParameters:
+    def __init__(self, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
+                 stops=None, optimizer_params=None, reproducible=False, keep_best=False):
+        self.mini_batch = mini_batch
+        self.parallelism = parallelism
+        self.valid_iters = valid_iters
+        self.measure = measure  # TODO: ver si ya ponerle algo por defecto
+        if stops is None:
+            stops = [criterion['MaxIterations'](5),
+                     criterion['AchieveTolerance'](0.95, key='hits')]
+        self.stops = stops
+        if optimizer_params is None:
+            optimizer_params = OptimizerParameters()
+        self.optimizer_params = optimizer_params
+        self.reproducible = reproducible
+        self.keep_best = keep_best
+
+    def __str__(self):  # TODO: definir esto
+        pass
+
+
+# Funciones usadas en model
 
 def optimize(model, data, params=None, mini_batch=50, seed=123):
     """
