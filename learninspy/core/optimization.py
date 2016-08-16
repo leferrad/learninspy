@@ -53,7 +53,7 @@ class OptimizerParameters:
     def __init__(self, algorithm='Adadelta', options=None, stops=None, merge_criter='w_avg', merge_goal='hits'):
         if options is None:  # Agrego valores por defecto
             if algorithm == 'Adadelta':
-                options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-6}
+                options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
             elif algorithm == 'GD':
                 options = {'step-rate': 0.1, 'momentum': 0.0, 'momentum_type': 'standard'}  # TODO mejorar pq no funca
         self.options = options
@@ -168,13 +168,45 @@ class Adadelta(Optimizer):
             m = self.parameters.options['momentum']
             sr = self.parameters.options['step-rate']
             # --- Entrenamiento ---
-            for lp in self.data:  # Por cada LabeledPoint del conj de datos
-                # 1) Computar el gradiente
+            # 1) Computar el gradiente
+            cost, (nabla_w, nabla_b) = self.model.cost_overall(self.data)
+            for l in xrange(self.num_layers):
+                # ADICIONAL: Aplico momentum y step-rate (ANTE LA DUDA, COMENTAR ESTAS LINEAS)
+                step1w = self.step_w[l] * m
+                step1b = self.step_b[l] * m
+                # 2) Acumular el gradiente
+                self.gms_w[l] = (self.gms_w[l] * d) + (nabla_w[l] ** 2) * (1 - d)
+                self.gms_b[l] = (self.gms_b[l] * d) + (nabla_b[l] ** 2) * (1 - d)
+                # 3) Computar actualizaciones
+                step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
+                step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
+                # 4) Acumular actualizaciones
+                self.step_w[l] = step2w - step1w
+                self.step_b[l] = step2b - step1b
+                self.sms_w[l] = (self.sms_w[l] * d) + (self.step_w[l] ** 2) * (1 - d)
+                self.sms_b[l] = (self.sms_b[l] * d) + (self.step_b[l] ** 2) * (1 - d)
+            # 5) Aplicar actualizaciones a todas las capas
+            self.cost = cost
+            self._update()
+            # --- Evaluo modelo optimizado---
+            data = copy.deepcopy(self.data)
+            self.hits = self.model.evaluate(data, predictions=False)
+            self.n_iter += 1
+            yield self.check_stop()
+
+    def _iterate2(self):
+        while self.check_stop() is False:
+            d = self.parameters.options['decay']
+            o = self.parameters.options['offset']  # offset
+            m = self.parameters.options['momentum']
+            sr = self.parameters.options['step-rate']
+            # --- Entrenamiento ---
+            for lp in self.data:
                 cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
                 for l in xrange(self.num_layers):
                     # ADICIONAL: Aplico momentum y step-rate (ANTE LA DUDA, COMENTAR ESTAS LINEAS)
-                    step1w = self.step_w[l] * m * sr
-                    step1b = self.step_b[l] * m * sr
+                    step1w = self.step_w[l] * m
+                    step1b = self.step_b[l] * m
                     # 2) Acumular el gradiente
                     self.gms_w[l] = (self.gms_w[l] * d) + (nabla_w[l] ** 2) * (1 - d)
                     self.gms_b[l] = (self.gms_b[l] * d) + (nabla_b[l] ** 2) * (1 - d)
@@ -182,8 +214,8 @@ class Adadelta(Optimizer):
                     step2w = ((self.sms_w[l] + o) ** 0.5) / ((self.gms_w[l] + o) ** 0.5) * nabla_w[l] * sr
                     step2b = ((self.sms_b[l] + o) ** 0.5) / ((self.gms_b[l] + o) ** 0.5) * nabla_b[l] * sr
                     # 4) Acumular actualizaciones
-                    self.step_w[l] = step1w + step2w
-                    self.step_b[l] = step1b + step2b
+                    self.step_w[l] = step2w - step1w
+                    self.step_b[l] = step2b - step1b
                     self.sms_w[l] = (self.sms_w[l] * d) + (self.step_w[l] ** 2) * (1 - d)
                     self.sms_b[l] = (self.sms_b[l] * d) + (self.step_b[l] ** 2) * (1 - d)
                 # 5) Aplicar actualizaciones a todas las capas
@@ -222,7 +254,7 @@ class GD(Optimizer):
             self.step_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
             self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
-    def _iterate(self):
+    def _iterate2(self):
         while self.check_stop() is False:
             m = self.parameters.options['momentum']
             sr = self.parameters.options['step-rate']
@@ -232,31 +264,27 @@ class GD(Optimizer):
                     # Computar el gradiente
                     cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
                     for l in xrange(self.num_layers):
+                        self.step_w[l] = nabla_w[l] * sr - self.step_w[l] * m
+                        self.step_b[l] = nabla_b[l] * sr - self.step_b[l] * m
+                    self._update()
+                elif self.parameters.options['momentum_type'] == 'nesterov':
+                    # Gradiente descendiente con momentum Nesterov
+
+                    # Momentum sobre el step anterior
+                    big_jump_w = map(lambda st_w: st_w * -m, self.step_w)
+                    big_jump_b = map(lambda st_b: st_b * -m, self.step_b)
+
+                    #  Aplico primera correccion sobre una copia del modelo (no se modifica el actual)
+                    model_mom = copy.deepcopy(self.model).update(big_jump_w, big_jump_b)
+
+                    # Computo costo y gradientes sobre el modelo anterior
+                    cost, (nabla_w, nabla_b) = model_mom.cost(lp.features, lp.label)
+
+                    # Correciones finales sobre el modelo actual
+                    for l in xrange(self.num_layers):
                         self.step_w[l] = nabla_w[l] * sr + self.step_w[l] * m
                         self.step_b[l] = nabla_b[l] * sr + self.step_b[l] * m
                     self._update()
-                elif self.parameters.options['momentum_type'] == 'nesterov':
-                    raise NotImplementedError("NO ANDA BIEN!!")  # Come mucha memoria, y no se pq todavia
-                    big_jump_w = [st_w * m for st_w in self.step_w]
-                    big_jump_b = [st_b * m for st_b in self.step_b]
-                    #  Aplico primera correccion
-                    self.step_w = big_jump_w
-                    self.step_b = big_jump_b
-                    self._update()
-
-                    # Computar el gradiente
-                    cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
-
-                    correction_w = [n_w * sr for n_w in nabla_w]
-                    correction_b = [n_b * sr for n_b in nabla_b]
-                    #  Aplico segunda correccion
-                    self.step_w = correction_w
-                    self.step_b = correction_b
-                    self._update()
-
-                    #  Acumulo correcciones ya aplicadas
-                    self.step_w = big_jump_w + correction_w
-                    self.step_b = big_jump_b + correction_b
 
                 self.cost = cost
             # --- Evaluo modelo optimizado ---
@@ -264,6 +292,46 @@ class GD(Optimizer):
             self.hits = self.model.evaluate(data)
             self.n_iter += 1
             yield self.check_stop()
+
+    def _iterate(self):
+        while self.check_stop() is False:
+            m = self.parameters.options['momentum']
+            sr = self.parameters.options['step-rate']
+            # --- Entrenamiento ---
+            if self.parameters.options['momentum_type'] == 'standard':
+                # Gradiente descendiente clásico
+                cost, (nabla_w, nabla_b) = self.model.cost_overall(self.data)
+                for l in xrange(self.num_layers):
+                    self.step_w[l] = nabla_w[l] * sr - self.step_w[l] * m
+                    self.step_b[l] = nabla_b[l] * sr - self.step_b[l] * m
+                self._update()
+
+            elif self.parameters.options['momentum_type'] == 'nesterov':
+                # Gradiente descendiente con momentum Nesterov
+
+                # Momentum sobre el step anterior
+                big_jump_w = map(lambda st_w: st_w * -m, self.step_w)
+                big_jump_b = map(lambda st_b: st_b * -m, self.step_b)
+
+                #  Aplico primera correccion sobre una copia del modelo (no se modifica el actual)
+                model_mom = copy.deepcopy(self.model).update(big_jump_w, big_jump_b)
+
+                # Computo costo y gradientes sobre el modelo anterior
+                cost, (nabla_w, nabla_b) = model_mom.cost_overall(self.data)
+
+                # Correciones finales sobre el modelo actual
+                for l in xrange(self.num_layers):
+                    self.step_w[l] = nabla_w[l] * sr + self.step_w[l] * m
+                    self.step_b[l] = nabla_b[l] * sr + self.step_b[l] * m
+                self._update()
+
+            self.cost = cost
+            # --- Evaluo modelo optimizado ---
+            data = copy.deepcopy(self.data)
+            self.hits = self.model.evaluate(data)
+            self.n_iter += 1
+            yield self.check_stop()
+
 
 Minimizer = {'Adadelta': Adadelta, 'GD': GD}
 

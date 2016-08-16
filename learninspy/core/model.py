@@ -12,7 +12,6 @@ __author__ = 'leferrad'
 from learninspy.core import activations as act, loss, optimization as opt
 from learninspy.core.stops import criterion
 from learninspy.core.neurons import LocalNeurons
-from learninspy.utils import checks
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.utils.data import LabeledDataSet, DistributedLabeledDataSet, label_to_vector
 from learninspy.context import sc
@@ -437,9 +436,8 @@ class NeuralNetwork(object):
         for layer in self.list_layers:
             c_l1, g_l1 = layer.l1()
             cost += c_l1
-            gradient.append(g_l1)
+            gradient.append(g_l1 * self.params.strength_l1)
         cost *= self.params.strength_l1
-        gradient[:] = [grad * self.params.strength_l1 for grad in gradient]
         return cost, gradient
 
     # Ante la duda, l2 consigue por lo general mejores resultados que l1 pero se pueden combinar
@@ -449,9 +447,8 @@ class NeuralNetwork(object):
         for layer in self.list_layers:
             c_l2, g_l2 = layer.l2()
             cost += c_l2
-            gradient.append(g_l2)
+            gradient.append(g_l2 * self.params.strength_l2)
         cost *= self.params.strength_l2 * 0.5  # Multiplico por 0.5 para hacer mas simple el gradiente
-        gradient[:] = [grad * self.params.strength_l2 for grad in gradient]
         return cost, gradient
 
     def set_l1(self, strength_l1):
@@ -526,19 +523,61 @@ class NeuralNetwork(object):
         :param label:
         :return:
         """
-        # Si la tarea de la red es de clasificación, entonces 'label' se debe convertir a vector binario.
-        # Así, se puede aplicar directamente a una función de costo contra la salida del softmax (vector).
+        # 'label' se debe vectorizar para que se pueda utilizar en una fun_loss sobre un Neurons (arreglo)
+        # - Si la tarea de la red es de clasificación, entonces 'label' se debe convertir a vector binario.
+        #   Así, se puede aplicar directamente a una función de costo contra la salida del softmax (vector).
+        # - Si la tarea de la red es de regresión, entonces 'label' pasa a ser un list(label)
         if self.params.classification is True:
             label = label_to_vector(label, self.params.units_layers[-1])  # n_classes dado por la dim de la últ capa
+        else:
+            label = [label]  # Conversion a list necesaria para loss que opera con arreglos
         cost, (nabla_w, nabla_b) = self._backprop(features, label)
+
         if self.params.strength_l1 > 0.0:
-            cost_l1, nabla_w_l1 = self.l1()
-            cost += cost_l1
-            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l1))
+            c, n_w = self.l1()
+            cost += c
+            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, n_w))
         if self.params.strength_l2 > 0.0:
-            cost_l2, nabla_w_l2 = self.l2()
-            cost += cost_l2
-            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, nabla_w_l2))
+            c, n_w = self.l2()
+            cost += c
+            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, n_w))
+
+        return cost, (nabla_w, nabla_b)
+
+    def cost_overall(self, data):
+        """
+        .. note:: EXPERIMENTAL. Hay q ver si sirve usar cost() o cost_overall() en los Optimizers
+        :param data:
+        :return:
+        """
+        features = map(lambda lp: lp.features, data)
+        if self.params.classification is True:
+            labels = map(lambda lp: label_to_vector(lp.label, self.params.units_layers[-1]), data)
+        else:
+            labels = map(lambda lp: [lp.label], data)
+
+        # Loss avg overall
+        cost, (nabla_w, nabla_b) = self._backprop(features[0], labels[0])
+        n = len(data)
+        for f, l in zip(features, labels)[1:]:
+            c, (n_w, n_b) = self._backprop(f, l)
+            cost += c
+            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, n_w))
+            nabla_b = map(lambda (n1, n2): n1 + n2, zip(nabla_b, n_b))
+        cost /= float(n)
+        nabla_w = map(lambda n_l: n_l / float(n), nabla_w)
+        nabla_b = map(lambda n_l: n_l / float(n), nabla_b)
+
+        # Regularization
+        if self.params.strength_l1 > 0.0:
+            c, n_w = self.l1()
+            cost += c
+            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, n_w))
+        if self.params.strength_l2 > 0.0:
+            c, n_w = self.l2()
+            cost += c
+            nabla_w = map(lambda (n1, n2): n1 + n2, zip(nabla_w, n_w))
+
         return cost, (nabla_w, nabla_b)
 
     def predict(self, x):
@@ -690,7 +729,7 @@ class NeuralNetwork(object):
         train = sc.broadcast(train)
         # TODO: ver si hay mas opciones que quedarse con el mejor
         if keep_best is True:
-            best_epoch = 0
+            best_epoch = 1
             best_valid = 0.0
             best_model = None
         if stops is None:
@@ -719,66 +758,42 @@ class NeuralNetwork(object):
                 self.epochs.append(epoch + 1)
                 logger.info("Epoca %i realizada en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
                             epoch+1, end, self.hits_train[-1], self.hits_valid[-1])
+                if keep_best is True:
+                    if self.hits_valid[-1] >= best_valid:
+                        best_epoch = epoch + 1
+                        best_valid = self.hits_valid[-1]
+                        best_model = self.list_layers
             else:
                 logger.info("Epoca %i realizada en %8.4fs.",
                             epoch+1, end)
-            if keep_best is True and evaluate:
-                if self.hits_valid[-1] >= best_valid:
-                    best_epoch = epoch + 1
-                    best_valid = self.hits_valid[-1]
-                    best_model = self.list_layers
             # Recoleccion de basura manual para borrar de memoria los objetos largos generados por los datasets
             # Ver http://www.digi.com/wiki/developer/index.php/Python_Garbage_Collection
             collected = gc.collect()
             logger.debug("Garbage Collector: Recolectados %d objetos.", collected)
             epoch += 1
         if keep_best is True:
-            self.list_layers = copy.deepcopy(best_model)
-            # Se truncan las siguientes listas hasta el indice correspondiente al best model
-            i = self.epochs.index(best_epoch)
-            self.epochs = self.epochs[:i]
-            self.hits_train = self.hits_train[:i]
-            self.hits_valid = self.hits_valid[:i]
-        logger.debug("Unpersisting training dataset...")
-        train.unpersist()
-        # Evaluación final
+            if best_model is not None: # Si hubo algun best model, procedo con el reemplazo
+                self.list_layers = copy.deepcopy(best_model)
+                # Se truncan las siguientes listas hasta el indice correspondiente al best model
+                i = self.epochs.index(best_epoch)
+                self.epochs = self.epochs[:i]
+                self.hits_train = self.hits_train[:i]
+                self.hits_valid = self.hits_valid[:i]
+        # Evaluación final  # TODO: vale la pena hacerla?
         self.epochs.append(epoch + 1)
-        self.hits_train.append(hits_train)
+        self.hits_train.append(self.evaluate(train.value, predictions=False, measure=measure))
         self.hits_valid.append(self.evaluate(valid, predictions=False, measure=measure))
         logger.info("Ajuste total realizado en %8.4fs. Hits en train: %12.11f. Hits en valid: %12.11f",
                     total_end, self.hits_train[-1], self.hits_valid[-1])
+        logger.debug("Unpersisting training dataset...")
+        train.unpersist()
         return self.hits_valid[-1]
 
     def update(self, stepw, stepb):
         # Cada parametro step es una lista, para actualizar cada capa
         for l in xrange(self.num_layers):
             self.list_layers[l].update(stepw[l], stepb[l])
-
-    # TODO: redefinir todo esto! (actualizar)
-    """
-    def check_gradients(self):
-        fun_act = self.params.activation
-        fun_loss = self.params.loss
-        if type(fun_act) is not list:
-            fun_act = [fun_act]
-        # Chequeo funciones de activacion
-        check = checks.CheckGradientActivation(fun_act)
-        bad_gradients = check()
-        if bad_gradients is None:
-            print 'Gradientes de activaciones OK!'
-        else:
-            indexes = np.array(range(self.num_layers))
-            index_badgrad = indexes[bad_gradients]
-            raise Exception('El gradiente de las capas ' + str(index_badgrad) + ' se encuentra mal implementado!')
-        # Chequeo funcion de error
-        #
-        # check = checks.CheckGradientLoss(fun_loss)
-        # bad_gradient = check()
-        # if bad_gradient is None:
-        #     print 'Gradiente de loss OK!'
-        # else:
-        #     raise Exception('El gradiente de las funcion de error se encuentra mal implementado!')
-    """
+        return self
 
     def set_initial_rndstate(self):
         self.params.rng.set_state(self.rnd_state)
