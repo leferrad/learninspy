@@ -4,10 +4,12 @@
 __author__ = 'leferrad'
 
 from learninspy.core.model import NetworkParameters, NeuralNetwork
-from learninspy.core.optimization import OptimizerParameters
+from learninspy.core.optimization import OptimizerParameters, optimize
 from learninspy.core.stops import criterion
 from learninspy.utils.data import LocalLabeledDataSet, load_iris
 from learninspy.utils.fileio import get_logger
+
+import copy
 
 logger = get_logger(name=__name__)
 
@@ -38,18 +40,32 @@ class TestOptimizer(object):
                                        dropout_ratios=[0.2, 0.0], classification=True)
         self.model = NeuralNetwork(net_params)
 
-    def _optimize(self, stops=None, mini_batch=30, parallelism=2):
+    def _optimize(self, stops=None, mini_batch=30, parallelism=1, keep_best=True):
         if stops is None:
-            stops = [criterion['MaxIterations'](30),
+            stops = [criterion['MaxIterations'](50),
                      criterion['AchieveTolerance'](0.95, key='hits')]
         logger.info("Entrenando modelo...")
-        hits_valid = self.model.fit(self.train, self.valid, valid_iters=1, mini_batch=mini_batch,
-                                    parallelism=parallelism, stops=stops,optimizer_params=self.opt_params,
-                                    keep_best=True, reproducible=True)
+        if keep_best is True:
+            best_valid = 0.0
+            best_model = None
+        epoch = 0
+        hits_valid = 0.0
+        while self.model.check_stop(epoch, stops) is False:
+            hits_train = optimize(self.model, self.train, params=self.opt_params, mini_batch=mini_batch, seed=123)
+            hits_valid = self.model.evaluate(self.valid, predictions=False, measure='F-measure')
+            if keep_best is True:
+                if hits_valid >= best_valid:
+                    best_valid = hits_valid
+                    best_model = self.model
+            epoch += 1
+        if keep_best is True:
+            if best_model is not None: # Si hubo algun best model, procedo con el reemplazo
+                self.model = copy.deepcopy(best_model)
+
         return hits_valid
 
-    def test_optimization(self, stops=None, mini_batch=30, parallelism=1):
-        hits_valid = self._optimize(stops=stops, mini_batch=mini_batch, parallelism=parallelism)
+    def test_optimization(self, stops=None, mini_batch=30, parallelism=1, keep_best=True):
+        hits_valid = self._optimize(stops=stops, mini_batch=mini_batch, parallelism=parallelism, keep_best=keep_best)
         logger.info("Asegurando salidas correctas...")
         assert hits_valid > 0.8
         hits_test = self.model.evaluate(self.test, predictions=False, measure='F-measure')
