@@ -95,7 +95,7 @@ def plot_autoencoders(network):
     plt.show()
 
 
-def plot_neurons(network):
+def plot_neurons(network, show=True):
     """
     Ploteo de la representación latente de una Red Neuronal.
     .. note:: Experimental
@@ -126,8 +126,11 @@ def plot_neurons(network):
             ax_b.get_yaxis().set_visible(False)
 
             # Ploteo
-            plot_matrix(layer.weights.matrix, ax_w, values=False)
-            plot_matrix(layer.bias.matrix.T, ax_b, values=False)
+            plot_matrix(layer.weights.matrix, ax_w, values=False, show=False)
+            plot_matrix(layer.bias.matrix.T, ax_b, values=False, show=False)
+
+        if show is True:
+            plt.show()
 
     #plt.tight_layout()
 
