@@ -25,19 +25,19 @@ def mse(o, t):
     Función de error cuadrático medio.
     Ver más info en Wikipedia: `Mean squared error <https://en.wikipedia.org/wiki/Mean_squared_error>`_
 
-    Las entradas *o* y *t* son arreglos de N x 1, y corresponden respectivamente a la salida real
-    y la esperada de predicciones realizadas sobre un batch de N ejemplos. La función devuelve el
-    error cuadrático medio asociado a dichas predicciones.
+    Las entradas *o* y *t* son arreglos de M x 1, y corresponden respectivamente a la salida real
+    y la esperada de una predicción de dimensión M realizada sobre un ejemplo. La función devuelve el
+    error cuadrático medio asociado a dicha predicción. Notar que la constante 1/2 es incluida para
+    que se cancele con el exponente en la función derivada.
 
-    :math:`J=\\dfrac{1}{N}\displaystyle\sum\limits_{i}^N (o^{(i)}-t^{(i)})^2`
+    :math:`J=\\dfrac{1}{2}\displaystyle\sum\limits_{i}^N (t^{(i)}-y^{(i)})^2`
 
     :param o: numpy.ndarray
     :param t: numpy.ndarray
     :return: float
     """
-    err = np.array(map(lambda(output, target): output - target, zip(o, t)))
-    n = err.size
-    return np.sum(np.square(err)) / float(n)
+    err = np.array(map(lambda(output, target): target - output, zip(o, t)))
+    return 0.5 * np.sum(np.square(err))
 
 
 def _mse_d(o, t):
@@ -49,8 +49,7 @@ def _mse_d(o, t):
     :return: numpy.ndarray
     """
     err = np.array(map(lambda(output, target): output - target, zip(o, t)))
-    n = err.size
-    return 2 * err / float(n)
+    return err
 
 
 def cross_entropy(o, t):
