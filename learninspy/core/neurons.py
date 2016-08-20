@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 
 """
-
+En este módulo se implementa un esquema de "neuronas" para manejar los arreglos referidos
+a pesos sinápticos en las capas de una red neuronal. Ello implica tanto operaciones algebraicas
+sobre matrices y vectores como la aplicación de funciones de activación y costo.
 """
 
 __author__ = 'leferrad'
 
 from learninspy.utils.asserts import *
+
 import pyspark.rdd
-import sys
 
 
 """
@@ -276,7 +278,7 @@ class LocalNeurons(object):
 
     # ### Operaciones algebraicas ###
 
-    #@assert_matchdimension
+    @assert_matchdimension
     def mul_array(self, array):
         """
         Realiza el producto matricial entre el arreglo alojado *self.matrix* y *array*.
@@ -305,20 +307,7 @@ class LocalNeurons(object):
         shape = res.shape
         return LocalNeurons(res, shape)
 
-
-    # #@assert_samedimension
-    # def dot(self, vec):
-    #     """
-    #     Producto punto entre vectores. Equivalente a *numpy.array.dot*.
-    #
-    #     :param vec: numpy.array o list.
-    #     :return: int o float
-    #     """
-    #     # TODO: assert same dimension (or transpose 'vec' at least)
-    #     return self.matrix.dot(vec)
-
-
-    #@assert_samedimension
+    @assert_samedimension
     def mul_elemwise(self, array):
         """
         Producto elemento a elemento con *array*. Equivalente a utilizar *numpy.multiply* entre dos arreglos.
@@ -332,7 +321,7 @@ class LocalNeurons(object):
             array = array.matrix
         return LocalNeurons(np.multiply(self.matrix, array), self.shape)
 
-    #@assert_samedimension
+    @assert_samedimension
     def sum_array(self, array):
         """
         Suma elemento a elemento con *array*.
@@ -410,26 +399,6 @@ class LocalNeurons(object):
         """
         return LocalNeurons(fun(self.matrix, y), self.shape)
 
-    # TODO: deprecate
-    # #@assert_samedimension
-    # def _mse(self, y):
-    #     n = self.count()
-    #     error = (y - self.matrix) ** 2
-    #     sum_error = sum(error)
-    #     return sum_error / (1.0 * n)
-    #
-    # #@assert_samedimension
-    # def _mse_d(self, y):
-    #     """
-    #
-    #     :param y:
-    #     :return: :class:`~learninspy.core.neurons.LocalNeurons`
-    #     """
-    #     n = self.count()
-    #     error = y - self.matrix
-    #     error_div = error * (2.0 / n)
-    #     return LocalNeurons(error_div, self.shape)
-
     # ### Normas de regularización sobre pesos ###
 
     def dropout(self, p, seed=123):
@@ -442,6 +411,8 @@ class LocalNeurons(object):
 
         :param p: float, tal que :math:`0<p<1`
         :return: tuple de :class:`~learninspy.core.neurons.LocalNeurons`, numpy.ndarray
+
+        **Referencias**:
 
         .. [srivastava2014dropout] Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov, R. (2014):
             "Dropout: A simple way to prevent neural networks from overfitting".

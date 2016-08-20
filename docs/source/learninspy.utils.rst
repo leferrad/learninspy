@@ -4,13 +4,6 @@ learninspy.utils package
 Submódulos
 ----------
 
-learninspy.utils.checks
-------------------------------
-
-.. automodule:: learninspy.utils.checks
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 learninspy.utils.data
 ----------------------------
