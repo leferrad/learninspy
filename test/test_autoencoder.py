@@ -9,6 +9,7 @@ from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
 from learninspy.utils.data import LocalLabeledDataSet
 from learninspy.utils.fileio import get_logger
+from learninspy.utils.plots import plot_neurons, plot_fitting, plot_activations
 
 import os
 
@@ -120,3 +121,19 @@ class TestStackedAutoEncoder(object):
         assert hits_test_pretrain > 0.7
         assert hits_test_finetune > 0.8
         logger.info("OK")
+
+        # Test plot of fitting
+        logger.info("Testeando plots de fitting...")
+        plot_fitting(self.model, show=False)
+        logger.info("OK")
+        return
+
+    def test_plotting(self):
+        logger.info("Testando plots de activaciones...")
+        plot_activations(self.model.params, show=False)
+        logger.info("OK")
+
+        logger.info("Testeando plots de neuronas...")
+        plot_neurons(self.model, show=False)
+        logger.info("OK")
+        return

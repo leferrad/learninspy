@@ -67,13 +67,14 @@ def plot_confusion_matrix(matrix, show=True):
     plot_matrix(matrix, ax, values=True, show=show)
 
 
-def plot_autoencoders(network):
+def plot_autoencoders(network, show=True):
     """
     Ploteo de la representación latente un StackedAutoencoder dado.
 
     .. note:: Experimental
 
     :param network: red neuronal, del tipo :class:`.StackedAutoencoder`.
+    :param show: bool, para indicar si se debe imprimir inmediatamente en pantalla mediante **matplotlib.pyplot.show()**
     """
 
     n_layers = len(network.list_layers)
@@ -92,7 +93,9 @@ def plot_autoencoders(network):
         # Ploteo
         plot_matrix(ae.encoder_layer().weights.matrix, ax_w, values=False, show=False)
         # TODO estaría faltando el bias...
-    plt.show()
+
+    if show is True:
+        plt.show()
 
 
 def plot_neurons(network, show=True):
@@ -101,9 +104,10 @@ def plot_neurons(network, show=True):
     .. note:: Experimental
 
     :param network: red neuronal del tipo :class:`.NeuralNetwork`.
+    :param show: bool, para indicar si se debe imprimir inmediatamente en pantalla mediante **matplotlib.pyplot.show()**
     """
     if type(network) is StackedAutoencoder:
-        plot_autoencoders(network)
+        plot_autoencoders(network, show=show)
     else:
         n_layers = len(network.list_layers)
         # Configuro el ploteo
@@ -132,16 +136,15 @@ def plot_neurons(network, show=True):
         if show is True:
             plt.show()
 
-    #plt.tight_layout()
 
-
-def plot_activations(params):
+def plot_activations(params, show=True):
     """
     Ploteo de las activaciones establecidas para una red neuronal. Se representan como señales 1-D, en un dominio dado.
 
     .. note:: Experimental
 
     :param params: parámetros del tipo :class:`.NetworkParameters`.
+    :param show: bool, para indicar si se debe imprimir inmediatamente en pantalla mediante **matplotlib.pyplot.show()**
     """
     # Si la activacion es la misma para todas las capas, la ploteo una sola vez
     if all(act == params.activation[0] for act in params.activation):
@@ -164,8 +167,8 @@ def plot_activations(params):
         # Ploteo
         ax_act.plot(x_axis, act)
         ax_d_act.plot(x_axis, d_act)
-    plt.show()
-    return
+    if show is True:
+        plt.show()
 
 
 def plot_fitting(network, show=True):

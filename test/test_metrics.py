@@ -5,6 +5,8 @@ __author__ = 'leferrad'
 
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.utils.fileio import get_logger
+from learninspy.utils.plots import plot_confusion_matrix
+
 import numpy as np
 
 logger = get_logger(name=__name__)
@@ -37,6 +39,11 @@ def test_classification_metrics():
     assert metrics.f_measure(beta=2) == 0.5851063829787233  # F2-score, prioriza recall en lugar de precision
     logger.info("OK")
 
+    # Test of plotting confusion matrix
+    logger.info("Testeando plot de matriz de confusion...")
+    plot_confusion_matrix(metrics.confusion_matrix(), show=False)
+    logger.info("OK")
+    return
 
 def test_regression_metrics():
     logger.info("Testeando métricas de evaluación para regresión...")
