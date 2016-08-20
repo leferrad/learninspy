@@ -7,6 +7,8 @@ from learninspy.core.neurons import LocalNeurons
 from learninspy.core.activations import fun_activation, fun_activation_d
 from learninspy.core.loss import fun_loss, fun_loss_d
 from learninspy.utils.fileio import get_logger
+from learninspy.context import sc
+
 import numpy as np
 
 logger = get_logger(name=__name__)
@@ -63,8 +65,8 @@ class TestLocalNeurons(object):
         assert np.array_equiv(res_d.matrix, fun_d(np.ones(self.matrix_neurons.shape)))
         # Test de softmax como funcion de activacion
         N = self.matrix_neurons.rows
-        shape = (N, 1)
-        x = LocalNeurons(range(N), shape)
+        shape = (N,)
+        x = LocalNeurons(sc.parallelize(range(N)), shape)  # Aprovecho para testear con RDD
         res = x.softmax()
         res = map(lambda e: e[0], res.matrix)
         exp_x = np.exp(range(N))

@@ -222,7 +222,7 @@ class LocalNeurons(object):
 
     .. note:: Es preciso aclarar que su estructuración se debe a que está pensada para ser compatible con su par *DistributedNeurons*, pero que en esta versión se encuentra inhabilitada.
 
-    :param mat: numpy.array o list o pyspark.rdd.PipelinedRDD, que corresponde a la matriz **W**
+    :param mat: numpy.array o list o pyspark.rdd.RDD, que corresponde a la matriz **W**
                 o vector **b** a alojar para operar.
     :param shape: tuple, que corresponde a la dimensión que debe tener *mat*. Útil sólo cuando se
                 utilizan arreglos distribuidos.
@@ -235,7 +235,7 @@ class LocalNeurons(object):
     # NOTA: Vectores son guardados como vectores columna
     def __init__(self, mat, shape):
 
-        if isinstance(mat, pyspark.rdd.PipelinedRDD):
+        if isinstance(mat, pyspark.rdd.RDD):
             mat = mat.collect()
         if len(shape) == 1:
             shape += (1,)  # Le agrego la dimension que le falta

@@ -117,3 +117,22 @@ class TestAsserts(object):
             test_ok = True
 
         assert test_ok
+
+        # 4) Test de assert_sametype
+
+        try:
+            self.test_sametype(features, features)
+            test_ok = True
+        except:
+            test_ok = False
+
+        assert test_ok
+
+        try:
+            self.test_sametype(features, matrix2)
+            test_ok = False
+        except:
+            test_ok = True
+
+        assert test_ok
+
