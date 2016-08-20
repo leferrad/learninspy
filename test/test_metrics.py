@@ -3,6 +3,10 @@
 
 __author__ = 'leferrad'
 
+# For Travis CI compatibility on plots
+import matplotlib
+matplotlib.use('agg')
+
 from learninspy.utils.evaluation import ClassificationMetrics, RegressionMetrics
 from learninspy.utils.fileio import get_logger
 from learninspy.utils.plots import plot_confusion_matrix
@@ -39,11 +43,19 @@ def test_classification_metrics():
     assert metrics.f_measure(beta=2) == 0.5851063829787233  # F2-score, prioriza recall en lugar de precision
     logger.info("OK")
 
+
+def test_plotting():
     # Test of plotting confusion matrix
     logger.info("Testeando plot de matriz de confusion...")
+    predict = [0, 1, 0, 2, 2, 1]
+    labels = [0, 1, 1, 2, 1, 0]
+
+    metrics = ClassificationMetrics(zip(predict, labels), 3)
+
     plot_confusion_matrix(metrics.confusion_matrix(), show=False)
     logger.info("OK")
     return
+
 
 def test_regression_metrics():
     logger.info("Testeando métricas de evaluación para regresión...")

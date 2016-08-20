@@ -3,6 +3,10 @@
 
 __author__ = 'leferrad'
 
+# For Travis CI compatibility on plots
+import matplotlib
+matplotlib.use('agg')
+
 from learninspy.core.model import NetworkParameters
 from learninspy.core.autoencoder import AutoEncoder, StackedAutoencoder
 from learninspy.core.optimization import OptimizerParameters
@@ -84,8 +88,8 @@ class TestStackedAutoEncoder(object):
 
     def _fit(self, opt_params=None, stops=None, mini_batch=30, parallelism=2):
         if opt_params is None:
-            options  = {'step-rate': 1.0, 'decay': 0.9, 'momentum': 0.0, 'offset': 1e-8}
-            opt_params = OptimizerParameters(algorithm='Adadelta')
+            options = {'step-rate': 1.0, 'decay': 0.9, 'momentum': 0.0, 'offset': 1e-8}
+            opt_params = OptimizerParameters(algorithm='Adadelta', options=options)
         if stops is None:
             stops = [criterion['MaxIterations'](30),
                      criterion['AchieveTolerance'](0.95, key='hits')]
