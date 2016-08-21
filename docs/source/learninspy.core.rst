@@ -110,5 +110,4 @@ learninspy.core.stops
 .. automodule:: learninspy.core.stops
     :members:
     :undoc-members:
-    :show-inheritance:
 
