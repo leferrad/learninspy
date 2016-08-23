@@ -65,13 +65,28 @@ class RandomSearch(object):
     aleatoria" o *random search*, el cual es fácil de implementar como el *grid search*
     aunque se considera más eficiente especialmente en espacios de gran dimensión [bergstra2012random]_.
 
-    Explicar como se usa..
+    En esta implementación, se deben especificar los parámetros específicos que se quieren explorar.
+    Esto se realiza utilizando como medio la clase :class:`~learninspy.core.model.NetworkParameters`,
+    en la cual se indica con un bool (True o False) sobre cada parámetro que se desea contemplar
+    en la búsqueda de parámetros.
+    También se pueden especificar los rangos o dominio de búsqueda (e.g. funciones de activación, cant.
+    de capas y unidades en c/u, rangos de constantes para normas L1/L2, etc). Por defecto, se utiliza
+    el dict 'network_domain' implementado en este módulo.
 
     :param net_params: :class:`~learninspy.core.model.NetworkParameters`
-    :param n_layers: int,
-    :param n_iter: int,
-    :param net_domain: dict,
-    :param seed: int,
+    :param n_layers: int, si es -1 se muestrea la cant. de capas, si es 0 se mantiene intacta la config,
+     y si es > 0 representa la cant. de capas deseada.
+    :param n_iter: int, cant. de iteraciones para la búsqueda.
+    :param net_domain: dict, si es None se utiliza el dict 'network_domain' implementado en este módulo.
+    :param seed: int, semilla que alimenta los generadores de números aleatorios.
+
+    >>> from learninspy.core.model import NetworkParameters, NeuralNetwork
+    >>> from learninspy.core.search import network_domain
+    >>> net_params = NetworkParameters(units_layers=[4, 10, 3], activation=False, dropout_ratios=True,\ ...
+    >>>                                classification=True, strength_l1=True, strength_l2=True, seed=123)
+    >>> rnd_search = RandomSearch(net_params, n_layers=0, n_iter=10, net_domain=network_domain, seed=123)
+    >>> rnd_search.fit(NeuralNetwork, train, valid, test)
+    >>> ...
 
     **Referencias**:
 
@@ -190,11 +205,17 @@ class RandomSearch(object):
     def fit(self, type_model, train, valid, test, mini_batch=100, parallelism=4, valid_iters=5, measure=None,
             stops=None, optimizer_params=None, reproducible=False, keep_best=True):
         """
-        ...
+        Función para iniciar la búsqueda de parámetros ajustada a las especificaciones de dominio dadas,
+        utilizando los conjuntos de datos ingresados y demás parámetros de optimización para usar
+        en la función de modelado :func:`~learninspy.core.model.NeuralNetwork.fit` en
+        :class:`~learninspy.core.model.NeuralNetwork`.
 
-        .. note:: Los parámetros son los mismos que recibe la función :func:`~learninspy.core.model.NeuralNetwork.fit`
-        incluyendo también el conjunto de prueba *test* que se utiliza para validar la conveniencia de
-        cada modelo logrado. Remitirse a la API de dicha función para encontrar información de los parámetros.
+        :param type_model: class, correspondiente a un tipo de modelo del módulo :mod:`~learninspy.core.model`.
+
+        .. note:: El resto de los parámetros son los mismos que recibe la función
+            :func:`~learninspy.core.model.NeuralNetwork.fit` incluyendo también el conjunto de prueba *test*
+            que se utiliza para validar la conveniencia de cada modelo logrado.
+            Remitirse a la API de dicha función para encontrar información de los parámetros.
 
         """
         if stops is None:

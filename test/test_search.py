@@ -58,13 +58,14 @@ class TestRandomSearch(object):
     def test_all_fitting(self, mini_batch=30, parallelism=1):
         n_layers = [-1, 0, 3, 4]
         best_hits_final = 0.0
-        self.rnd_search.n_iter = 1
+        net_params = NetworkParameters(units_layers=[4, 10, 3], activation=True, dropout_ratios=[0.0, 0.0],
+                                       classification=True, strength_l1=1e-7, strength_l2=1e-4, seed=123)
         for n_l in n_layers:
             logger.info("Testeando con 'n_layers = %i'", n_l)
-            self.rnd_search.n_layers = n_l
+            self.rnd_search = RandomSearch(net_params, n_l, n_iter=1, net_domain=None, seed=123)
             best_model, best_hits = self.rnd_search.fit(self.type_model, self.train, self.valid, self.test,
                                                         mini_batch=mini_batch, parallelism=parallelism, valid_iters=1,
-                                                        stops=None, optimizer_params=self.opt_params, reproducible=True,
+                                                        stops=None, optimizer_params=None, reproducible=True,
                                                         keep_best=True)
             if best_hits > best_hits_final:
                 best_hits_final = best_hits
