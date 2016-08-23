@@ -4,7 +4,7 @@
 __author__ = 'leferrad'
 
 from learninspy.core.model import NetworkParameters, NeuralNetwork
-from learninspy.core.optimization import OptimizerParameters, optimize
+from learninspy.core.optimization import OptimizerParameters, optimize, mix_models
 from learninspy.core.stops import criterion
 from learninspy.utils.data import LocalLabeledDataSet, load_iris
 from learninspy.utils.fileio import get_logger
@@ -104,3 +104,16 @@ class TestGDNesterov(TestOptimizer):
             opt_params = OptimizerParameters(algorithm='GD', stops=stops,
                                              options=options, merge_criter='w_avg')
         super(TestGDNesterov, self).__init__(opt_params)
+
+
+def test_mix_models():
+    # Dado que esta funcion se llama en una transformación de RDD, no es rastreada por Python
+    # por lo que es mejor hacerle unittest de forma que sea trazada en el coverage code.
+
+    # Configuracion de modelo
+    net_params = NetworkParameters(units_layers=[4, 10, 3], activation='ReLU', strength_l1=1e-5, strength_l2=3e-4,
+                                   dropout_ratios=[0.2, 0.0], classification=True)
+    model = NeuralNetwork(net_params)
+    mixed_layers = mix_models(model.list_layers, model.list_layers)
+    for l in xrange(len(mixed_layers)):
+        assert mixed_layers[l] == model.list_layers[l] * 2  # A + A = 2A

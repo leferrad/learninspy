@@ -55,7 +55,7 @@ class OptimizerParameters:
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
             elif algorithm == 'GD':
-                options = {'step-rate': 0.1, 'momentum': 0.0, 'momentum_type': 'standard'}  # TODO mejorar pq no funca
+                options = {'step-rate': 0.2, 'momentum': 0.9, 'momentum_type': 'nesterov'}
         self.options = options
         self.algorithm = algorithm
         if stops is None:
@@ -194,6 +194,7 @@ class Adadelta(Optimizer):
             self.n_iter += 1
             yield self.check_stop()
 
+    """
     def _iterate2(self):
         while self.check_stop() is False:
             d = self.parameters.options['decay']
@@ -226,7 +227,7 @@ class Adadelta(Optimizer):
             self.hits = self.model.evaluate(data, predictions=False)
             self.n_iter += 1
             yield self.check_stop()
-
+    """
 
 class GD(Optimizer):
     """
@@ -254,6 +255,7 @@ class GD(Optimizer):
             self.step_w.append(LocalNeurons(np.zeros(shape_w), shape_w))
             self.step_b.append(LocalNeurons(np.zeros(shape_b), shape_b))
 
+    """
     def _iterate2(self):
         while self.check_stop() is False:
             m = self.parameters.options['momentum']
@@ -292,6 +294,7 @@ class GD(Optimizer):
             self.hits = self.model.evaluate(data)
             self.n_iter += 1
             yield self.check_stop()
+    """
 
     def _iterate(self):
         while self.check_stop() is False:
@@ -336,6 +339,7 @@ class GD(Optimizer):
 Minimizer = {'Adadelta': Adadelta, 'GD': GD}
 
 
+"""
 class FitParameters:
     def __init__(self, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
                  stops=None, optimizer_params=None, reproducible=False, keep_best=False):
@@ -355,6 +359,7 @@ class FitParameters:
 
     def __str__(self):  # TODO: definir esto
         pass
+"""
 
 
 # Funciones usadas en model
