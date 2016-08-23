@@ -1,19 +1,46 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+En este módulo se implementan los mecanismos para realizar búsquedas
+de los parámetros utilizados durante el ajuste de redes neuronales.
+
+Como puede notarse durante el diseño del modelo en cuestión, existen diversos
+parámetros y configuraciones que se deben especificar en base a los datos
+tratados y la tarea asignada para el modelo. Estos pueden ser valores en
+particular de los cuales se puede tener una idea de rangos posibles (e.g. taza de
+aprendizaje para el algoritmo de optimización) o elecciones posibles de la
+arquitectura del modelo (e.g. función de activación de cada capa).
+
+La configuración elegida es crucial para que la optimización resulte
+en un modelo preciso para la tarea asignada,y en el caso de los hiperparámetros
+elegir un valor determinado puede ser difícil especialmente cuando son sensibles.
+Una forma asistida para realizar esto es implementar un algoritmo de búsqueda
+de parámetros el cual realiza elecciones particulares tomando muestras sobre
+los rangos posibles determinados, así luego se optimiza un modelo por cada
+configuración especificada. Opcionalmente, también se puede utilizar
+validación cruzada para estimar la generalización del modelo obtenido con la
+configuración y su independencia del conjunto de datos tomado.
+
+Resumiendo, una búsqueda consta de:
+
+* Un modelo estimador.
+* Un espacio de parámetros.
+* Un método para muestrear o elegir candidatos.
+* Una función de evaluación para el modelo.
+* (Opcional) Un esquema de validación cruzada.
+
+"""
+
 __author__ = 'leferrad'
 
-# Dependencias externas
-import numpy as np
-
-# Dependencias internas
-from learninspy.core.activations import fun_activation
 from learninspy.core.model import NetworkParameters, NeuralNetwork
 from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
 from learninspy.utils.fileio import get_logger
 
-# Librerias de Python
+import numpy as np
+
 import os
 
 logger = get_logger(name=__name__)
@@ -25,11 +52,34 @@ network_domain = {'n_layers': ((3, 7), 1),  # Teniendo en cuenta capa de entrada
                   'activation': ['Tanh', 'ReLU', 'Softplus'],  # Tambien puede ponerse fun_activation.keys()
                   'dropout_ratios': ((0.0, 0.7), 1),  # ((begin, end), precision)
                   'l1': ((1e-6, 1e-4), 6), 'l2': ((1e-6, 1e-3), 4),  # ((begin, end), precision)
-                  'perc_neurons': ((0.2, 1.2), 2)
+                  'perc_neurons': ((0.4, 1.5), 2)
                   }
 
 
 class RandomSearch(object):
+    """
+    Una forma que evade buscar exahustivamente sobre el espacio de parámetros
+    (lo cual es potencialmente costoso si dicho espacio es de una dimensión alta),
+    es la de muestrear una determinada cantidad de veces el espacio, en forma
+    aleatoria y no sobre una grilla determinada. Este método se denomina "búsqueda
+    aleatoria" o *random search*, el cual es fácil de implementar como el *grid search*
+    aunque se considera más eficiente especialmente en espacios de gran dimensión [bergstra2012random]_.
+
+    Explicar como se usa..
+
+    :param net_params: :class:`~learninspy.core.model.NetworkParameters`
+    :param n_layers: int,
+    :param n_iter: int,
+    :param net_domain: dict,
+    :param seed: int,
+
+    **Referencias**:
+
+    .. [bergstra2012random] Bergstra, J., & Bengio, Y. (2012).
+                            Random search for hyper-parameter optimization.
+                            Journal of Machine Learning Research, 13(Feb), 281-305.
+    """
+
     def __init__(self, net_params, n_layers=0, n_iter=10, net_domain=None, seed=123):
         self.net_params = net_params
         if net_domain is None:
@@ -67,9 +117,11 @@ class RandomSearch(object):
             units_layers = [n_in] # Primero va la capa de entrada
             for p in percents:
                 # Agrego unidades ocultas, siendo un porcentaje de la capa anterior
-                units_layers.append(int(p * units_layers[-1]))
+                units = int(p * units_layers[-1])
+                if units <= 1:  # Verificar que haya una lista válida de neuronas
+                    units = 2
+                units_layers.append(units)
             units_layers.append(n_out)  # Por ultimo la capa de salida
-            # TODO: verificar que haya una lista válida de neuronas
         return units_layers
 
     def _sample_activation(self, n_layers):
@@ -135,13 +187,15 @@ class RandomSearch(object):
                                        strength_l1=strength_l1, strength_l2=strength_l2, seed=seed)
         return net_params
 
-    def fit(self, train, valid, test, mini_batch=100, parallelism=4, stops=None, optimizer_params=None, keep_best=True):
+    def fit(self, type_model, train, valid, test, mini_batch=100, parallelism=4, valid_iters=5, measure=None,
+            stops=None, optimizer_params=None, reproducible=False, keep_best=True):
         """
-
+        ...
 
         .. note:: Los parámetros son los mismos que recibe la función :func:`~learninspy.core.model.NeuralNetwork.fit`
-            incluyendo también el conjunto de prueba *test* que se utiiza para validar la conveniencia de
-            cada modelo logrado.
+        incluyendo también el conjunto de prueba *test* que se utiliza para validar la conveniencia de
+        cada modelo logrado. Remitirse a la API de dicha función para encontrar información de los parámetros.
+
         """
         if stops is None:
             stops = [criterion['MaxIterations'](10),
@@ -160,27 +214,14 @@ class RandomSearch(object):
             net_params_sample = self._take_sample(seed=self.seeds[it])
             logger.info("Iteracion %i en busqueda.", it+1)
             logger.info("Configuracion usada: %s", os.linesep+str(net_params_sample))
-            neural_net = NeuralNetwork(net_params_sample)
-            hits_valid = neural_net.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism,
-                                        stops=stops, optimizer_params=optimizer_params, keep_best=keep_best)
-            hits_test = neural_net.evaluate(test, predictions=False)
+            model = type_model(net_params_sample)
+            hits_valid = model.fit(train, valid, mini_batch=mini_batch, parallelism=parallelism,
+                                   valid_iters=valid_iters, measure=measure, reproducible=reproducible,
+                                   stops=stops, optimizer_params=optimizer_params, keep_best=keep_best)
+            hits_test = model.evaluate(test, predictions=False)
             if hits_test >= best_hits:
                 best_hits = hits_test
-                best_model = neural_net
-        neural_net = best_model
-        hits_test = best_hits
-        return neural_net, hits_test
-
-    @staticmethod
-    def save_config():
-        pass
-
-
-def _test_busqueda():
-    net_params = NetworkParameters(units_layers=[100,5,3], activation=False, dropout_ratios=True, classification=True,
-                                   strength_l1=True, strength_l2=True)
-    rndsearch = RandomSearch(net_params, n_layers=0, n_iter=40)
-    rndsearch.fit(None, None, None)
-    return
-
-#_test_busqueda()
+                best_model = model
+        logger.info("Configuracion del mejor modelo: %s", os.linesep+str(best_model.params))
+        logger.info("Hits en test: %12.11f", best_hits)
+        return best_model, best_hits
