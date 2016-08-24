@@ -24,7 +24,6 @@ def parse_point(line, delimiter=r'[ ,|;"]+'):
     :param delimiter: string, donde se indican los posibles caracteres delimitadores.
     :return: list con elementos deseados.
     """
-    # TODO dar posibilidad de cambiar delimiter
     values = [float(x) for x in re.split(delimiter, line)]
     return values
 
@@ -72,6 +71,7 @@ def _label_point(row, pos_label=-1):
 
 
 # Loader
+
 def load_file_spark(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
     """
     Carga de un archivo de datos mediante Apache Spark en RDD.
@@ -79,15 +79,13 @@ def load_file_spark(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
     :param path: string, path al archivo.
     :param pos_label: int, posición donde se ubica el *label* para cada línea. Si es -1, se indica la última posición.
     :param delimiter: string, donde se indican los posibles caracteres delimitadores.
-    :return: **pyspark.rdd.RDD** de LabeledPoints.
+    :return: *pyspark.rdd.RDD* de LabeledPoints.
     """
-    if is_text_file(path):
-        dataset = (sc.textFile(path)
-                     .map(lambda p: parse_point(p, delimiter))
-                     .map(lambda row: _label_point(row, pos_label))
-                   )
-    else:
-        dataset = sc.binaryFiles(path)  # TODO: mejorar esto
+    #assert is_text_file(path), ValueError("Sólo se aceptan archivos de texto!")
+    dataset = (sc.textFile(path)
+                 .map(lambda p: parse_point(p, delimiter))
+                 .map(lambda row: _label_point(row, pos_label))
+               )
     return dataset
 
 
@@ -99,42 +97,42 @@ def load_file_local(path, pos_label=-1):
     :param pos_label: int, posición donde se ubica el *label* para cada línea. Si es -1, se indica la última posición.
     :return: list de LabeledPoints.
     """
-    if is_text_file(path):
-        with open(path, 'rb') as f:
-            # Uso de Sniffer para deducir el formato del archivo CSV
-            dialect = csv.Sniffer().sniff(f.read(1024))  # Ver https://docs.python.org/3/library/csv.html
-            f.seek(0)
-            reader = csv.reader(f, dialect)
-            dataset = [x for x in reader]
-            dataset = map(lambda row: _label_point(row, pos_label), dataset)
-    else:
-        dataset = None  # TODO: permitir manejo de binarios
+    assert is_text_file(path), ValueError("Sólo se aceptan archivos de texto!")
+    with open(path, 'rb') as f:
+        # Uso de Sniffer para deducir el formato del archivo CSV
+        dialect = csv.Sniffer().sniff(f.read(1024))  # Ver https://docs.python.org/3/library/csv.html
+        f.seek(0)
+        reader = csv.reader(f, dialect)
+        dataset = [x for x in reader]
+        dataset = map(lambda row: _label_point(row, pos_label), dataset)
     return dataset
 
 
 # Saver
-# TODO: hacer estas funciones
-def save_file_spark(data, path):
+
+def save_file_spark(rdd_data, path):
     """
-    .. warning:: No se encuentra implementada.
+    Guarda el contenido de un RDD en un archivo de texto.
 
-    :param data:
-    :param path:
-    :return:
+    :param rdd_data: *pyspark.rdd.RDD* de lists.
+    :param path: string, indicando la ruta en donde se guarda el archivo.
     """
-    raise NotImplementedError
+    rdd_data.saveAsTextFile(path)
+    return
 
 
-def save_file_local(data, path):
+def save_file_local(data, path, delimiter=','):
     """
-    .. warning:: No se encuentra implementada.
+    Guardar el contenido de un arreglo de listas en un archivo de texto.
 
-    :param data:
-    :param path:
-    :return:
+    :param data: list de lists
+    :param path: string, indicando la ruta en donde se guarda el archivo.
     """
-    raise NotImplementedError
-
+    with open(path, "w") as f:
+        writer = csv.writer(f, delimiter=delimiter, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        for line in data:
+            writer.writerow(line)
+    return
 
 def get_logger(name='learninspy', level=logging.INFO):
     """
