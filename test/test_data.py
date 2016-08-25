@@ -94,21 +94,21 @@ class TestLabeledDataset(object):
         res2 = sorted(dataset.collect(), key=lambda (l, f): l)
         assert res1 == res2
 
-    def test_split_data(self):
+    def test_split_data(self, seed=123):
         # DistributedLabeledDataSet
         logger.info("Testeo de split en DistributedLabeledDataset...")
         distributed_dataset = DistributedLabeledDataSet(self.data)
-        set1, set2 = distributed_dataset.split_data([0.1, 0.9])
-        assert set1.rows == 5
+        set1, set2 = distributed_dataset.split_data([0.1, 0.9], seed=seed)
+        assert set1.rows < distributed_dataset.rows
 
-        set1, set2 = distributed_dataset.split_data([0.9, 0.1], balanced=True)
+        set1, set2 = distributed_dataset.split_data([0.9, 0.1], balanced=True, seed=seed)
         assert set(set1.labels.collect()) == set(distributed_dataset.labels.collect())  # Contienen todas las clases
 
         # LocalLabeledDataSet
         logger.info("Testeo de split en LocalLabeledDataset...")
         local_dataset = LocalLabeledDataSet(self.data)
-        set1, set2 = local_dataset.split_data([0.1, 0.9])
+        set1, set2 = local_dataset.split_data([0.1, 0.9], seed=seed)
         assert set1.rows == 5
 
-        set1, set2 = local_dataset.split_data([0.9, 0.1], balanced=True)
+        set1, set2 = local_dataset.split_data([0.9, 0.1], balanced=True, seed=seed)
         assert set(set1.labels) == set(local_dataset.labels)  # Contienen todas las clases
