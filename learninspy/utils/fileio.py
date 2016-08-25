@@ -81,7 +81,6 @@ def load_file_spark(path, pos_label=-1, delimiter=r'[ ,|;"]+'):
     :param delimiter: string, donde se indican los posibles caracteres delimitadores.
     :return: *pyspark.rdd.RDD* de LabeledPoints.
     """
-    #assert is_text_file(path), ValueError("Sólo se aceptan archivos de texto!")
     dataset = (sc.textFile(path)
                  .map(lambda p: parse_point(p, delimiter))
                  .map(lambda row: _label_point(row, pos_label))
@@ -117,7 +116,16 @@ def save_file_spark(rdd_data, path):
     :param rdd_data: *pyspark.rdd.RDD* de lists.
     :param path: string, indicando la ruta en donde se guarda el archivo.
     """
-    rdd_data.saveAsTextFile(path)
+    def delete_brackets(line):
+        """
+        Funcion para eliminar corchetes de inicio y fin en caso de que se trate
+        una lista pero solo quieren almacenarse sus valores.
+        """
+        if line.find('[') == 0 and line.find(']') == (len(line) - 1):
+            line = line[1:-1]
+        return line
+
+    rdd_data.map(lambda line: delete_brackets(str(line))).saveAsTextFile(path)
     return
 
 

@@ -36,6 +36,7 @@ def test_is_text_file():
 
 
 def test_file_spark():
+    logger.info("Testeo de manejo de archivos de texto con Spark...")
     filename = TEMP_PATH + "spark_data.txt"
     if os.path.exists(filename):
         shutil.rmtree(filename)
@@ -50,11 +51,12 @@ def test_file_spark():
 
 
 def test_file_local():
+    logger.info("Testeo de manejo de archivos de texto en forma local...")
     filename = TEMP_PATH + "local_data.txt"
     if os.path.exists(filename):
         os.remove(filename)
 
-    local_data = zip(range(10), range(10,20))  # dummy data
+    local_data = zip(range(10), range(10, 20))  # dummy data
 
     save_file_local(local_data, filename)  # Saving
     data = load_file_local(filename, pos_label=0)  # Loading
