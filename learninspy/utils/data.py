@@ -101,28 +101,14 @@ class StandardScaler(object):
                 dataset = LocalLabeledDataSet(zip(labels, dataset))
         return dataset
 
+
 # -- Clases para datasets --
 
 class LabeledDataSet(object):
     """
     Clase base para construcción de datasets.
     """
-
-    @property
-    def features(self):
-        raise NotImplementedError("Definicion en subclases Distributed o Local")
-
-    @property
-    def labels(self):
-        raise NotImplementedError("Definicion en subclases Distributed o Local")
-
-    def collect(self):
-        raise NotImplementedError("Definicion en subclases Distributed o Local")
-
-    @property
-    def shape(self):
-        raise NotImplementedError("Definicion en subclases Distributed o Local")
-
+    pass
 
 class DistributedLabeledDataSet(LabeledDataSet):
     """
@@ -145,6 +131,10 @@ class DistributedLabeledDataSet(LabeledDataSet):
         self.data = data
         if self.with_lp is False and self.data is not None:  # Por ahora que quede etiquetado con LabeledPoints
             self._labeled_point()
+
+        if self.data is not None:
+            self.rows = self.data.count()
+            self.cols = len(self.features.take(1)[0].toArray())
 
     @property
     def features(self):
@@ -185,16 +175,21 @@ class DistributedLabeledDataSet(LabeledDataSet):
         self.data = fileio.load_file_spark(path, pos_label=pos_label)
         self._labeled_point()
 
-    def save_file(self, path):  # TODO mejorar pq no anda
+        self.rows = self.data.count()
+        self.cols = len(self.features.take(1)[0].toArray())
+
+    def save_file(self, path):
         """
         Guardar conjunto de datos en archivo de texto.
 
-        .. warning:: No se encuentra implementada.
-
         :param path: string, indicando la ruta en donde se guardan los datos.
         """
-
-        raise NotImplementedError
+        if self.with_lp is True:
+            data = self.data.map(lambda lp: (lp.label, lp.features))
+        else:
+            data = self.data
+        data = data.map(lambda (label, features): [label] + list(features))
+        fileio.save_file_spark(data, path)
 
     def _labeled_point(self):
         """
@@ -227,7 +222,7 @@ class DistributedLabeledDataSet(LabeledDataSet):
         sets = [DistributedLabeledDataSet(data) for data in sets]
         return sets
 
-    def collect(self, unpersist=True):
+    def collect(self, unpersist=False):
         """
         Devuelve el conjunto de datos como lista, mediante la aplicación del método *collect()* sobre el RDD.
 
@@ -249,9 +244,7 @@ class DistributedLabeledDataSet(LabeledDataSet):
         """
         shape = None
         if self.data is not None:
-            rows = self.data.count()
-            cols = len(self.features.take(1)[0].toArray())
-            shape = (rows, cols)
+            shape = self.rows, self.cols
         return shape
 
 
@@ -276,6 +269,10 @@ class LocalLabeledDataSet(LabeledDataSet):
         self.data = data
         if self.with_lp is False and self.data is not None:  # Por ahora que quede etiquetado con LabeledPoints
             self._labeled_point()
+
+        if self.data is not None:
+            self.rows = len(self.data)
+            self.cols = len(self.features[0])
 
     @property
     def features(self):
@@ -317,7 +314,10 @@ class LocalLabeledDataSet(LabeledDataSet):
         self.data = fileio.load_file_local(path, pos_label=pos_label)
         self._labeled_point()
 
-    def save_file(self, path):  # TODO mejorar pq no anda
+        self.rows = len(self.data)
+        self.cols = len(self.features[0])
+
+    def save_file(self, path):
         """
         Guardar conjunto de datos en archivo de texto.
 
@@ -326,7 +326,12 @@ class LocalLabeledDataSet(LabeledDataSet):
         :param path: string, indicando la ruta en donde se guardan los datos.
         """
 
-        raise NotImplementedError
+        if self.with_lp is True:
+            data = map(lambda lp: (lp.label, lp.features), self.data)
+        else:
+            data = self.data
+        data = map(lambda (label, features): [label] + list(features), data)
+        fileio.save_file_local(data, path)
 
     def _labeled_point(self):
         """
@@ -375,9 +380,7 @@ class LocalLabeledDataSet(LabeledDataSet):
         """
         shape = None
         if self.data is not None:
-            rows = len(self.data)
-            cols = len(self.features[0])
-            shape = (rows, cols)
+            shape = self.rows, self.cols
         return shape
 
 
@@ -434,9 +437,9 @@ def split_data(data, fractions, seed=123):
     :return: list de conjuntos (e.g. train, valid, test)
     """
     # Verifico que fractions sea correcto
-    # TODO: assert (sum(fractions) <= 1.0, Exception("Fracciones para conjuntos incorrectas!"))
+    assert (sum(fractions) <= 1.0, Exception("Fracciones para conjuntos incorrectas!"))
     if isinstance(data, pyspark.rdd.RDD):
-        sets = data.randomSplit(fractions, seed)  # Uso la funcion del RDD
+        sets = data.randomSplit(fractions, seed)  # Uso la funcion del RDD. TODO: no esta devolviendo tamaños acordes a las fractions
     else:
         # Mezclo un poco los datos
         random.seed(seed)
@@ -466,7 +469,7 @@ def split_balanced(data, fractions, seed=123):
     # 'fractions' es aplicado a cada conjunto formado por c/ clase
     # 'n' indica la cantidad de clases
     # Verifico que fractions sea correcto
-    # TODO: assert (sum(fractions) <= 1.0, Exception("Fracciones para conjuntos incorrectas!"))
+    assert (sum(fractions) <= 1.0, Exception("Fracciones para conjuntos incorrectas!"))
     if isinstance(data, pyspark.rdd.RDD):
         data = data.collect()  # Solución provisoria
     assert isinstance(data[0], LabeledPoint), Exception("Solo se puede operar con conjunto de LabeledPoints!")
