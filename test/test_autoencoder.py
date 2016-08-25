@@ -8,12 +8,15 @@ import matplotlib
 matplotlib.use('agg')
 
 from learninspy.core.model import NetworkParameters
+from learninspy.core.neurons import LocalNeurons
 from learninspy.core.autoencoder import AutoEncoder, StackedAutoencoder
 from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
 from learninspy.utils.data import LocalLabeledDataSet
 from learninspy.utils.fileio import get_logger
 from learninspy.utils.plots import plot_neurons, plot_fitting, plot_activations
+
+import numpy as np
 
 import os
 
@@ -34,7 +37,6 @@ class TestAutoEncoder(object):
         self.train, self.valid, self.test = dataset.split_data([.5, .3, .2])
         self.train = self.train.collect()
         self.valid = self.valid.collect()
-        self.test = self.test.collect()
 
         # Modelo
         if network_params is None:
@@ -54,7 +56,20 @@ class TestAutoEncoder(object):
                                     keep_best=True, reproducible=True)
         return hits_valid
 
+    def _test_backprop(self, x, y):
+        # Dado que esta funcion se llama en una transformación de RDD, no es rastreada por Python
+        # por lo que es mejor hacerle unittest de forma que sea trazada en el coverage code.
+        cost, (nabla_w, nabla_b) = self.model._backprop(x, y)
+        assert type(cost) is float or isinstance(cost, np.float)
+        assert type(nabla_w[0]) is LocalNeurons
+        assert type(nabla_b[0]) is LocalNeurons
+
     def test_fitting(self, opt_params=None, stops=None, mini_batch=30, parallelism=1):
+        logger.info("Testeando backpropagation en AutoEncoders...")
+        x = self.train[0].features
+        y = self.train[0].label
+        self._test_backprop(x, y)
+
         hits_valid = self._fit(opt_params=opt_params, stops=stops, mini_batch=mini_batch, parallelism=parallelism)
         logger.info("Asegurando salidas correctas...")
         assert hits_valid > 0.8
@@ -77,7 +92,6 @@ class TestStackedAutoEncoder(object):
         self.train, self.valid, self.test = dataset.split_data([.5, .3, .2])
         self.train = self.train.collect()
         self.valid = self.valid.collect()
-        self.test = self.test.collect()
 
         # Modelo
         if network_params is None:

@@ -116,9 +116,6 @@ class AutoEncoder(NeuralNetwork):
             ret = hits
         return ret
 
-    def _kl_divergence(self, x):
-        raise NotImplementedError("Implementar para SparseAutoencoder!")
-
     def encode(self, x):
         """
         Codifica la entrada **x**, transformando los datos al pasarlos por el *encoder*.
