@@ -49,7 +49,7 @@ logger.propagate = False  # Para que no se dupliquen los mensajes por herencia
 
 # optimization_domain = {}  # TODO Soportar esta funcionalidad
 network_domain = {'n_layers': ((3, 7), 1),  # Teniendo en cuenta capa de entrada y salida
-                  'activation': ['Tanh', 'ReLU', 'Softplus'],  # Tambien puede ponerse fun_activation.keys()
+                  'activation': ['Sigmoid', 'Tanh', 'ReLU', 'Softplus'],  # Tambien puede ponerse fun_activation.keys()
                   'dropout_ratios': ((0.0, 0.7), 1),  # ((begin, end), precision)
                   'l1': ((1e-6, 1e-4), 6), 'l2': ((1e-6, 1e-3), 4),  # ((begin, end), precision)
                   'perc_neurons': ((0.4, 1.5), 2)

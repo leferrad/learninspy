@@ -102,7 +102,6 @@ learninspy.core.search
 .. automodule:: learninspy.core.search
     :members:
     :undoc-members:
-    :show-inheritance:
 
 learninspy.core.stops
 ----------------------------

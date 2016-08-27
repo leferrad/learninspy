@@ -29,7 +29,7 @@ class TestRandomSearch(object):
         if opt_params is None:  # Por defecto, se utiliza Adadelta
             stops = [criterion['MaxIterations'](10),
                      criterion['AchieveTolerance'](0.95, key='hits')]
-            options = {'step-rate': 1.0, 'decay': 0.99, 'momentum': 0.3, 'offset': 1e-8}
+            options = {'step-rate': 1.0, 'decay': 0.995, 'momentum': 0.3, 'offset': 1e-8}
             opt_params = OptimizerParameters(algorithm='Adadelta', stops=stops,
                                              options=options, merge_criter='w_avg')
         self.opt_params = opt_params
