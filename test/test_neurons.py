@@ -31,7 +31,7 @@ class TestLocalNeurons(object):
         assert np.array_equiv(res.matrix, np.zeros(self.matrix_neurons.shape))
         res = self.matrix_neurons + other
         assert np.array_equiv(res.matrix, np.ones(self.matrix_neurons.shape) * 2)
-        res = res ** 2  # LocalNeurons
+        res **= 2  # LocalNeurons
         assert np.array_equiv(res.matrix, np.ones(self.matrix_neurons.shape) * 4)
         assert self.matrix_neurons == LocalNeurons(self.matrix_neurons.matrix, self.matrix_neurons.shape)
         logger.info("OK")

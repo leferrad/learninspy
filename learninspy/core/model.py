@@ -115,16 +115,11 @@ class NeuralLayer(object):
             if sparsity is True:  # Hago que el vector sea sparse
                 b = sparse.csr_matrix(b)
 
-        # TODO weights_T era p/ poder hacer operaciones distribuidas, pero se deja como experimental DistributedNeurons
-        if distributed is True:
-            logger.error("DistributedNeurons will be implemented soon ...")
-            #self.weights = DistributedNeurons(w, self.shape_w)
-            #self.weights_T = DistributedNeurons(w.T, self.shape_w[::-1])
-            #self.bias = DistributedNeurons(b, self.shape_b)
-        else:
-            self.weights = LocalNeurons(w, self.shape_w)
-            #self.weights_T = LocalNeurons(w.transpose(), self.shape_w[::-1])
-            self.bias = LocalNeurons(b, self.shape_b)
+        # TODO weights_T era p/ poder hacer operaciones distribuidas, pero se deja como TBC la class DistributedNeurons
+        assert distributed is False, logger.error("DistributedNeurons will be implemented soon ...")
+        self.weights = LocalNeurons(w, self.shape_w)
+        #self.weights_T = LocalNeurons(w.transpose(), self.shape_w[::-1])
+        self.bias = LocalNeurons(b, self.shape_b)
 
     def __div__(self, other):
         self.weights /= other
@@ -179,7 +174,7 @@ class NeuralLayer(object):
         return a
 
     # Basado en http://cs231n.github.io/neural-networks-2/
-    def dropoutput(self, x, p, grad=False):
+    def dropoutput(self, x, p, grad=True):
         """
         Salida de la capa neuronal, luego de aplicar la regularización de los pesos sinápticos por Dropout
         utilizando la funcion :func:`~learninspy.core.neurons.LocalNeurons.dropout`.
@@ -196,10 +191,10 @@ class NeuralLayer(object):
         out = self.output(x, grad)
         if grad is True:
             a, d_a = out
-            a, mask = a.dropout(p, self.rng.randint(500))
+            a, mask = a.dropout(p, self.rng.randint(500))  # randint es para generar un nuevo seed (reproducible)
             out = a, d_a
         else:
-            out, mask = out.dropout(p, self.rng.randint(500))
+            out, mask = out.dropout(p, self.rng.randint(500))  # TODO: en que caso no se necesitaria el grad?
         return out, mask  # Devuelvo ademas la mascara utilizada, para el backprop
 
     def update(self, step_w, step_b):  # Actualiza sumando los argumentos w y b a los respectivos pesos
@@ -290,7 +285,6 @@ class RegressionLayer(NeuralLayer):
         raise Exception("Don't use dropout for output layer")
 
 
-# TODO: Ver la factibilidad de cambiarlo por un dict
 class NetworkParameters:
     """
     Clase utilizada para especificar todos los parámetros necesarios para configurar una red neuronal
@@ -310,6 +304,9 @@ class NetworkParameters:
     :param strength_l2: float, ratio de Norma **L2** a aplicar en todas las capas.
     :param seed: int, semilla que alimenta al generador de números aleatorios **numpy.random.RandomState**
         utilizado por la red.
+
+    >>> net_params = []
+    >>> str(net_params)
     """
     def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
                  classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
@@ -339,6 +336,15 @@ class NetworkParameters:
         self.strength_l2 = strength_l2
         self.rng = np.random.RandomState(seed)
 
+    def __eq__(self, other):
+        assert isinstance(other, NetworkParameters), ValueError("Se necesita una instancia de NetworkParameters")
+        equal_values = []
+        for k_self, v_self in self.__dict__.items():
+            if k_self is not 'rng':  # No tiene sentido comparar objetos np.random.RandomState
+                equals = other.__dict__[k_self] == v_self
+                equal_values.append(equals)
+        return all(equal_values)
+
     def __str__(self):
         config = ""
         for l in xrange(len(self.units_layers)):
@@ -366,7 +372,7 @@ class NeuralNetwork(object):
     cargar y guardar un modelo entrenado.
 
     :param params: :class:`.NetworkParameters`, parámetros que configuran la red.
-    :param list_layers: list of :class:`.NruralLayer`, en caso de que se utilicen capas de neuronas
+    :param list_layers: list of :class:`.NeuralLayer`, en caso de que se utilicen capas de neuronas
         ya creadas.
     """
     def __init__(self, params, list_layers=None):
@@ -388,6 +394,11 @@ class NeuralNetwork(object):
         self.epochs = []
 
     def __assert_type_outputlayer(self):
+        """
+        Función interna creada para asegurar que la capa de salida sea correcta en cuanto a la tarea de la red.
+
+        :return:
+        """
         if self.params.classification is True:  # Problema de clasificacion
             if type(self.list_layers[-1]) is not ClassificationLayer:  # Capa de salida no es de clasificacion
                 new_outputlayer = ClassificationLayer()
@@ -583,7 +594,7 @@ class NeuralNetwork(object):
     def predict(self, x):
         beg = time.time()  # tic
         if isinstance(x, list):
-            x = map(lambda lp: self.predict(lp.features).matrix(), x)
+            x = map(lambda lp: self.predict(lp.features).matrix, x)
         else:
             # Tener en cuenta que en la prediccion no se aplica el dropout
             for i in xrange(self.num_layers):
@@ -800,17 +811,18 @@ class NeuralNetwork(object):
         return
 
     def save(self, name, path):
-        file = open(path+name+'.lea', 'w')
-        pickler = pickle.Pickler(file, -1)
+        f = open(path+name+'.lea', 'w')
+        pickler = pickle.Pickler(f, -1)
         pickler.dump(self)
-        file.close()
+        f.close()
         return
 
-    def load(self, name, path):
-        file = open(path+name+'.lea')
-        model = pickle.load(file)
-        self.__dict__.update(model.__dict__)
-        return
+    @classmethod
+    def load(cls, name, path):
+        f = open(path+name+'.lea')
+        model = pickle.load(f)
+        f.close()
+        return model
 
     def __copy__(self):
         cls = self.__class__
