@@ -18,6 +18,7 @@ import cPickle
 import gzip
 import random
 import os
+import abc
 from operator import add
 
 
@@ -108,7 +109,30 @@ class LabeledDataSet(object):
     """
     Clase base para construcción de datasets.
     """
-    pass
+    @abc.abstractmethod
+    def features(self):
+        """Devuelve sólo las características del conjunto de datos, en el correspondiente orden almacenado."""
+
+    @abc.abstractmethod
+    def labels(self):
+        """Devuelve sólo las etiquetas del conjunto de datos, en el correspondiente orden almacenado."""
+
+    @abc.abstractmethod
+    def load_file(self, path, pos_label=-1):
+        """Carga de conjunto de datos desde archivo."""
+
+    @abc.abstractmethod
+    def save_file(self, path):
+        """Guardar conjunto de datos en archivo de texto."""
+
+    @abc.abstractmethod
+    def collect(self, **kwargs):
+        """Devuelve el conjunto de datos,"""
+
+    @abc.abstractmethod
+    def shape(self):
+        """Devuelve el tamaño del conjunto de datos alojado."""
+
 
 class DistributedLabeledDataSet(LabeledDataSet):
     """
@@ -502,26 +526,44 @@ def label_data(data, labels):
 
 # -- Datos de ejemplo --
 
-def load_iris():
+def load_ccpp(path=None):
+    """
+    Carga del conjunto de datos de Combined Cycle Power Plant extraido del
+    UCI Machine Learning repository <http://archive.ics.uci.edu/ml/datasets/Combined+Cycle+Power+Plant>`_.
+
+    :param path: string, ruta al archivo 'ccpp.csv'.
+    :return: list de LabeledPoints.
+    """
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'examples/datasets/ccpp.csv')
+    data = fileio.load_file_local(path)
+    data = map(lambda (l, f): LabeledPoint(l, f), data)
+    return data
+
+def load_iris(path=None):
     """
     Carga del conjunto de datos de Iris.
 
+    :param path: string, ruta al archivo 'iris.csv'.
     :return: list de LabeledPoints.
     """
-    path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'examples/datasets/iris.csv')
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'examples/datasets/iris.csv')
     data = fileio.load_file_local(path)
     data = map(lambda (l, f): LabeledPoint(l, f), data)
     return data
 
 
-def load_mnist():
+def load_mnist(path=None):
     """
     Carga del conjunto de datos original de MNIST.
 
+    :param path: string, ruta al archivo 'mnist.pkl.gz'.
     :return: tuple de lists con LabeledPoints, correspondientes a los conjuntos de train, valid y test respectivamente.
     """
     # Datos y procedim extraídos de http://deeplearning.net/tutorial/gettingstarted.html
-    path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'examples/datasets/mnist.pkl.gz')
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, 'examples/datasets/mnist.pkl.gz')
     f = gzip.open(path, 'rb')
     train, valid, test = cPickle.load(f)
     f.close()
