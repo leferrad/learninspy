@@ -17,9 +17,8 @@ Learninspy is a framework for building deep neural networks using Spark features
 
 ### Dependencies
 * Python 2.7.x
-* Spark[>=1.3.0]
+* Spark[>=1.3.x, 2.0.x]
 * NumPy
-* SciPy
 * Matplotlib 
 
 ## Testing

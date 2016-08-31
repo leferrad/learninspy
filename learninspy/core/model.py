@@ -24,7 +24,6 @@ import time
 import gc
 
 import numpy as np
-from scipy import sparse
 from pyspark import StorageLevel
 
 
@@ -53,7 +52,6 @@ class NeuralLayer(object):
     :param distributed: si es True, indica que se utilicen arreglos distribuidos para **w** y **b**.
     :param w: :class:`.LocalNeurons`, matriz de pesos sinápticos. Si es *None*, se crea por defecto.
     :param b: :class:`.LocalNeurons`, vector de pesos bias. Si es *None*, se crea por defecto.
-    :param sparsity: si es True, los arreglos se almacenan en formato **scipy.sparse.csr_matrix**.
     :param rng: si es *None*, se crea un generador de números aleatorios
      mediante una instancia **numpy.random.RandomState**.
 
@@ -69,12 +67,11 @@ class NeuralLayer(object):
 
     """
 
-    def __init__(self, n_in=2, n_out=2, activation='ReLU', distributed=False, w=None, b=None, sparsity=False, rng=None):
+    def __init__(self, n_in=2, n_out=2, activation='ReLU', distributed=False, w=None, b=None, rng=None):
         self.n_out = n_out
         self.n_in = n_in
         self.activation = act.fun_activation[activation]
         self.activation_d = act.fun_activation_d[activation]
-        sparsity = False  # TODO completar esta funcionalidad
         distributed = False  # TODO completar esta funcionalidad
 
         if rng is None:
@@ -106,14 +103,9 @@ class NeuralLayer(object):
                 )
             else:
                 w = self.rng.randn(*self.shape_w) * np.sqrt(2.0/n_in)
-            if sparsity is True:
-                w = sparse.csr_matrix(w)  # Convierto matriz densa a "rala"
 
         if b is None:
             b = np.zeros(self.shape_b, dtype=np.dtype(float))
-
-            if sparsity is True:  # Hago que el vector sea sparse
-                b = sparse.csr_matrix(b)
 
         # TODO weights_T era p/ poder hacer operaciones distribuidas, pero se deja como TBC la class DistributedNeurons
         assert distributed is False, logger.error("DistributedNeurons will be implemented soon ...")
@@ -308,7 +300,7 @@ class NetworkParameters:
     >>> net_params = []
     >>> str(net_params)
     """
-    def __init__(self, units_layers, activation='ReLU', layer_distributed=None, dropout_ratios=None,
+    def __init__(self, units_layers, activation='ReLU', dropout_ratios=None, layer_distributed=False,
                  classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
         num_layers = len(units_layers)  # Cant total de capas (entrada + ocultas + salida)
         if dropout_ratios is None:
@@ -318,20 +310,25 @@ class NetworkParameters:
             else:
                 dropout_ratios = [0.0] * num_layers  # Nunca recomendado hacer dropout en regresion
             dropout_ratios[-1] = 0.0  # TODO es para asegurarme que no haya DropOut en la salida, pero verificar mejor
-        if layer_distributed is None:
-            layer_distributed = [False] * num_layers   # Por defecto, las capas no estan distribuidas
+
+        if type(layer_distributed) is bool:  # Por defecto, las capas no estan distribuidas (default=False)
+            layer_distributed = [layer_distributed] * num_layers
+
         if type(activation) is not list:  # Si es un string, lo replico por la cant de capas
             activation = [activation] * num_layers
+
         self.activation = activation
         self.dropout_ratios = dropout_ratios  # Recordar que la capa de salida no sufre dropout
         # 'units_layers' es un vector que indica la cantidad de unidades de cada capa (1er elemento se refiere a capa visible)
         self.units_layers = units_layers
         self.layer_distributed = layer_distributed
         self.classification = classification
+
         if classification is True:
             self.loss = 'CrossEntropy'  # Loss para clasificacion
         else:
             self.loss = 'MSE'  # Loss para regresion
+
         self.strength_l1 = strength_l1
         self.strength_l2 = strength_l2
         self.rng = np.random.RandomState(seed)
@@ -348,9 +345,13 @@ class NetworkParameters:
     def __str__(self):
         config = ""
         for l in xrange(len(self.units_layers)):
-            if l == (len(self.units_layers)-1) and self.classification is True:  # Para especificar softmax de clasific
-                config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
-                          + "Softmax activation."+os.linesep
+            if l == (len(self.units_layers)-1):
+                if self.classification is True:  # Para especificar softmax de clasific
+                    config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                              + "Softmax activation."+os.linesep
+                else:  # Regresion
+                    config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                              + self.activation[l]+" activation."+os.linesep
             else:
                 config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
                           + self.activation[l]+" activation and "\
@@ -417,7 +418,8 @@ class NeuralNetwork(object):
         self.set_initial_rndstate()
         for i in xrange(1, num_layers - 1):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
-                                                self.params.activation[i - 1], self.params.layer_distributed[i],
+                                                self.params.activation[i - 1],
+                                                distributed=self.params.layer_distributed[i],
                                                 rng=self.params.rng))
         if self.params.classification is True:
             # Ultima capa es de clasificacion, por lo que su activacion es softmax
@@ -425,7 +427,7 @@ class NeuralNetwork(object):
                                                         self.params.units_layers[-1],
                                                         self.params.activation[-2],
                                                         # Notar que no tomo la ultima, ya que la lista tiene 1 elem mas
-                                                        self.params.layer_distributed[-1],
+                                                        distributed=self.params.layer_distributed[-1],
                                                         rng=self.params.rng))
         else:
             # Ultima capa es de regresion, por lo que su activacion puede ser cualquiera
@@ -434,8 +436,12 @@ class NeuralNetwork(object):
                                                     self.params.units_layers[num_layers - 1],
                                                     self.params.activation[-1],
                                                     # Notar que ahora tomo la ultima, ya que se corresponde a la salida
-                                                    self.params.layer_distributed[num_layers - 1],
+                                                    distributed=self.params.layer_distributed[num_layers - 1],
                                                     rng=self.params.rng))
+
+    def set_initial_rndstate(self):
+        self.params.rng.set_state(self.rnd_state)
+        return
 
     def l1(self):
         """
@@ -501,6 +507,7 @@ class NeuralNetwork(object):
         cost = a[-1].loss(self.loss, y)
         # Backward pass
         d_cost = a[-1].loss_d(self.loss_d, y)
+        logger.debug("Loss on backpropagation: %10.3f", cost)
         # Si el problema es de clasificación, entonces se utiliza una Softmax y por ende
         # el gradiente ya está computado en d_cost por el loss de CE.
         if self.params.classification is True:
@@ -561,6 +568,7 @@ class NeuralNetwork(object):
         :param data:
         :return:
         """
+        # TODO: tener en cuenta esto http://stats.stackexchange.com/questions/108381/how-to-avoid-nan-in-using-relu-cross-entropy
         features = map(lambda lp: lp.features, data)
         if self.params.classification is True:
             labels = map(lambda lp: label_to_vector(lp.label, self.params.units_layers[-1]), data)
@@ -806,11 +814,14 @@ class NeuralNetwork(object):
             self.list_layers[l].update(stepw[l], stepb[l])
         return self
 
-    def set_initial_rndstate(self):
-        self.params.rng.set_state(self.rnd_state)
-        return
-
     def save(self, name, path):
+        """
+
+        :param name:
+        :param path:
+
+        >>>
+        """
         f = open(path+name+'.lea', 'w')
         pickler = pickle.Pickler(f, -1)
         pickler.dump(self)
