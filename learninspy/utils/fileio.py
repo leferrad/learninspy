@@ -142,6 +142,7 @@ def save_file_local(data, path, delimiter=','):
             writer.writerow(line)
     return
 
+
 def get_logger(name='learninspy', level=logging.INFO):
     """
     Función para obtener el logger de Learninspy.

@@ -16,7 +16,7 @@ Clases principales:
 
     :class:`learninspy.core.model.NeuralNetwork`
 
-    Clase para crear una red neuronal profunda.
+    Clase base para crear una red neuronal profunda.
 
     :class:`learninspy.core.model.NetworkParameters`
 
@@ -28,7 +28,7 @@ Clases principales:
 
     :class:`learninspy.utils.data.LabeledDataSet`
 
-    Clase para crear una base de datos etiquetada, para problemas de clasificación o regresión.
+    Clase abstracta para crear una base de datos etiquetada, para problemas de clasificación o regresión.
 
 
 

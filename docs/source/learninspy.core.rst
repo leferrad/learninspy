@@ -54,6 +54,8 @@ Red neuronal
 """"""""""""
 
 .. autoclass:: NeuralNetwork
+    :members:
+    :show-inheritance:
 
 Parámetros
 """"""""""
