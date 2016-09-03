@@ -429,10 +429,15 @@ class LocalNeurons(object):
     def l1(self):
         """
         Norma **L1** sobre la matriz almacenada.
-
         Se retorna una tupla con el resultado y además el gradiente de dicha norma.
 
+        :math:`L_1(W)=\displaystyle\sum\limits_{i}^{n_{rows}} \sum\limits_{j}^{n_{cols}} |W_{i,j}|, \quad
+        \\dfrac{\partial}{\partial W_{i,j}} L_1(W)= sign(W_{i,j})`
+
         :return: tuple de float, :class:`~learninspy.core.neurons.LocalNeurons`
+
+        .. note:: El cálculo no suele aplicarse a un vector de bias *b*,
+            ya que afecta poco en el resultado final.
         """
         cost = sum(sum(abs(self.matrix)))
         gradient = np.sign(self.matrix)  # en x=0 no es diferenciable, pero que sea igual a 0 la derivada anda bien
@@ -440,13 +445,18 @@ class LocalNeurons(object):
 
     def l2(self):
         """
-        Norma **L1** sobre la matriz almacenada.
-
+        Norma **L2** sobre la matriz almacenada.
         Se retorna una tupla con el resultado y además el gradiente de dicha norma.
 
+        :math:`L_2(W)=\\dfrac{1}{2} \displaystyle\sum\limits_{i}^{n_{rows}} \sum\limits_{j}^{n_{cols}} (W_{i,j})^2, \quad
+        \\dfrac{\partial}{\partial W_{i,j}} L_2(W)= W_{i,j}`
+
         :return: tuple de float, :class:`~learninspy.core.neurons.LocalNeurons`
+
+        .. note:: El cálculo no suele aplicarse a un vector de bias *b*,
+            ya que afecta poco en el resultado final.
         """
-        cost = sum(sum(self.matrix ** 2))
+        cost = sum(sum(self.matrix ** 2)) * 0.5  # Multiplico por 0.5 para hacer mas simple el gradiente
         gradient = self.matrix
         return cost, LocalNeurons(gradient, self.shape)
 
