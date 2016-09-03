@@ -22,16 +22,15 @@ if 'sc' not in locals() or sc is None:
             .set('spark.driver.extraJavaOptions', extraJavaOptions)
             .set('spark.executor.extraJavaOptions', extraJavaOptions)
             .set('spark.executor.extraJavaOptions', '-XX:+UseCompressedOops')  # Cuando se tiene menos de 32GB de RAM, punteros de 4 bytes en vez de 8 bytes
-           .set("spark.storage.memoryFraction", "0.5")
+            .set("spark.storage.memoryFraction", "0.5")  # Deprecado en 2.0.0
             .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
             .set("spark.kryoserializer.buffer", "256")
             .set("spark.rdd.compress", "true")
             .set("spark.logConf", "false"))
     sc = SparkContext.getOrCreate(conf=conf)
 
-"""
-if 'logger' not in locals():
     from learninspy.utils.fileio import get_logger
     logger = get_logger(name=__name__)
-"""
+
+    logger.info("Contexto de Spark inicializado.")
 
