@@ -110,10 +110,10 @@ class TestNeuralNetwork(object):
 
     def test_fileio_model(self):
         # Save
-        model_name = 'test_model'
-        self.model.save(name=model_name, path=TEMP_PATH)
+        model_name = 'test_model.lea'
+        self.model.save(filename=TEMP_PATH+model_name)
 
         # Load
-        test_model = NeuralNetwork.load(name=model_name, path=TEMP_PATH)
+        test_model = NeuralNetwork.load(filename=TEMP_PATH+model_name)
 
         assert self.model.params == test_model.params

@@ -25,6 +25,7 @@ import gc
 
 import numpy as np
 from pyspark import StorageLevel
+from pyspark.mllib.regression import LabeledPoint
 
 
 logger = get_logger(name=__name__)
@@ -67,7 +68,7 @@ class NeuralLayer(object):
 
     """
 
-    def __init__(self, n_in=2, n_out=2, activation='ReLU', distributed=False, w=None, b=None, rng=None):
+    def __init__(self, n_in, n_out, activation='ReLU', distributed=False, w=None, b=None, rng=None):
         self.n_out = n_out
         self.n_in = n_in
         self.activation = act.fun_activation[activation]
@@ -297,8 +298,19 @@ class NetworkParameters:
     :param seed: int, semilla que alimenta al generador de números aleatorios **numpy.random.RandomState**
         utilizado por la red.
 
-    >>> net_params = []
-    >>> str(net_params)
+    >>> net_params = NetworkParameters(units_layers=[4, 8, 3], dropout_ratios=[0.0, 0.0],\ ...
+    >>>                                activation='ReLU', strength_l1=1e-5, strength_l2=3e-4,\ ...
+    >>>                                classification=True, seed=123)
+    >>> net_params == net_params
+    True
+    >>> net_params == NetworkParameters(units_layers=[10, 2])
+    False
+    >>> print str(net_params)
+    Layer 0 with 4 neurons, using ReLU activation and 0.0 ratio of DropOut.
+    Layer 1 with 8 neurons, using ReLU activation and 0.0 ratio of DropOut.
+    Layer 2 with 3 neurons, using Softmax activation.
+    The loss is CrossEntropy for a task of classification.
+    L1 strength is 1e-05 and L2 strength is 0.0003.
     """
     def __init__(self, units_layers, activation='ReLU', dropout_ratios=None, layer_distributed=False,
                  classification=True, strength_l1=1e-5, strength_l2=1e-4, seed=123):
@@ -415,7 +427,7 @@ class NeuralNetwork(object):
     def __init_weights(self):  # Metodo privado
         logger.debug("Initializing weights and bias of Neural Layers ...")
         num_layers = len(self.params.units_layers)
-        self.set_initial_rndstate()
+        self._set_initial_rndstate()
         for i in xrange(1, num_layers - 1):
             self.list_layers.append(NeuralLayer(self.params.units_layers[i - 1], self.params.units_layers[i],
                                                 self.params.activation[i - 1],
@@ -439,14 +451,21 @@ class NeuralNetwork(object):
                                                     distributed=self.params.layer_distributed[num_layers - 1],
                                                     rng=self.params.rng))
 
-    def set_initial_rndstate(self):
+    def _set_initial_rndstate(self):
         self.params.rng.set_state(self.rnd_state)
         return
 
     def l1(self):
         """
-        Norma **L1** sobre todas las capas (explicar que es una suma y luego se multiplica por strength).
-        :return: float, resultado de aplicar norma.
+        Norma **L1** sobre la matriz **w** de pesos sinápticos de cada una de las N capas en la red,
+        calculada mediante llamadas a la funcion :func:`~learninspy.core.neurons.LocalNeurons.l1`,
+        tal que se obtiene:
+
+        :math:`L1=\lambda_1 \displaystyle\sum\limits_{l}^N L_1(W^{l})`
+
+        Además se retorna la lista de N gradientes correspondientes a cada capa de la red.
+
+        :return: tuple de float, list de :class:`~learninspy.core.neurons.LocalNeurons`
         """
         cost = 0.0
         gradient = []
@@ -457,38 +476,69 @@ class NeuralNetwork(object):
         cost *= self.params.strength_l1
         return cost, gradient
 
-    # Ante la duda, l2 consigue por lo general mejores resultados que l1 pero se pueden combinar
     def l2(self):
+        """
+        Norma **L2** sobre la matriz **w** de pesos sinápticos de cada una de las N capas en la red,
+        calculada mediante llamadas a la funcion :func:`~learninspy.core.neurons.LocalNeurons.l2`,
+        tal que se obtiene:
+
+        :math:`L2=\lambda_2 \displaystyle\sum\limits_{l}^N L_2(W^{l})`
+
+        Además se retorna la lista de N gradientes correspondientes a cada capa de la red.
+
+        :return: tuple de float, list de :class:`~learninspy.core.neurons.LocalNeurons`
+        """
         cost = 0.0
         gradient = []
         for layer in self.list_layers:
             c_l2, g_l2 = layer.l2()
             cost += c_l2
             gradient.append(g_l2 * self.params.strength_l2)
-        cost *= self.params.strength_l2 * 0.5  # Multiplico por 0.5 para hacer mas simple el gradiente
+        cost *= self.params.strength_l2
         return cost, gradient
 
     def set_l1(self, strength_l1):
+        """
+        Setea un strength dado para calcular la norma L1,
+        sobrescribiendo el valor correspondiente en la instancia de parámetros
+        :class:`~learninspy.core.model.NetworkParameters`.
+
+        :param strength_l1: float
+        """
         self.params.strength_l1 = strength_l1
         return
 
     def set_l2(self, strength_l2):
+        """
+        Setea un strength dado para calcular la norma L2,
+        sobrescribiendo el valor correspondiente en la instancia de parámetros
+        :class:`~learninspy.core.model.NetworkParameters`.
+
+        :param strength_l2: float
+        """
         self.params.strength_l2 = strength_l2
         return
 
     def set_dropout_ratios(self, dropout_ratios):
+        """
+        Setea los ratios para utilizar en el DropOut de los pesos sinápticos,
+        sobrescribiendo el valor correspondiente en la instancia de parámetros
+        :class:`~learninspy.core.model.NetworkParameters`.
+
+        :param dropout_ratios: list de floats
+        """
         self.params.dropout_ratios = dropout_ratios
         return
 
     def _backprop(self, x, y):
         """
+        Algoritmo de backpropagation para ajustar la red neuronal con una entrada {x,y}
 
-        :param x:
-        :param y:
-        :return:
+        :param x: *numpy.ndarray* (features)
+        :param y: float o *numpy.ndarray* (label)
+        :return: float (costo), tuple de :class:`~learninspy.core.neurons.LocalNeurons` (gradientes de W y b)
         """
         # Ver http://neuralnetworksanddeeplearning.com/chap1.html#implementing_our_network_to_classify_digits
-        # x, y: numpy array
         beg = time.time()  # tic
         num_layers = self.num_layers
         drop_fraction = self.params.dropout_ratios  # Vector con las fracciones de DropOut para cada NeuralLayer
@@ -529,17 +579,25 @@ class NeuralNetwork(object):
         logger.debug("Duration of computing gradients on backpropagation: %8.4fms.", end)
         return cost, (nabla_w, nabla_b)
 
-    def cost(self, features, label):
+    def cost_single(self, features, label):
         """
+        Costo total de la red neuronal para una entrada singular {*features*, *label*}, dado por:
 
-        Para problemas de clasificación, el float *label* se convierte a un vector binario
-        de dimensión K (dado por la cantidad de clases a predecir) mediante
-        :func:`~learninspy.utils.data.label_to_vector` para así poder aplicar una función de costo
-        en forma directa contra la predicción realizada por la softmax (que es un vector).
+        :math:`C(W, b; x, y) = C_{FP}(W, b; x, y) + L1 + L2`
 
-        :param features:
-        :param label:
-        :return:
+        donde :math:`C_{FP}` es el costo obtenido al final del Forward Pass durante el algoritmo de Backpropagation,
+        y los términos *L1* y *L2* corresponden a las normas de regularización calculadas con las funciones
+        :func:`~learninspy.core.model.NeuralNetwork.l1` y  :func:`~learninspy.core.model.NeuralNetwork.l2`
+        respectivamente.
+
+        :param features: *numpy.ndarray*
+        :param label: float o *numpy.ndarray*
+        :return: float (costo), tuple de :class:`~learninspy.core.neurons.LocalNeurons` (gradientes de W y b)
+
+        .. note:: Para problemas de clasificación, el float *label* se convierte a un vector binario
+          de dimensión K (dado por la cantidad de clases a predecir) mediante
+          :func:`~learninspy.utils.data.label_to_vector` para así poder aplicar una función de costo
+          en forma directa contra la predicción realizada por la softmax (que es un vector).
         """
         # 'label' se debe vectorizar para que se pueda utilizar en una fun_loss sobre un Neurons (arreglo)
         # - Si la tarea de la red es de clasificación, entonces 'label' se debe convertir a vector binario.
@@ -564,9 +622,22 @@ class NeuralNetwork(object):
 
     def cost_overall(self, data):
         """
-        .. note:: EXPERIMENTAL. Hay q ver si sirve usar cost() o cost_overall() en los Optimizers
-        :param data:
-        :return:
+        Costo promedio total de la red neuronal para un batch de M entradas {*features*, *label*}, dado por:
+
+        :math:`C(W, b; x, y) = \\dfrac{1}{M} \displaystyle\sum\limits_{i}^M C_{FP}(W, b; x^{(i)}, y^{(i)}) + L1 + L2`
+
+        donde :math:`C_{FP}` es el costo obtenido al final del Forward Pass durante el algoritmo de Backpropagation,
+        y los términos *L1* y *L2* corresponden a las normas de regularización calculadas con las funciones
+        :func:`~learninspy.core.model.NeuralNetwork.l1` y  :func:`~learninspy.core.model.NeuralNetwork.l2`
+        respectivamente.
+
+        :param data: list de *pyspark.mllib.regression.LabeledPoint*
+        :return: float (costo), tuple de :class:`~learninspy.core.neurons.LocalNeurons` (gradientes de W y b)
+
+        .. note:: Para problemas de clasificación, el float *label* se convierte a un vector binario
+          de dimensión K (dado por la cantidad de clases a predecir) mediante
+          :func:`~learninspy.utils.data.label_to_vector` para así poder aplicar una función de costo
+          en forma directa contra la predicción realizada por la softmax (que es un vector).
         """
         # TODO: tener en cuenta esto http://stats.stackexchange.com/questions/108381/how-to-avoid-nan-in-using-relu-cross-entropy
         features = map(lambda lp: lp.features, data)
@@ -600,10 +671,18 @@ class NeuralNetwork(object):
         return cost, (nabla_w, nabla_b)
 
     def predict(self, x):
+        """
+        Predicciones sobre una entrada de datos (singular o conjunto).
+
+        :param x: *numpy.ndarray* o *pyspark.mllib.regression.LabeledPoint*, o list de ellos.
+        :return: *numpy.ndarray*
+        """
         beg = time.time()  # tic
         if isinstance(x, list):
-            x = map(lambda lp: self.predict(lp.features).matrix, x)
+            x = map(lambda x_i: self.predict(x_i).matrix, x)
         else:
+            if isinstance(x, LabeledPoint):
+                x = x.features
             # Tener en cuenta que en la prediccion no se aplica el dropout
             for i in xrange(self.num_layers):
                 x = self.list_layers[i].output(x, grad=False)
@@ -612,6 +691,15 @@ class NeuralNetwork(object):
         return x
 
     def check_stop(self, epochs, criterions, check_all=False):
+        """
+        Chequeo de los criterios de cortes definidos sobre la información del ajuste en una red neuronal.
+
+        :param epochs: int, número de épocas efectuadas en el ajuste de la red
+        :param criterions: list de *criterion*, instanciados desde :mod:`~learninspy.core.stops`.
+        :param check_all: bool, si es True se devuelve un AND de todos los criterios y si es False
+         se utiliza un OR.
+        :return: bool, indicando True si los criterios señalan que se debe frenar el ajuste de la red.
+        """
         if len(self.hits_valid) == 0:
             hits = 0.0
         else:
@@ -626,12 +714,15 @@ class NeuralNetwork(object):
 
     def evaluate(self, data, predictions=False, measure=None):
         """
+        Evaluación de un conjunto de datos etiquetados, midiendo la salida real o de predicción
+        contra la esperada mediante una métrica definida en base a la tarea asignada para la red.
 
-        :param data:
-        :param predictions:
+        :param data: instancia de :class:`.LabeledDataSet` o list de *pyspark.mllib.regression.LabeledPoint*
+        :param predictions: bool, si es True se deben retornar también las predicciones hechas sobre *data*
         :param measure: string, key de alguna medida implementada en alguna de las métricas
          diponibles en :mod:`~learninspy.utils.evaluation`.
-        :return:
+        :return: float, resultado de aplicar la medida dada por *measure*. Si *predictions* es True se retorna
+         además una lista de *numpy.ndarray* (predicciones).
         """
         if isinstance(data, LabeledDataSet):
             actual = data.labels
@@ -665,15 +756,19 @@ class NeuralNetwork(object):
     def _train(self, train_bc, mini_batch=50, parallelism=4, measure=None, optimizer_params=None,
                reproducible=False, evaluate=True):
         """
+        Entrenamiento de la red neuronal sobre el conjunto *train_bc*.
 
-        :param train_bc:
-        :param mini_batch:
-        :param parallelism:
-        :param optimizer_params:
-        :param measure:
-        :param reproducible:
-        :param evaluate:
-        :return:
+        :param train_bc: *pyspark.Broadcast*, variable Broadcast de Spark correspondiente al conjunto de entrenamiento.
+        :param mini_batch: int, cantidad de ejemplos a utilizar durante una época de la optimización.
+        :param parallelism: int, cantidad de modelos a optimizar concurrentemente.
+            Si es -1, se setea como :math:`\\frac{N}{m}` donde *N* es la cantidad
+            total de ejemplos de entrenamiento y *m* la cantidad de ejemplos para el mini-batch.
+        :param optimizer_params: :class:`.OptimizerParameters`
+        :param measure: string, key de alguna medida implementada en alguna de las métricas
+         diponibles en :mod:`~learninspy.utils.evaluation`.
+        :param reproducible: bool, si es True se indica que se debe poder reproducir exactamente el ajuste.
+        :param evaluate: bool, si es True se evalua el modelo sobre el conjunto de entrenamiento.
+        :return: float, resultado de evaluar el modelo final, o None si *evaluate* es False.
         """
         if parallelism == -1:
             # Se debe entrenar un modelo por cada batch (aunque se pueden solapar)
@@ -685,7 +780,7 @@ class NeuralNetwork(object):
         # TODO ver si usar sc.accumulator para acumular actualizaciones y despues aplicarlas (paper de mosharaf)
 
         if reproducible is True:
-            self.set_initial_rndstate()  # Seteo estado inicial del RandomState (al generarse la instancia NeuralNetwork)
+            self._set_initial_rndstate()  # Seteo estado inicial del RandomState (al generarse la instancia NeuralNetwork)
 
         seeds = list(self.params.rng.randint(500, size=parallelism))
         # Paralelizo modelo actual en los nodos mediante parallelism (que define el n° de particiones o slices del RDD)
@@ -724,21 +819,36 @@ class NeuralNetwork(object):
     def fit(self, train, valid=None, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
             stops=None, optimizer_params=None, reproducible=False, keep_best=False):
         """
+        Ajuste de la red neuronal utilizando los conjuntos *train* y *valid*, mediante las siguientes pautas:
+
+        * Durante la optimización, un modelo itera sobre un batch o subconjunto muestreado de *train* cuya
+          magnitud está dada por *mini_batch*.
+        * La optimización se realiza en forma distribuida, seleccionando batchs de datos para cada modelo
+          a entrenar en forma paralela por cada iteración de la optimización. La cantidad de modelos a entrenar
+          en forma concurrente está dada por *parallelism*.
+        * El conjunto *train* es enviado en Broadcast de Spark a todos los nodos de ejecución para mejorar el esquema
+          de comunicación durante la optimización.
+        * La validación se realiza cada una cierta cantidad de épocas, dada por *valid_iters*,
+          para así poder agilizar el ajuste cuando *valid* es de gran dimensión.
+        * La optimización es controlada mediante los parámetros :class:`.OptimizerParameters` y los criterios de corte
+          provenientes de :mod:`~learninspy.core.stops`.
+
 
         :param train: :class:`.LabeledDataSet` or list, conjunto de datos de entrenamiento.
         :param valid: :class:`.LabeledDataSet` or list, conjunto de datos de validación.
         :param mini_batch: int, cantidad de ejemplos a utilizar durante una época de la optimización.
         :param parallelism: int, cantidad de modelos a optimizar concurrentemente.
-            Si es -1, se setea como :math:`\\frac{N_{train}}{m}` donde *N* es la cantidad
+            Si es -1, se setea como :math:`\\frac{N}{m}` donde *N* es la cantidad
             total de ejemplos de entrenamiento y *m* la cantidad de ejemplos para el mini-batch.
-        :param valid_iters:
-        :param measure:
-        :param stops: list of Criterions.
+        :param valid_iters: int, indicando cada cuántas iteraciones evaluar el modelo sobre el conjunto *valid*.
+        :param measure: string, key de alguna medida implementada en alguna de las métricas
+         diponibles en :mod:`~learninspy.utils.evaluation`.
+        :param stops: list de *criterion*, instanciados desde :mod:`~learninspy.core.stops`.
         :param optimizer_params: :class:`.OptimizerParameters`
-        :param reproducible:
+        :param reproducible: bool, si es True se indica que se debe poder reproducir exactamente el ajuste.
         :param keep_best: bool, indicando **True** si se desea mantener al final de la optimización
             el mejor modelo obtenido.
-        :return:
+        :return: float, resultado de evaluar el modelo final sobre el conjunto *valid*.
         """
         # Si es LabeledDataSet, lo colecto en forma de lista
         if isinstance(train, LabeledDataSet):
@@ -808,29 +918,47 @@ class NeuralNetwork(object):
         train.unpersist()
         return self.hits_valid[-1]
 
-    def update(self, stepw, stepb):
+    def update(self, step_w, step_b):
+        """
+        Actualiza los pesos sinápticos de cada capa en la red, agregando a cada una los incrementos
+        ingresados como parámetros mediante llamadas a la función :func:`~learninspy.core.model.NeuralLayer.update`.
+
+        :param step_w: list de :class:`~learninspy.core.neurons.LocalNeurons`.
+        :param step_b: list de :class:`~learninspy.core.neurons.LocalNeurons`.
+        :return: :class:`~learninspy.core.model.NeuralNetwork`.
+        """
         # Cada parametro step es una lista, para actualizar cada capa
         for l in xrange(self.num_layers):
-            self.list_layers[l].update(stepw[l], stepb[l])
+            self.list_layers[l].update(step_w[l], step_b[l])
         return self
 
-    def save(self, name, path):
+    def save(self, filename):
         """
+        Guardar el modelo en forma serializada con Pickler.
 
-        :param name:
-        :param path:
+        :param filename: string, ruta indicando dónde debe almacenarse.
 
-        >>>
+        >>> # Load
+        >>> model_path = '/tmp/model/test_model.lea'
+        >>> test_model = NeuralNetwork.load(filename=model_path)
+        >>> # Save
+        >>> test_model.save(filename=model_path)
         """
-        f = open(path+name+'.lea', 'w')
+        f = open(filename, 'w')
         pickler = pickle.Pickler(f, -1)
         pickler.dump(self)
         f.close()
         return
 
     @classmethod
-    def load(cls, name, path):
-        f = open(path+name+'.lea')
+    def load(cls, filename):
+        """
+        Carga de un modelo desde archivo en forma serializada con Pickler.
+
+        :param filename: string, ruta indicando desde dónde debe cargarse.
+        :return: :class:`~learninspy.core.model.NeuralNetwork`
+        """
+        f = open(filename)
         model = pickle.load(f)
         f.close()
         return model

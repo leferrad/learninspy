@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+...
+"""
+
 __author__ = 'leferrad'
 
-# Dependencias externas
-import numpy as np
-
-# Librerias de Learninspy
 from learninspy.utils.evaluation import RegressionMetrics
 from learninspy.utils.data import label_data, LabeledDataSet, DistributedLabeledDataSet
 from learninspy.core.model import NeuralNetwork, NetworkParameters, RegressionLayer, ClassificationLayer
 from learninspy.utils.fileio import get_logger
 
-# Librerias de Python
+import numpy as np
+
 import copy
 import time
 
