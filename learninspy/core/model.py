@@ -322,6 +322,8 @@ class NetworkParameters:
             else:
                 dropout_ratios = [0.0] * num_layers  # Nunca recomendado hacer dropout en regresion
             dropout_ratios[-1] = 0.0  # TODO es para asegurarme que no haya DropOut en la salida, pero verificar mejor
+        if len(dropout_ratios) < (num_layers - 1):
+            dropout_ratios.append(0.0)  # Se completa la lista de ratios con un 0.0 para la salida
 
         if type(layer_distributed) is bool:  # Por defecto, las capas no estan distribuidas (default=False)
             layer_distributed = [layer_distributed] * num_layers

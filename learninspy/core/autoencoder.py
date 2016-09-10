@@ -88,22 +88,22 @@ class AutoEncoder(NeuralNetwork):
         """
         Evalúa AutoEncoder sobre un conjunto de datos.
 
-        :param data: list de LabeledPoint
+        :param data: list de LabeledPoint o instancia de :class:`~learninspy.utils.data.LabeledDataSet`.
         :param predictions: si es True, retorna las predicciones (salida reconstruida por el AutoEncoder).
         :param measure: string, key de alguna medida implementada en
          :class:`~learninspy.utils.evaluation.RegressionMetrics`.
         :return: resultado de evaluación, y predicciones si se solicita en *predictions*
         """
         if isinstance(data, LabeledDataSet):
-            actual = data.features  # Tiene que aprender a reconstruir la entrada
+            actual = data.features
             if type(data) is DistributedLabeledDataSet:
+                predicted = actual.map(lambda f: self.predict(f).matrix.T).collect()  # TODO: notar la transposic
                 actual = actual.collect()
-                predicted = data.features.map(lambda f: self.predict(f).matrix.T).collect()  # TODO: notar la transposic
             else:
-                predicted = map(lambda f: self.predict(f).matrix.T, data.features)
+                predicted = map(lambda f: self.predict(f).matrix.T, actual)
         else:
             actual = map(lambda lp: lp.features, data)
-            predicted = map(lambda lp: self.predict(lp.features).matrix.T, data)
+            predicted = map(lambda f: self.predict(f).matrix.T, actual)
 
         metrics = RegressionMetrics(zip(predicted, actual))
         if measure is None:
@@ -120,11 +120,16 @@ class AutoEncoder(NeuralNetwork):
     def encode(self, x):
         """
         Codifica la entrada **x**, transformando los datos al pasarlos por el *encoder*.
+
+        :param x: list of LabeledPoints.
+        :return: list of numpy.ndarray
         """
         if isinstance(x, list):
-            x = map(lambda lp: self.encode(lp.features).matrix, x)
+            x = map(lambda lp: self.encode(lp.features), x)
         else:
-            x = self.encoder_layer().output(x, grad=False)   # Solo la salida de la capa oculta
+            x = self.encoder_layer().output(x, grad=False).matrix   # Solo la salida de la capa oculta
+            # 'x' es un vector columna ya que es la salida de una capa.
+            x = x.ravel()  # Se quiere como vector fila, por lo cual el ravel hace el 'flattening'.
         return x
 
     def encoder_layer(self):
@@ -139,7 +144,7 @@ class AutoEncoder(NeuralNetwork):
         (que sea del tipo *model.RegressionLayer*).
         """
         if type(self.list_layers[-1]) is ClassificationLayer:
-            layer = RegressionLayer()
+            layer = RegressionLayer(n_in=2, n_out=2)  # Inicializo con basura, luego se sobreescribe
             layer.__dict__ = self.list_layers[-1].__dict__.copy()
             self.list_layers[-1] = layer
 
