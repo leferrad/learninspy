@@ -13,10 +13,11 @@ from learninspy.core.stops import criterion
 from learninspy.utils.data import subsample
 from learninspy.utils.fileio import get_logger
 
+import numpy as np
+
 import copy
 import os
-
-import numpy as np
+import abc
 
 logger = get_logger(name=__name__)
 
@@ -52,6 +53,7 @@ class OptimizerParameters:
     """
     def __init__(self, algorithm='Adadelta', options=None, stops=None, merge_criter='w_avg', merge_goal='hits'):
         if options is None:  # Agrego valores por defecto
+            # TODO: pensar en un parametro 'measure' dentro de options para controlar la evaluacion en batch
             if algorithm == 'Adadelta':
                 options = {'step-rate': 1, 'decay': 0.99, 'momentum': 0.0, 'offset': 1e-8}
             elif algorithm == 'GD':
@@ -82,6 +84,19 @@ class Optimizer(object):
     :param model: :class:`.NeuralNetwork`, modelo a optimizar.
     :param data: list de *pyspark.mllib.regression.LabeledPoint*. batch de datos a utilizar en el ajuste.
     :param parameters: :class:`.OptimizerParameters`, parámetros de la optimización.
+
+    >>> stops = [criterion['MaxIterations'](10), \...
+    >>>          criterion['AchieveTolerance'](0.95, key='hits')]
+    >>> # Gradient Descent
+    >>> options = {'step-rate': 0.01, 'momentum': 0.8, 'momentum_type': 'standard'}
+    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, options=options, merge_criter='w_avg')
+    >>> # Adadelta
+    >>> options = {'step-rate': 1.0, 'decay': 0.99, 'momentum': 0.7, 'offset': 1e-8}
+    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, options=options, merge_criter='avg')0
+    >>> minimizer = Minimizer[opt_params.algorithm](model, data, opt_params)
+    >>> for result in minimizer:
+    >>>     logger.info("Cant de iteraciones: %i. Hits en batch: %12.11f. Costo: %12.11f", \...
+    >>>                  result['iterations'], result['hits'], result['cost'])
     """
     def __init__(self, model, data, parameters=None):
         self.model = copy.copy(model)
@@ -96,8 +111,9 @@ class Optimizer(object):
         self.step_w = None
         self.step_b = None
 
+    @abc.abstractmethod
     def _iterate(self):
-        # Implementacion hecha en las clases que heredan
+        """Optimizacion iterativa del modelo sobre el conjunto de datos"""
         yield
 
     def _update(self):
@@ -130,12 +146,25 @@ class Optimizer(object):
 
 class Adadelta(Optimizer):
     """
-    ...
+    Adadelta es un algoritmo de optimización que usa la magnitud de los incrementos y gradientes
+    anteriores para obtener una tasa de aprendizaje adaptativa [zeiler2012adadelta]_.
+
+    Como configuración, se deben incluir como 'options' dentro de *parameters* los siguientes
+    parámetros:
+
+    * 'step-rate': tasa de aprendizaje en rango [0,1] (default=1.0).
+    * 'decay': factor de decaimiento en rango [0,1], indicando el grado de "memoria" a mantener (default=0.99).
+    * 'momentum': factor de momento en rango [0,1] para acelerar la optimización (default=0.0).
+    * 'offset': valor pequeño (recomendado entre 1e-8 y 1e-4) a sumar para evitar división por 0.
 
     :param model: :class:`.NeuralNetwork`,
     :param data: list de *pyspark.mllib.regression.LabeledPoint*.
-    :param parameters: :class:`.OptimizerParameters`,
-    :return:
+    :param parameters: :class:`.OptimizerParameters`.
+
+    **Referencias**:
+
+    .. [zeiler2012adadelta] Zeiler, M. D. (2012). ADADELTA: an adaptive learning rate method.
+        arXiv preprint arXiv:1212.5701.
     """
     def __init__(self, model, data, parameters=None):
         super(Adadelta, self).__init__(model, data, parameters)
@@ -203,7 +232,7 @@ class Adadelta(Optimizer):
             sr = self.parameters.options['step-rate']
             # --- Entrenamiento ---
             for lp in self.data:
-                cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
+                cost, (nabla_w, nabla_b) = self.model.cost_single(lp.features, lp.label)
                 for l in xrange(self.num_layers):
                     # ADICIONAL: Aplico momentum y step-rate (ANTE LA DUDA, COMENTAR ESTAS LINEAS)
                     step1w = self.step_w[l] * m
@@ -229,14 +258,28 @@ class Adadelta(Optimizer):
             yield self.check_stop()
     """
 
+
 class GD(Optimizer):
     """
-    ...
+    Optimización de una red neuronal mediante el clásico algoritmo Gradiente Descendiente.
+
+    Como configuración, se deben incluir como 'options' dentro de *parameters* los siguientes
+    parámetros:
+
+    * 'step-rate': tasa de aprendizaje en rango [0,1] (default=1.0).
+    * 'momentum': factor de momento en rango [0,1] para acelerar la optimización (default=0.0).
+    * 'momentum_type': Tipo de momentum, eligiendo entre 'standard' y 'nesterov', indicando
+      este último el uso de Nesterov accelerated gradient (NAG) [nesterov1983method]_.
 
     :param model: :class:`.NeuralNetwork`,
     :param data: list de *pyspark.mllib.regression.LabeledPoint*.
-    :param parameters: :class:`.OptimizerParameters`,
-    :return:
+    :param parameters: :class:`.OptimizerParameters`.
+
+    **Referencias**:
+
+    .. [nesterov1983method] Nesterov, Y. (1983, February). A method for unconstrained convex minimization problem
+       with the rate of convergence O (1/k2). In Doklady an SSSR (Vol. 269, No. 3, pp. 543-547).
+
     """
     def __init__(self, model, data, parameters=None):
         super(GD, self).__init__(model, data, parameters)
@@ -264,7 +307,7 @@ class GD(Optimizer):
             for lp in self.data:  # Por cada LabeledPoint del conj de datos
                 if self.parameters.options['momentum_type'] == 'standard':
                     # Computar el gradiente
-                    cost, (nabla_w, nabla_b) = self.model.cost(lp.features, lp.label)
+                    cost, (nabla_w, nabla_b) = self.model.cost_single(lp.features, lp.label)
                     for l in xrange(self.num_layers):
                         self.step_w[l] = nabla_w[l] * sr - self.step_w[l] * m
                         self.step_b[l] = nabla_b[l] * sr - self.step_b[l] * m
@@ -366,13 +409,14 @@ class FitParameters:
 
 def optimize(model, data, params=None, mini_batch=50, seed=123):
     """
+    Función para optimizar un modelo sobre un conjunto de datos a partir de una configuración dada.
 
-    :param model:
-    :param data:
-    :param params:
-    :param mini_batch:
-    :param seed:
-    :return:
+    :param model: :class:`.NeuralNetwork`, modelo a optimizar.
+    :param data: :class:`.LabeledDataSet` or list, conjunto de datos para el ajuste.
+    :param params: :class:`.OptimizerParameters`
+    :param mini_batch: int, cantidad de ejemplos a utilizar durante una época de la optimización.
+    :param seed: int, semilla que alimenta al generador de números aleatorios.
+    :return: dict, con cada uno de los resultados obtenidos en la optimización.
     """
     final = {
         'model': model.list_layers,
