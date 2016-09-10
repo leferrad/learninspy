@@ -26,9 +26,6 @@ ofrece la facilidad de utilizar estos criterios utilizando el diccionario
 *criterion* instanciado en este módulo, con lo cual se combinan sencillamente
 llamándolos mediante strings (es así como se utilizan en los módulos de learninspy).
 
-
-Ejemplos:
----------
 >>> from learninspy.core.stops import criterion
 >>> criterions = [criterion['MaxIterations'](10),\ ...
 >>>               criterion['AchieveTolerance'](0.9, 'hits'),\ ...
