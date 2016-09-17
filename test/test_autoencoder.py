@@ -134,9 +134,9 @@ class TestStackedAutoEncoder(object):
                                              mini_batch=mini_batch, parallelism=parallelism)
         hits_test_finetune = self.model.evaluate(self.test, predictions=False, measure='F-measure')
         logger.info("Asegurando salidas correctas...")
-        assert hits_valid_pretrain > 0.7
+        assert hits_valid_pretrain > 0.6
         assert hits_valid_finetune > 0.8
-        assert hits_test_pretrain > 0.7
+        assert hits_test_pretrain > 0.6
         assert hits_test_finetune > 0.8
         logger.info("OK")
 

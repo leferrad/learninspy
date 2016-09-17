@@ -425,7 +425,6 @@ def optimize(model, data, params=None, mini_batch=50, seed=123):
         'cost': -1.0,
         'seed': seed
     }
-    # TODO: se podría modificar el batch cada tantas iteraciones (que no sea siempre el mismo)
     balanced = model.params.classification  # Bool que indica que se balanceen clases (problema de clasificacion)
     batch = subsample(data, mini_batch, balanced, seed)  # Se balancea si se trata con clases
     minimizer = Minimizer[params.algorithm](model, batch, params)

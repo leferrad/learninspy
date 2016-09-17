@@ -756,7 +756,7 @@ class NeuralNetwork(object):
         return ret
 
     def _train(self, train_bc, mini_batch=50, parallelism=4, measure=None, optimizer_params=None,
-               reproducible=False, evaluate=True):
+               reproducible=False, evaluate=True, seeds=None):
         """
         Entrenamiento de la red neuronal sobre el conjunto *train_bc*.
 
@@ -784,18 +784,20 @@ class NeuralNetwork(object):
         if reproducible is True:
             self._set_initial_rndstate()  # Seteo estado inicial del RandomState (al generarse la instancia NeuralNetwork)
 
-        seeds = list(self.params.rng.randint(500, size=parallelism))
+        if seeds is None:
+            seeds = list(self.params.rng.randint(500, size=parallelism))
+
         # Paralelizo modelo actual en los nodos mediante parallelism (que define el n° de particiones o slices del RDD)
         # NOTA: se persiste en memoria serializando ya que se supone que son objetos grandes y no conviene cachearlos
         models_rdd = (sc.parallelize(zip([self] * parallelism, seeds), numSlices=parallelism)
-                        .persist(StorageLevel.MEMORY_ONLY_SER)
+                        .persist(StorageLevel.MEMORY_ONLY_SER)  # TODO: si o si este StorageLevel?
                       )
         # Minimizo el costo de las redes en paralelo
         # NOTA: persist() es importante porque se traza varias veces el grafo de acciones sobre el RDD results
         logger.debug("Training %i models in parallel.", parallelism)
         results = (models_rdd.map(lambda (model, seed):
                                   minimizer(model, train_bc.value, optimizer_params, mini_batch, seed))
-                             .persist(StorageLevel.MEMORY_ONLY_SER)
+                             .persist(StorageLevel.MEMORY_ONLY_SER)  # TODO: si o si este StorageLevel?
                    )
         # Junto modelos entrenados en paralelo, en base a un criterio de ponderacion sobre un valor objetivo
         logger.debug("Merging models ...")
@@ -858,15 +860,28 @@ class NeuralNetwork(object):
         # Creo Broadcasts, de manera de mandarlo una sola vez a todos los nodos
         logger.debug("Broadcasting training dataset ...")
         train = sc.broadcast(train)
+
         # TODO: ver si hay mas opciones que quedarse con el mejor
         if keep_best is True:
             best_epoch = 1
             best_valid = 0.0
             best_model = None
+
         if stops is None:
             logger.debug("Setting up stop criterions by default.")
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
+
+        if parallelism == -1:
+            # Se debe entrenar un modelo por cada batch (aunque se pueden solapar)
+            total = len(train.value)
+            parallelism = total / mini_batch
+
+        if reproducible is True:
+            self._set_initial_rndstate()  # Seteo estado inicial del RandomState (al generarse la instancia NeuralNetwork)
+
+        seeds = list(self.params.rng.randint(500, size=parallelism))
+
         # Inicializo variable a utilizar
         epoch = 0
         total_end = 0
@@ -878,8 +893,12 @@ class NeuralNetwork(object):
         while self.check_stop(epoch, stops) is False:
             beg = time.time()  # tic
             evaluate = epoch % valid_iters == 0
+            # De forma que los samples de datos varien en cada iteración, se cambian las seeds de forma determinística
+            seeds = [s + epoch for s in seeds]
+
             hits_train = self._train(train, mini_batch=mini_batch, parallelism=parallelism, measure=measure,
-                                     optimizer_params=optimizer_params, reproducible=reproducible, evaluate=evaluate)
+                                     optimizer_params=optimizer_params, reproducible=reproducible,
+                                     evaluate=evaluate, seeds=seeds)
             end = time.time() - beg  # toc
             total_end += end  # Acumular total
             # Validacion cada ciertas iteraciones, dado por valid_iters
