@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 """
-...
+Este módulo provee las clases utilizadas para modelar redes neuronales relacionadas a autoencoders
+(e.g. AutoEncoder, StackerAutoencoder).
+Es por ello que se corresponde a un caso o herencia del módulo principal :mod:`~learninspy.core.model`,
+donde se sobrecargan las funcionalidades de dicho módulo para adaptarlas al diseño de autoencoders.
 """
 
 __author__ = 'leferrad'
@@ -26,7 +29,7 @@ class AutoEncoder(NeuralNetwork):
     Tipo de red neuronal, compuesto de una capa de entrada, una oculta, y una de salida.
     Las unidades en la capa de entrada y la de salida son iguales, y en la capa oculta
     se entrena una representación de la entrada en distinta dimensión, mediante aprendizaje
-    no supervisado y backpropagation..
+    no supervisado y backpropagation.
     A las conexiones entre la capa de entrada y la oculta se le denominan **encoder**,
     y a las de la oculta a la salida se les llama **decoder**.
 
@@ -40,10 +43,6 @@ class AutoEncoder(NeuralNetwork):
     >>> ae = AutoEncoder(ae_params)
     """
     def __init__(self, params=None, list_layers=None, dropout_in=0.0):
-        # TODO: incluir cuando haya SparseAutoencoder
-        #self.sparsity_beta = 0
-        #self.sparsity_param = 0.05
-
         # Aseguro algunos parametros
         params.classification = False
         n_in = params.units_layers[0]
@@ -54,8 +53,7 @@ class AutoEncoder(NeuralNetwork):
         self.num_layers = 2
         NeuralNetwork.__init__(self, params, list_layers)
 
-
-    # Override del backpropagation, para que sea de una sola capa oculta (TODO que incluya sparsity)
+    #  Override del backpropagation, para que sea de una sola capa oculta
     def _backprop(self, x, y):
         # y es el label del aprendizaje supervisado. lo omito
         beg = time.time()  # tic
@@ -86,7 +84,8 @@ class AutoEncoder(NeuralNetwork):
 
     def evaluate(self, data, predictions=False, measure=None):
         """
-        Evalúa AutoEncoder sobre un conjunto de datos.
+        Evalúa el AutoEncoder sobre un conjunto de datos, lo que equivale a medir su desempeño en
+        reconstruir dicho conjunto de entrada.
 
         :param data: list de LabeledPoint o instancia de :class:`~learninspy.utils.data.LabeledDataSet`.
         :param predictions: si es True, retorna las predicciones (salida reconstruida por el AutoEncoder).
@@ -134,11 +133,11 @@ class AutoEncoder(NeuralNetwork):
 
     def encoder_layer(self):
         """
-        Devuelve la capa de *encoder*.
+        Devuelve la capa de neuronas correspondiente al *encoder*.
         """
         return self.list_layers[0]
 
-    def assert_regression(self):
+    def _assert_regression(self):
         """
         Se asegura que el *decoder* corresponda a una capa de regresión
         (que sea del tipo *model.RegressionLayer*).
@@ -149,24 +148,20 @@ class AutoEncoder(NeuralNetwork):
             self.list_layers[-1] = layer
 
 
+# TODO: no debería ser StackedAutoEncoder?
 class StackedAutoencoder(NeuralNetwork):
     """
-    Estructura de red neuronal profunda, donde los pesos de cada capa son inicializados con los datos de entrenamiento
-    mediante **autoencoders**.
+    Estructura de red neuronal profunda, donde los parámetros de cada capa son inicializados con los datos de entrenamiento
+    mediante instancias de :class:`~learninspy.core.autoencoder.AutoEncoder`.
 
     Para más información, ver http://ufldl.stanford.edu/wiki/index.php/Stacked_Autoencoders
 
-    :param params: model.NeuralNetworkParameters, donde se especifica la configuración de la red.
-    :param list_layers: list de model.NeuralLayer, en caso de usar capas ya inicializadas.
-    :param dropout: radio de DropOut a utilizar en el *encoder* de cada :class:`.AutoEncoder`.
+    :param params: :class:`~learninspy.core.model.NetworkParameters`, donde se especifica la configuración de la red.
+    :param list_layers: list de :class:`~learninspy.core.model.NeuralLayer`, en caso de querer usar capas ya inicializadas.
+    :param dropout: ratio de DropOut a utilizar en el *encoder* de cada :class:`.AutoEncoder`.
     """
 
     def __init__(self, params, list_layers=None, dropout=None):
-
-        # TODO: incluir cuando haya SparseAutoencoder
-        #self.sparsity_beta = 0
-        #self.sparsity_param = 0.05
-
         self.params = params
         self.num_layers = len(params.units_layers)
         if dropout is None:
@@ -176,6 +171,11 @@ class StackedAutoencoder(NeuralNetwork):
         self._init_autoencoders()  # Creo autoencoders que se guardan en list_layers
 
     def _init_autoencoders(self):
+        """
+        Inicialización de los parámetros de cada autoencoder que conforman esta red.
+
+        :return:
+        """
         for l in xrange(self.num_layers - 1):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
             params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation[l],  # TODO: ojo si activation es una lista
@@ -195,21 +195,13 @@ class StackedAutoencoder(NeuralNetwork):
             stops=None, optimizer_params=None, reproducible=False, keep_best=False):
         """
         Fit de cada autoencoder usando conjuntos de entrenamiento y validación,
-        y su apilado para entrenar la red neuronal profunda con aprendizaje no supervisado.
-        Se especifica además cómo debe realizarse la optimización, mediante los parámetros explicados
-        en el método :func:`~learninspy.core.model.NeuralNetwork.fit` de :class:`.NeuralNetwork`.
+        y su apilado para pre-entrenar la red neuronal profunda con aprendizaje no supervisado.
+        Finalmente se entrena un clasificador Softmax sobre la salida del último autoencoder
+        entrenado.
 
-        :param train:
-        :param valid:
-        :param mini_batch:
-        :param parallelism:
-        :param valid_iters:
-        :param measure:
-        :param stops:
-        :param optimizer_params:
-        :param reproducible:
-        :param keep_best:
-        :return:
+        .. note:: Dado que esta función es una sobrecarga del método original
+           :func:`~learninspy.core.model.NeuralNetwork.fit`, se puede remitir a la documentación
+           de esta última para conocer el significado de los parámetros.
         """
         # Entreno Autoencoders
         train_ae = train
@@ -223,7 +215,7 @@ class StackedAutoencoder(NeuralNetwork):
             ae = self.list_layers[l]
             logger.info("Entrenando AutoEncoder -> In: %i, Hidden: %i",
                         ae.params.units_layers[0], ae.params.units_layers[1])
-            ae.assert_regression()  # Aseguro que sea de regresion (no puede ser de clasificacion)
+            ae._assert_regression()  # Aseguro que sea de regresion (no puede ser de clasificacion)
             ae.fit(train_ae, valid_ae, valid_iters=valid_iters, stops=stops, mini_batch=mini_batch,
                    parallelism=parallelism, measure=measure, optimizer_params=optimizer_params,
                    reproducible=reproducible, keep_best=keep_best)
@@ -249,6 +241,14 @@ class StackedAutoencoder(NeuralNetwork):
 
     def finetune(self, train, valid, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
                  stops=None,  optimizer_params=None, reproducible=False, keep_best=False):
+        """
+        Ajuste fino con aprendizaje supervisado de la red neuronal, cuyos parámetros fueron inicializados mediante
+        el pre-entrenamiento de los autoencoders.
+
+        .. note:: Dado que esta función es una sobrecarga del método original
+           :func:`~learninspy.core.model.NeuralNetwork.fit`, se puede remitir a la documentación
+           de esta última para conocer el significado de los parámetros.
+        """
         list_layers = copy.deepcopy(self.list_layers)
         list_layers[:-1] = map(lambda ae: ae.encoder_layer(), list_layers[:-1])  # Tomo solo la capa de encoder de cada ae
         list_layers[-1] = list_layers[-1].list_layers[0]  # Agarro la primer capa de la red que se genero para la salida
@@ -267,6 +267,12 @@ class StackedAutoencoder(NeuralNetwork):
         return hits_valid
 
     def predict(self, x):
+        """
+        Predicciones sobre una entrada de datos (singular o conjunto).
+
+        :param x: *numpy.ndarray* o *pyspark.mllib.regression.LabeledPoint*, o list de ellos.
+        :return: *numpy.ndarray*
+        """
         beg = time.time()  # tic
         if isinstance(x, list):
             x = map(lambda lp: self.predict(lp.features).matrix(), x)

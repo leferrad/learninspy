@@ -641,7 +641,7 @@ class NeuralNetwork(object):
           :func:`~learninspy.utils.data.label_to_vector` para así poder aplicar una función de costo
           en forma directa contra la predicción realizada por la softmax (que es un vector).
         """
-        # TODO: tener en cuenta esto http://stats.stackexchange.com/questions/108381/how-to-avoid-nan-in-using-relu-cross-entropy
+        # TODO: ver http://stats.stackexchange.com/questions/108381/how-to-avoid-nan-in-using-relu-cross-entropy
         features = map(lambda lp: lp.features, data)
         if self.params.classification is True:
             labels = map(lambda lp: label_to_vector(lp.label, self.params.units_layers[-1]), data)

@@ -4,7 +4,7 @@
 """
 En este módulo se pueden configurar las funciones de activación que se deseen.
 Para ello, simplemente se codifica tanto la función como su derivada analítica
-(o aproximación, como en el caso de la ReLU), y luego se insertan en los diccionarios
+(o aproximación, como en el caso de la ReLU). Luego se insertan en los diccionarios
 de funciones correspondientes, que se encuentran al final del script,
 con una key común que identifique la activación.
 
