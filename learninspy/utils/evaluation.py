@@ -247,7 +247,7 @@ class RegressionMetrics(object):
 
         :return: float, que varía entre 0 (mejor) e inf (peor).
         """
-        return np.sum(np.square(self.error)) / float(self.n_elem)
+        return np.mean(np.square(self.error))
 
     def rmse(self):
         """
@@ -270,7 +270,7 @@ class RegressionMetrics(object):
 
         :return: float, que varía entre 0 (mejor) e inf (peor).
         """
-        return np.sum(np.abs(self.error))
+        return np.mean(np.abs(self.error))
 
     def rmae(self):
         """
