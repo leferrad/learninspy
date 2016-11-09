@@ -453,10 +453,11 @@ def mix_models(left, right):
     return left
 
 # Funciones de merge o consenso para ponderar modelos entrenados en forma paralela
+THRESHOLD_DIVISION = 1e-3
 
 fun_criter = {'avg': lambda x: 1.0,  # Promedio sin ponderación (todos los pesos son 1/n)
               'w_avg': lambda x: x,  # Promedio con ponderacion lineal
-              'log_avg': lambda x: 1.0 + np.log(x)  # Promedio con ponderación logarítmica
+              'log_avg': lambda x: 1.0 + np.log(max(x, THRESHOLD_DIVISION))  # Promedio con ponderación logarítmica
               }
 
 
@@ -472,7 +473,7 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
         Si es 'hits' se debe hacer sobre el resultado obtenido con las métricas de evaluación, y si
         es 'cost' es sobre el resultado de la función de costo.
 
-    :return: list of
+    :return: list of :class:`learninspy.core.model.NeuralLayer`
     """
     assert goal == 'hits' or goal == 'cost', ValueError("Solo se puede ponderar por hits o cost!")
     assert criter in fun_criter.keys(), ValueError("No existe tal criterio para merge!")
@@ -482,7 +483,7 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
     # Mezclo modelos con la funcion de merge definida
     layers = (results_rdd.map(merge_fun).reduce(lambda left, right: mix_models(left, right)))
     total = results_rdd.map(weights).sum()
-    total = max(total, 1e-3)  # Asegurar que no se va a dividir por 0 o valores pequeños que hagan diverger los pesos
+    total = max(total, THRESHOLD_DIVISION)  # Evitar division por 0 o valores pequeños que hagan diverger los pesos
     # Promedio sobre todas las capas
     final_list_layers = map(lambda layer: layer / float(total), layers)
     return final_list_layers

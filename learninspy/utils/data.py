@@ -102,6 +102,66 @@ class StandardScaler(object):
                 dataset = LocalLabeledDataSet(zip(labels, dataset))
         return dataset
 
+''''
+class MinMaxScaler(object):
+    def __init__(self, min=0.0, max=1.0):
+        self.min = min
+        self.max = max
+        self.min_train = None
+        self.max_train = None
+        self.model = None
+
+    def fit(self, dataset):
+        """
+        Computa la media y desvio estándar de un conjunto de datos, las cuales se usarán para estandarizar datos.
+
+        :param dataset: pyspark.rdd.RDD o numpy.ndarray o :class:`.LabeledDataSet`
+
+        """
+        if isinstance(dataset, LabeledDataSet):
+            dataset = dataset.features
+        if isinstance(dataset, pyspark.rdd.RDD):
+            standarizer = StdSc(self.flag_mean, self.flag_std)
+            self.model = standarizer.fit(dataset)
+        else:
+            if type(dataset) is not np.ndarray:
+                dataset = np.array(dataset)
+            if self.flag_mean is True:
+                self.mean = dataset.mean(axis=0)
+            if self.flag_std is True:
+                self.std = dataset.std(axis=0, ddof=1)
+        return
+
+    def transform(self, dataset):
+        """
+        Aplica estandarización sobre **dataset**.
+
+        :param dataset: pyspark.rdd.RDD o numpy.ndarray o :class:`.LabeledDataSet`
+
+        """
+        labels = None  # Por si el dataset viene con labels
+        type_dataset = type(dataset)
+        if isinstance(dataset, LabeledDataSet):
+            labels = dataset.labels
+            dataset = dataset.features
+        if self.model is not None:  # Se debe usar modelo de pyspark
+            if not isinstance(dataset, pyspark.rdd.RDD):
+                dataset = sc.parallelize(dataset)
+            dataset = self.model.transform(dataset)
+        else:
+            if type(dataset) is not np.ndarray:
+                dataset = np.array(dataset)
+            if self.flag_mean is True:
+                dataset -= self.mean  # Remove mean
+            if self.flag_std is True:
+                dataset /= self.std  # Scale unit variance
+        if labels is not None:
+            if type_dataset is DistributedLabeledDataSet:
+                dataset = DistributedLabeledDataSet(labels.zip(dataset))
+            else:
+                dataset = LocalLabeledDataSet(zip(labels, dataset))
+        return dataset
+'''
 
 # -- Clases para datasets --
 
