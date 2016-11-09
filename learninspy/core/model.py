@@ -358,23 +358,26 @@ class NetworkParameters:
 
     def __str__(self):
         config = ""
-        for l in xrange(len(self.units_layers)):
-            if l == (len(self.units_layers)-1):
+        for l in xrange(len(self.units_layers)-1):
+            if l == (len(self.units_layers)-2):
                 if self.classification is True:  # Para especificar softmax de clasific
-                    config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                    config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons " \
+                              + "connects to Layer "+str(l+1)+" having "+str(self.units_layers[l+1])+" neurons using " \
                               + "Softmax activation."+os.linesep
                 else:  # Regresion
-                    config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                    config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons " \
+                              + "connects to Layer "+str(l+1)+" having "+str(self.units_layers[l+1])+" neurons using " \
                               + self.activation[l]+" activation."+os.linesep
             else:
-                config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons, using " \
+                config += "Layer "+str(l)+" with "+str(self.units_layers[l])+" neurons " \
+                          + "connects to Layer "+str(l+1)+" having "+str(self.units_layers[l+1])+" neurons using " \
                           + self.activation[l]+" activation and "\
                           + str(self.dropout_ratios[l])+" ratio of DropOut."+os.linesep
-        config += "The loss is "+self.loss+" for a task of "
+        config += "The loss is "+self.loss+" for a "
         if self.classification is True:
-            config += "classification."+os.linesep
+            config += "classification task."+os.linesep
         else:
-            config += "regression."+os.linesep
+            config += "regression task."+os.linesep
         config += "L1 strength is "+str(self.strength_l1) + \
                   " and L2 strength is "+str(self.strength_l2)+"."+os.linesep
         return config
@@ -755,7 +758,7 @@ class NeuralNetwork(object):
             ret = hits
         return ret
 
-    def _train(self, train_bc, mini_batch=50, parallelism=4, measure=None, optimizer_params=None,
+    def _train(self, train_bc, mini_batch=50, parallelism=0, measure=None, optimizer_params=None,
                reproducible=False, evaluate=True, seeds=None):
         """
         Entrenamiento de la red neuronal sobre el conjunto *train_bc*.
@@ -763,6 +766,7 @@ class NeuralNetwork(object):
         :param train_bc: *pyspark.Broadcast*, variable Broadcast de Spark correspondiente al conjunto de entrenamiento.
         :param mini_batch: int, cantidad de ejemplos a utilizar durante una época de la optimización.
         :param parallelism: int, cantidad de modelos a optimizar concurrentemente.
+            Si es 0, es determinado por el nivel de paralelismo por defecto en Spark (variable *sc.defaultParallelism*),
             Si es -1, se setea como :math:`\\frac{N}{m}` donde *N* es la cantidad
             total de ejemplos de entrenamiento y *m* la cantidad de ejemplos para el mini-batch.
         :param optimizer_params: :class:`.OptimizerParameters`
@@ -772,7 +776,9 @@ class NeuralNetwork(object):
         :param evaluate: bool, si es True se evalua el modelo sobre el conjunto de entrenamiento.
         :return: float, resultado de evaluar el modelo final, o None si *evaluate* es False.
         """
-        if parallelism == -1:
+        if parallelism == 0:
+            parallelism = sc.defaultParallelism
+        elif parallelism == -1:
             # Se debe entrenar un modelo por cada batch (aunque se pueden solapar)
             total = len(train_bc.value)
             parallelism = total / mini_batch
@@ -805,10 +811,10 @@ class NeuralNetwork(object):
             list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
         else:
             # Se realiza un promedio de hits sin ponderacion TODO cambiar esta distincion
-            list_layers = opt.merge_models(results, criter='avg', goal='hits')
+            list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
         # Copio el resultado de las capas mezcladas en el modelo actual
         self.list_layers = copy.copy(list_layers)
-        # Quito de cache
+        # Quito de memoria
         logger.debug("Unpersisting replicated models ...")
         results.unpersist()
         models_rdd.unpersist()
@@ -820,7 +826,7 @@ class NeuralNetwork(object):
         return hits
 
     # TODO: crear un fit_params que abarque stops, parallelism, reproducible, keep_best, valid_iters y measure
-    def fit(self, train, valid=None, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
+    def fit(self, train, valid=None, mini_batch=50, parallelism=0, valid_iters=10, measure=None,
             stops=None, optimizer_params=None, reproducible=False, keep_best=False):
         """
         Ajuste de la red neuronal utilizando los conjuntos *train* y *valid*, mediante las siguientes pautas:
@@ -842,6 +848,7 @@ class NeuralNetwork(object):
         :param valid: :class:`.LabeledDataSet` or list, conjunto de datos de validación.
         :param mini_batch: int, cantidad de ejemplos a utilizar durante una época de la optimización.
         :param parallelism: int, cantidad de modelos a optimizar concurrentemente.
+            Si es 0, es determinado por el nivel de paralelismo por defecto en Spark (variable *sc.defaultParallelism*),
             Si es -1, se setea como :math:`\\frac{N}{m}` donde *N* es la cantidad
             total de ejemplos de entrenamiento y *m* la cantidad de ejemplos para el mini-batch.
         :param valid_iters: int, indicando cada cuántas iteraciones evaluar el modelo sobre el conjunto *valid*.
@@ -872,7 +879,9 @@ class NeuralNetwork(object):
             stops = [criterion['MaxIterations'](5),
                      criterion['AchieveTolerance'](0.95, key='hits')]
 
-        if parallelism == -1:
+        if parallelism == 0:
+            parallelism = sc.defaultParallelism
+        elif parallelism == -1:
             # Se debe entrenar un modelo por cada batch (aunque se pueden solapar)
             total = len(train.value)
             parallelism = total / mini_batch
@@ -929,7 +938,7 @@ class NeuralNetwork(object):
                 self.epochs = self.epochs[:i]
                 self.hits_train = self.hits_train[:i]
                 self.hits_valid = self.hits_valid[:i]
-        # Evaluación final  # TODO: vale la pena hacerla?
+        # Evaluación final
         self.epochs.append(epoch + 1)
         self.hits_train.append(self.evaluate(train.value, predictions=False, measure=measure))
         self.hits_valid.append(self.evaluate(valid, predictions=False, measure=measure))

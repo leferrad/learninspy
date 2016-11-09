@@ -191,7 +191,7 @@ class StackedAutoencoder(NeuralNetwork):
         self.list_layers[-1] = NeuralNetwork(params=params)
 
     # TODO: renombrar a 'pretrain' y que la función 'fit' llame a esta fun y luego a 'finetune'
-    def fit(self, train, valid=None, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
+    def fit(self, train, valid=None, mini_batch=50, parallelism=0, valid_iters=10, measure=None,
             stops=None, optimizer_params=None, reproducible=False, keep_best=False):
         """
         Fit de cada autoencoder usando conjuntos de entrenamiento y validación,
@@ -239,7 +239,7 @@ class StackedAutoencoder(NeuralNetwork):
         self.epochs = out_layer.epochs
         return self.hits_valid[-1]
 
-    def finetune(self, train, valid, mini_batch=50, parallelism=4, valid_iters=10, measure=None,
+    def finetune(self, train, valid, mini_batch=50, parallelism=0, valid_iters=10, measure=None,
                  stops=None,  optimizer_params=None, reproducible=False, keep_best=False):
         """
         Ajuste fino con aprendizaje supervisado de la red neuronal, cuyos parámetros fueron inicializados mediante

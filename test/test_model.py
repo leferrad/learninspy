@@ -7,11 +7,11 @@ __author__ = 'leferrad'
 import matplotlib
 matplotlib.use('agg')
 
-from learninspy.core.model import NetworkParameters, NeuralNetwork, ClassificationLayer, RegressionLayer
+from learninspy.core.model import NetworkParameters, NeuralNetwork
 from learninspy.core.neurons import LocalNeurons
 from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
-from learninspy.utils.data import LocalLabeledDataSet, load_ccpp
+from learninspy.utils.data import LocalLabeledDataSet, load_ccpp, load_iris
 from learninspy.utils.fileio import get_logger
 from learninspy.utils.plots import plot_neurons, plot_fitting, plot_activations
 
@@ -34,8 +34,8 @@ class TestNeuralNetwork(object):
 
         # Modelo
         if network_params is None:
-            network_params = NetworkParameters(units_layers=[4, 10, 1], activation='ReLU',
-                                               classification=False)
+            network_params = NetworkParameters(units_layers=[4, 30, 1], activation='ReLU',
+                                               classification=False, seed=123)
         self.model = NeuralNetwork(network_params)
 
         # Seteo a mano
@@ -73,13 +73,13 @@ class TestNeuralNetwork(object):
         assert type(nabla_w[0]) is LocalNeurons
         assert type(nabla_b[0]) is LocalNeurons
 
-    def test_fitting(self, opt_params=None, stops=None, mini_batch=30, parallelism=1):
+    def test_fitting(self, opt_params=None, stops=None, mini_batch=30):
         logger.info("Testeando backpropagation en NeuralNetwork...")
         x = self.valid[0].features
         y = [self.valid[0].label]
         self._test_backprop(x, y)
 
-        hits_valid = self._fit(opt_params=opt_params, stops=stops, mini_batch=mini_batch, parallelism=parallelism)
+        hits_valid = self._fit(opt_params=opt_params, stops=stops, mini_batch=mini_batch)
         logger.info("Asegurando salidas correctas...")
         assert hits_valid > 0.7
 
@@ -98,8 +98,39 @@ class TestNeuralNetwork(object):
         logger.info("OK")
         return
 
+    def test_parallelism(self, mini_batch=10):
+        logger.info("Testeando variantes del nivel de paralelismo...")
+
+        # Datos
+        logger.info("Datos utilizados: Iris")
+        data = load_iris()
+        dataset = LocalLabeledDataSet(data)
+        self.train, self.valid, self.test = dataset.split_data([.5, .3, .2])
+        self.valid = self.valid.collect()
+
+        # Optimizacion
+        options = {'step-rate': 1.0, 'decay': 0.995, 'momentum': 0.3, 'offset': 1e-8}
+        opt_params = OptimizerParameters(algorithm='Adadelta', options=options)
+        stops = [criterion['MaxIterations'](10)]
+
+        # Niveles de paralelismo
+        parallelism = [-1, 0, 2]
+
+        for p in parallelism:
+            logger.info("Seteando paralelismo en %i", p)
+            hits_valid = self._fit(opt_params=opt_params, stops=stops, mini_batch=mini_batch, parallelism=p)
+            logger.info("Asegurando salidas correctas...")
+            assert hits_valid > 0.7
+
+            hits_test, pred_test = self.model.evaluate(self.test, predictions=True, measure='R2')
+            assert hits_test > 0.7
+
+            logger.info("OK")
+        return
+
+
     def test_plotting(self):
-        logger.info("Testando plots de activaciones...")
+        logger.info("Testeando plots de activaciones...")
         plot_activations(self.model.params, show=False)
         logger.info("OK")
 

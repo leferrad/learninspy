@@ -62,18 +62,18 @@ def test_regression_metrics():
     # Ejemplos para testear regresión
     dim = 100  # Tamaño del muestreo
     x = np.linspace(-4, 4, dim)  # Eje x
-    pure = np.sinc(x)  # Función sinc (labels)
+    clean = np.sinc(x)  # Función sinc (labels)
     np.random.seed(123)
     noise = np.random.uniform(0, 0.1, dim)  # Ruido para ensuciar la sinc (error en la predicción)
-    signal = pure + noise  # Señal resultante del ruido aditivo (predict)
-    metrics = RegressionMetrics(zip(signal, pure))
+    signal = clean + noise  # Señal resultante del ruido aditivo (predict)
+    metrics = RegressionMetrics(zip(signal, clean))
 
     assert np.allclose(metrics.r2(), 0.9708194315829859, rtol=1e-4)
-    assert np.allclose(metrics.mse(), 0.0031164269743473839, rtol=1e-4)
     assert np.allclose(metrics.explained_variance(), 0.9943620888461356, rtol=1e-4)
+    assert np.allclose(metrics.mse(), 0.0031164269743473839, rtol=1e-4)
     assert np.allclose(metrics.rmse(), 0.0558249673027, rtol=1e-4)
-    assert np.allclose(metrics.mae(), 5.01428880051, rtol=1e-4)
-    assert np.allclose(metrics.rmae(), 2.23926077099, rtol=1e-4)
+    assert np.allclose(metrics.mae(), 0.0501428880, rtol=1e-4)
+    assert np.allclose(metrics.rmae(), 0.2239260770, rtol=1e-4)
     logger.info("OK")
 
 
