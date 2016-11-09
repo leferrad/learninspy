@@ -92,7 +92,7 @@ class Optimizer(object):
     >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, options=options, merge_criter='w_avg')
     >>> # Adadelta
     >>> options = {'step-rate': 1.0, 'decay': 0.99, 'momentum': 0.7, 'offset': 1e-8}
-    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, options=options, merge_criter='avg')0
+    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, options=options, merge_criter='avg')
     >>> minimizer = Minimizer[opt_params.algorithm](model, data, opt_params)
     >>> for result in minimizer:
     >>>     logger.info("Cant de iteraciones: %i. Hits en batch: %12.11f. Costo: %12.11f", \...
@@ -480,10 +480,17 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
     # Defino numerador y denominador de la ponderación en base a 'fun_criter'
     merge_fun = lambda res: [layer * fun_criter[criter](res[goal]) for layer in res['model']]
     weights = lambda res: fun_criter[criter](res[goal])
+    #min_weight = results_rdd.map(weights).min()
+
+    #def substract_min(res):
+    #    res[goal] += min_weight
+    #    return res
+
     # Mezclo modelos con la funcion de merge definida
     layers = (results_rdd.map(merge_fun).reduce(lambda left, right: mix_models(left, right)))
     total = results_rdd.map(weights).sum()
-    total = max(total, THRESHOLD_DIVISION)  # Evitar division por 0 o valores pequeños que hagan diverger los pesos
+    if abs(total) < THRESHOLD_DIVISION:
+        total = THRESHOLD_DIVISION  # Evitar division por 0 o valores pequeños que hagan diverger los pesos
     # Promedio sobre todas las capas
     final_list_layers = map(lambda layer: layer / float(total), layers)
     return final_list_layers

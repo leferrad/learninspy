@@ -40,7 +40,7 @@ class TestOptimizer(object):
                                        dropout_ratios=[0.2, 0.0], classification=True)
         self.model = NeuralNetwork(net_params)
 
-    def _optimize(self, stops=None, mini_batch=30, parallelism=1, keep_best=True):
+    def _optimize(self, stops=None, mini_batch=30, keep_best=True):
         if stops is None:
             stops = [criterion['MaxIterations'](50),
                      criterion['AchieveTolerance'](0.95, key='hits')]
@@ -64,8 +64,8 @@ class TestOptimizer(object):
 
         return hits_valid
 
-    def test_optimization(self, stops=None, mini_batch=30, parallelism=1, keep_best=True):
-        hits_valid = self._optimize(stops=stops, mini_batch=mini_batch, parallelism=parallelism, keep_best=keep_best)
+    def test_optimization(self, stops=None, mini_batch=30, keep_best=True):
+        hits_valid = self._optimize(stops=stops, mini_batch=mini_batch, keep_best=keep_best)
         logger.info("Asegurando salidas correctas...")
         assert hits_valid > 0.8
         hits_test = self.model.evaluate(self.test, predictions=False, measure='F-measure')
@@ -75,6 +75,7 @@ class TestOptimizer(object):
 
 class TestAdadelta(TestOptimizer):
     def __init__(self, opt_params=None):
+        logger.info("Test de Adadelta iniciando...")
         if opt_params is None:
             stops = [criterion['MaxIterations'](10),
                      criterion['AchieveTolerance'](0.95, key='hits')]
@@ -86,6 +87,7 @@ class TestAdadelta(TestOptimizer):
 
 class TestGDStandard(TestOptimizer):
     def __init__(self, opt_params=None):
+        logger.info("Test de GD Standard iniciando...")
         if opt_params is None:
             stops = [criterion['MaxIterations'](10),
                      criterion['AchieveTolerance'](0.95, key='hits')]
@@ -97,6 +99,7 @@ class TestGDStandard(TestOptimizer):
 
 class TestGDNesterov(TestOptimizer):
     def __init__(self, opt_params=None):
+        logger.info("Test de GD Nesterov iniciando...")
         if opt_params is None:
             stops = [criterion['MaxIterations'](10),
                      criterion['AchieveTolerance'](0.95, key='hits')]
