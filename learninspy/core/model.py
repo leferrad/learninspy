@@ -321,7 +321,7 @@ class NetworkParameters:
                 dropout_ratios = [0.2] + [0.5] * (num_layers-2) + [0.0]
             else:
                 dropout_ratios = [0.0] * num_layers  # Nunca recomendado hacer dropout en regresion
-            dropout_ratios[-1] = 0.0  # TODO es para asegurarme que no haya DropOut en la salida, pero verificar mejor
+            dropout_ratios[-1] = 0.0  # TODO: así me aseguro que no haya DropOut en la salida, pero se puede mejorar
         if type(dropout_ratios) is list and len(dropout_ratios) < (num_layers - 1):
             dropout_ratios.append(0.0)  # Se completa la lista de ratios con un 0.0 para la salida
 
@@ -807,11 +807,7 @@ class NeuralNetwork(object):
                    )
         # Junto modelos entrenados en paralelo, en base a un criterio de ponderacion sobre un valor objetivo
         logger.debug("Merging models ...")
-        if self.params.classification is True:
-            list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
-        else:
-            # Se realiza un promedio de hits sin ponderacion TODO cambiar esta distincion
-            list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
+        list_layers = opt.merge_models(results, optimizer_params.merge['criter'], optimizer_params.merge['goal'])
         # Copio el resultado de las capas mezcladas en el modelo actual
         self.list_layers = copy.copy(list_layers)
         # Quito de memoria

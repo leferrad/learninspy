@@ -96,7 +96,7 @@ class AutoEncoder(NeuralNetwork):
         if isinstance(data, LabeledDataSet):
             actual = data.features
             if type(data) is DistributedLabeledDataSet:
-                predicted = actual.map(lambda f: self.predict(f).matrix.T).collect()  # TODO: notar la transposic
+                predicted = actual.map(lambda f: self.predict(f).matrix.T).collect()  # Notar la transposición de matrix
                 actual = actual.collect()
             else:
                 predicted = map(lambda f: self.predict(f).matrix.T, actual)
@@ -178,7 +178,7 @@ class StackedAutoencoder(NeuralNetwork):
         """
         for l in xrange(self.num_layers - 1):
             # Genero nueva estructura de parametros acorde al Autoencoder a crear
-            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation[l],  # TODO: ojo si activation es una lista
+            params = NetworkParameters(self.params.units_layers[l:l+2], activation=self.params.activation[l],
                                        layer_distributed=self.params.layer_distributed, dropout_ratios=None,
                                        classification=False, strength_l1=self.params.strength_l1,
                                        strength_l2=self.params.strength_l2)
@@ -190,7 +190,6 @@ class StackedAutoencoder(NeuralNetwork):
                                    strength_l2=self.params.strength_l2)
         self.list_layers[-1] = NeuralNetwork(params=params)
 
-    # TODO: renombrar a 'pretrain' y que la función 'fit' llame a esta fun y luego a 'finetune'
     def fit(self, train, valid=None, mini_batch=50, parallelism=0, valid_iters=10, measure=None,
             stops=None, optimizer_params=None, reproducible=False, keep_best=False):
         """

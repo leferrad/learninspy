@@ -79,20 +79,27 @@ def plot_autoencoders(network, show=True):
 
     n_layers = len(network.list_layers)
     # Configuro el ploteo
-    gs = gridspec.GridSpec(n_layers, 1)  # N Autoencoders, 1 solo grafico (W)
+    gs = gridspec.GridSpec(n_layers, 2)  # N Autoencoders, 2 graficos (W, b)
     for l in xrange(len(network.list_layers) - 1):
         ae = network.list_layers[l]
 
-        # Preparo plot de representacion latente del AutoEncoder
+        # Preparo plot de los pesos W del AutoEncoder
         ax_w = plt.subplot(gs[l, 0])
-        ax_w.set_title('AE'+str(l+1), color='r')
+        ax_w.set_title('AE'+str(l+1)+'_W', color='r')
         plt.setp(ax_w, xlabel='j', ylabel='i')
         ax_w.get_xaxis().set_visible(False)
         ax_w.get_yaxis().set_visible(False)
 
+        # Preparo plot del bias b del AutoEncoder
+        ax_b = plt.subplot(gs[l, 1])
+        ax_b.set_title('AE'+str(l+1)+'_b', color='r')
+        plt.setp(ax_b, ylabel='i')
+        ax_b.get_xaxis().set_visible(False)
+        ax_b.get_yaxis().set_visible(False)
+
         # Ploteo
         plot_matrix(ae.encoder_layer().weights.matrix, ax_w, values=False, show=False)
-        # TODO estaría faltando el bias...
+        plot_matrix(ae.encoder_layer().bias.matrix.T, ax_b, values=False, show=False)
 
     if show is True:
         plt.show()
@@ -154,13 +161,14 @@ def plot_activations(params, show=True):
 
     # Configuro el ploteo
     gs = gridspec.GridSpec(n_act, 2) # N activaciones, 2 graficos (act, d_act)
-
-    # TODO poner de titulo la key params.activation
     x_axis = [i / 10.0 for i in range(-50, 50)]  # Rango de -5 a 5 con 0.1 de step
+
     for n in xrange(n_act):
         # Grafico de act y d_act para activacion n
         ax_act = plt.subplot(gs[n, 0])
+        ax_act.set_title(params.activation[n], color='r')
         ax_d_act = plt.subplot(gs[n, 1])
+        ax_d_act.set_title('d_'+params.activation[n], color='r')
         # Calculo activacion y su derivada sobre valores de x
         act = [fun_activation[params.activation[n]](x) for x in x_axis]
         d_act = [fun_activation_d[params.activation[n]](x) for x in x_axis]

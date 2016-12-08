@@ -34,7 +34,7 @@ class PCA(object):
 
     """
     # Ver explicacion en http://cs231n.github.io/neural-networks-2/
-    # TODO: Ver si usar como parametro 'sigmas' que se sumen al mean, en lugar de una varianza acumulada
+    # TODO: Ver si conviene usar como parametro 'sigmas' que se sumen al mean, en lugar de una varianza acumulada
     def __init__(self, x, threshold_k=0.95):
         self.x = x
         type_x = type(x)
@@ -45,7 +45,7 @@ class PCA(object):
         x = np.array(x)
         self.mean = np.mean(x, axis=0)
         self.std = np.std(x, axis=0, ddof=1)
-        self.whitening_offset = 1e-5
+        self.whitening_offset = 1e-5  # TODO: ver si conviene tenerlo como parámetro, aunque no creo
         self.k = None
         # Umbral de varianza explicada, para sacar un k optimo
         self.threshold_k = threshold_k

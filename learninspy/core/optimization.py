@@ -480,11 +480,6 @@ def merge_models(results_rdd, criter='w_avg', goal='hits'):
     # Defino numerador y denominador de la ponderación en base a 'fun_criter'
     merge_fun = lambda res: [layer * fun_criter[criter](res[goal]) for layer in res['model']]
     weights = lambda res: fun_criter[criter](res[goal])
-    #min_weight = results_rdd.map(weights).min()
-
-    #def substract_min(res):
-    #    res[goal] += min_weight
-    #    return res
 
     # Mezclo modelos con la funcion de merge definida
     layers = (results_rdd.map(merge_fun).reduce(lambda left, right: mix_models(left, right)))

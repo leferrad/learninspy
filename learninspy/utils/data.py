@@ -497,7 +497,7 @@ def subsample(data, size, balanced=True, seed=123):
 
     """
     random.seed(seed)
-    if balanced is True:  #Problema de clasificacion
+    if balanced is True:  # Problema de clasificacion
         n_classes = int(max(map(lambda lp: lp.label, data))) + 1  # TODO: no siempre el batch va a tener todas las clases
         size /= n_classes  # es un int, y puede resultar menor al ingresado (se trunca)
         sample = []
@@ -505,7 +505,7 @@ def subsample(data, size, balanced=True, seed=123):
             batch_class = filter(lambda lp: lp.label == c, data)  # Filtro entradas que pertenezcan a la clase c
             batch = random.sample(batch_class, size)
             sample.extend(batch)  # Agrego el batch al vector de muestreo
-    else:  #Problema de regresion
+    else:  # Problema de regresion
         sample = random.sample(data, size)
     random.shuffle(sample)  # Mezclo para agregar aleatoriedad
     return sample
@@ -523,7 +523,7 @@ def split_data(data, fractions, seed=123):
     # Verifico que fractions sea correcto
     assert (sum(fractions) <= 1.0, Exception("Fracciones para conjuntos incorrectas!"))
     if isinstance(data, pyspark.rdd.RDD):
-        sets = data.randomSplit(fractions, seed)  # Uso la funcion del RDD. TODO: no esta devolviendo tamaños acordes a las fractions
+        sets = data.randomSplit(fractions, seed)  # Uso la funcion del RDD. TODO: no esta devolviendo tamaños acordes a fractions
     else:
         # Mezclo un poco los datos
         random.seed(seed)
@@ -579,7 +579,7 @@ def label_data(data, labels):
     :param labels: list o numpy.ndarray, correspondiente a **labels**
     :return: list
     """
-    # TODO: si label es int, dice la posicion de data donde esta la columna de labels
+    # TODO: podría hacerse que label sea int, señalando la posicion de data donde esta la columna de labels
     labeled_data = map(lambda (x, y): LabeledPoint(y, x), zip(data, labels))
     return labeled_data
 
