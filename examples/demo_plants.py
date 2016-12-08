@@ -9,7 +9,7 @@ __author__ = 'leferrad'
 from learninspy.core.model import NeuralNetwork, NetworkParameters
 from learninspy.core.optimization import OptimizerParameters
 from learninspy.core.stops import criterion
-from learninspy.utils.data import LocalLabeledDataSet, StandardScaler, load_ccpp
+from learninspy.utils.data import LocalLabeledDataSet, load_ccpp
 from learninspy.utils.evaluation import RegressionMetrics
 from learninspy.utils.plots import plot_fitting
 from learninspy.utils.fileio import get_logger
@@ -17,12 +17,6 @@ from learninspy.utils.fileio import get_logger
 import os
 
 logger = get_logger(name='learninspy-demo_ccpp')
-
-# Aca conviene hacer de demo:
-# *Examinar diferencias en resultados con diferentes funciones de consenso
-# *Explorar criterios de corte
-# ** MaxIterations de 5 a 20 cambia mucho el resultado final (mejora)
-
 
 # -- 1.a) Carga de datos
 
@@ -53,13 +47,13 @@ net_params = NetworkParameters(units_layers=[4, 30, 1], dropout_ratios=[0.0, 0.0
 local_stops = [criterion['MaxIterations'](30),
                criterion['AchieveTolerance'](0.95, key='hits')]
 
-global_stops = [criterion['MaxIterations'](50),
+global_stops = [criterion['MaxIterations'](20),
                 criterion['AchieveTolerance'](0.95, key='hits')]
 
-options = {'step-rate': 1.0, 'decay': 0.995, 'momentum': 0.3, 'offset': 1e-8}
+options = {'step-rate': 1.0, 'decay': 0.995, 'momentum': 0.7, 'offset': 1e-8}
 
 optimizer_params = OptimizerParameters(algorithm='Adadelta', stops=local_stops, options=options,
-                                       merge_criter='avg', merge_goal='hits')
+                                       merge_criter='w_avg', merge_goal='cost')
 
 logger.info("Optimizacion utilizada: %s", os.linesep+str(optimizer_params))
 logger.info("Configuracion usada: %s", os.linesep+str(net_params))
@@ -69,7 +63,7 @@ logger.info("Configuracion usada: %s", os.linesep+str(net_params))
 neural_net = NeuralNetwork(net_params)
 
 logger.info("Entrenando red neuronal ...")
-hits_valid = neural_net.fit(train, valid, valid_iters=5, mini_batch=50, parallelism=4,
+hits_valid = neural_net.fit(train, valid, valid_iters=1, mini_batch=20, parallelism=0,
                             stops=global_stops, optimizer_params=optimizer_params, measure='R2',
                             keep_best=True, reproducible=False)
 hits_test, predict = neural_net.evaluate(test, predictions=True)
@@ -84,6 +78,7 @@ metrics = RegressionMetrics(zip(predict, labels))
 print "MSE: ", metrics.mse()
 print "RMSE: ", metrics.rmse()
 print "MAE: ", metrics.mae()
+print "RMAE: ", metrics.rmae()
 print "R-cuadrado: ", metrics.r2()
 print "Explained Variance: ", metrics.explained_variance()
 print zip(predict, labels)[:10]
