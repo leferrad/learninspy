@@ -22,7 +22,7 @@ Learninspy is a framework for building deep neural networks using Spark features
 * NumPy
 * Matplotlib 
 
-**NOTE:** it is needed to have defined an environment variable called ``SPARK_HOME`` pointing to the Spark's root directory (e.g. /usr/local/spark/). In addition, if you want to connect Learninspy with a Spark's standalone cluster, you need to define the following environment variables: ``SPARK_MASTER_IP`` to specify the master's IP address, and ``SPARK_MASTER_PORT`` for its application port.
+**NOTE:** it is needed to have defined an environment variable called ``SPARK_HOME`` pointing to the Spark's root directory (e.g. /usr/local/spark/). You can follow the installation guide detailed on ``install_spark.md`` file. In addition, if you want to connect Learninspy with a Spark's standalone cluster, you need to define the following environment variables: ``SPARK_MASTER_IP`` to specify the master's IP address, and ``SPARK_MASTER_PORT`` for its application port.
 
 ## Testing
 Run ``nosetests test/`` from the download directory.
