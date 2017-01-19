@@ -48,12 +48,14 @@ export PYSPARK_DRIVER_PYTHON=ipython  # it can be 'ipython' or 'jupyter-notebook
 In these lines, you are setting up the root home of Spark and including it into the Python path. Also, it is configured the PY4J package included in Spark directory, which is responsible for translating between Scala and Python. Finally, in case of having installed JAVA 7 OpenJDK, it is configured its path (otherwise, you need to point ``JAVA_HOME`` to its real path). Additionally, it is configured a variable for indicating how it should be launched PySpark (in this case, with IPython shell).
 
 Now, you can check if it's all running by these ways:
-1) Importing 'pyspark' package from Python shell:
+
+1. Importing 'pyspark' package from Python shell:
     ```python
     import pyspark
     # It should be imported with no errors
     ```
-2) Launching 'pyspark' script:
+
+2. Launching 'pyspark' script:
     ```
     $ cd /usr/local/spark-1.6.0
     $ ./bin/pyspark
