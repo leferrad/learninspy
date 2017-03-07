@@ -37,10 +37,12 @@ class OptimizerParameters:
     :param merge_goal: string, parámetro *goal* de la función :func:`~learninspy.core.optimization.merge_models`.
 
     >>> from learninspy.core.stops import criterion
-    >>> local_stops = [criterion['MaxIterations'](10), criterion['AchieveTolerance'](0.95, key='hits')]
+    >>> local_stops = [criterion['MaxIterations'](10),  \ ...
+    >>>                criterion['AchieveTolerance'](0.95, key='hits')]
     >>> opt_options = {'step-rate': 1, 'decay': 0.9, 'momentum': 0.0, 'offset': 1e-8}
-    >>> opt_params = OptimizerParameters(algorithm='Adadelta', options=opt_options, stops=local_stops, \
-                                         merge_criter='w_avg', merge_goal='hits')
+    >>> opt_params = OptimizerParameters(algorithm='Adadelta', options=opt_options, \ ...
+    >>>                                  stops=local_stops, \ ...
+    >>>                                  merge_criter='w_avg', merge_goal='hits')
     >>> print str(opt_params)
     The algorithm used is Adadelta with the next parameters:
     offset: 1e-08
@@ -89,13 +91,16 @@ class Optimizer(object):
     >>>          criterion['AchieveTolerance'](0.95, key='hits')]
     >>> # Gradient Descent
     >>> options = {'step-rate': 0.01, 'momentum': 0.8, 'momentum_type': 'standard'}
-    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, options=options, merge_criter='w_avg')
+    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, \...
+    >>>                                  options=options, merge_criter='w_avg')
     >>> # Adadelta
     >>> options = {'step-rate': 1.0, 'decay': 0.99, 'momentum': 0.7, 'offset': 1e-8}
-    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, options=options, merge_criter='avg')
+    >>> opt_params = OptimizerParameters(algorithm='GD', stops=stops, \...
+    >>>                                  options=options, merge_criter='avg')
     >>> minimizer = Minimizer[opt_params.algorithm](model, data, opt_params)
     >>> for result in minimizer:
-    >>>     logger.info("Cant de iteraciones: %i. Hits en batch: %12.11f. Costo: %12.11f", \...
+    >>>     logger.info("Cant de iteraciones: %i. Hits en batch: %12.11f. "
+    >>>                                          "Costo: %12.11f", \...
     >>>                  result['iterations'], result['hits'], result['cost'])
     """
     def __init__(self, model, data, parameters=None):

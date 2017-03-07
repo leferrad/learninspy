@@ -82,9 +82,11 @@ class RandomSearch(object):
 
     >>> from learninspy.core.model import NetworkParameters, NeuralNetwork
     >>> from learninspy.core.search import network_domain
-    >>> net_params = NetworkParameters(units_layers=[4, 10, 3], activation=False, dropout_ratios=True,\ ...
-    >>>                                classification=True, strength_l1=True, strength_l2=True, seed=123)
-    >>> rnd_search = RandomSearch(net_params, n_layers=0, n_iter=10, net_domain=network_domain, seed=123)
+    >>> net_params = NetworkParameters(units_layers=[4, 10, 3], activation=False, \ ...
+    >>>                                dropout_ratios=True, classification=True, \ ...
+    >>>                                strength_l1=True, strength_l2=True, seed=123)
+    >>> rnd_search = RandomSearch(net_params, n_layers=0, n_iter=10,
+    >>>                           net_domain=network_domain, seed=123)
     >>> rnd_search.fit(NeuralNetwork, train, valid, test)
     >>> ...
 

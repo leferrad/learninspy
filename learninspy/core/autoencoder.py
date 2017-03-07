@@ -39,7 +39,8 @@ class AutoEncoder(NeuralNetwork):
     :param list_layers: list de model.NeuralLayer, en caso de usar capas ya inicializadas.
     :param dropout_in: radio de DropOut usado para el encoder (el decoder no debe sufrir DropOut).
 
-    >>> ae_params = NetworkParameters(units_layers=[5,3], activation='Tanh', dropout_ratios=None, classification=False)
+    >>> ae_params = NetworkParameters(units_layers=[5,3], activation='Tanh', \ ...
+    >>>                               dropout_ratios=None, classification=False)
     >>> ae = AutoEncoder(ae_params)
     """
     def __init__(self, params=None, list_layers=None, dropout_in=0.0):

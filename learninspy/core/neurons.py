@@ -228,7 +228,9 @@ class LocalNeurons(object):
                 utilizan arreglos distribuidos.
 
     >>> shape = (5,3)
-    >>> w = np.asarray(np.random.uniform(low=-np.sqrt(6.0 / (shape[0] + shape[1])), high=+np.sqrt(6.0 / (shape[0] + shape[1])), size=shape), dtype=np.dtype(float))
+    >>> w = np.asarray(np.random.uniform(low=-np.sqrt(6.0 / (shape[0] + shape[1])), \ ...
+    >>>                high=+np.sqrt(6.0 / (shape[0] + shape[1])),
+    >>>                size=shape), dtype=np.dtype(float))
     >>> weights = LocalNeurons(w, shape)
 
     """
