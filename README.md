@@ -5,6 +5,14 @@ Learninspy
 
 *Deep Learning in Spark, with Python*
 
+------------------------------------------------------------------------------------
+
+<img src="http://www.noemptyrooms.com/calimesa/images/discontinued.png" width="500">
+
+*This project is no longer maintained since June 2017. Sorry for the inconvenience.*
+
+------------------------------------------------------------------------------------
+
 [![Build Status](https://travis-ci.org/leferrad/learninspy.svg?branch=master)](https://travis-ci.org/leferrad/learninspy)
 [![Documentation Status](http://readthedocs.org/projects/learninspy/badge/?version=latest)](http://learninspy.readthedocs.io/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/leferrad/learninspy/badge.svg?branch=master)](https://coveralls.io/github/leferrad/learninspy?branch=master)
